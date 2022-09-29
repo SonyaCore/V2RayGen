@@ -3,7 +3,7 @@
 # V2Ray Config Generator
 # --------------------------------
 # author    : SonyaCore
-#	      https://github.com/SonyaCore
+#	github    : https://github.com/SonyaCore
 
 
 # Librarys
@@ -85,9 +85,9 @@ def dnsselect():
   '''
   DNS Selection
   '''
-  global both , google , cloudflare , NODNS
+  global both , google , cloudflare , opendns , quad9 , adguard , NODNS
   global dnslist
-  dnslist = ['both','google','cloudflare','nodns']
+  dnslist = ['both','google','cloudflare','opendns','adguard','nodns']
 
   both = """"dns": {
       "servers": [
@@ -107,6 +107,29 @@ def dnsselect():
         "1.1.1.1"
     ]
   },"""
+
+  opendns = """"dns": {
+      "servers": [
+        "208.67.222.222",
+        "208.67.220.220"
+    ]
+  },"""
+
+  quad9 = """"dns": {
+      "servers": [
+        "9.9.9.9",
+        "149.112.112.112"
+    ]
+  },"""
+
+  adguard = """"dns": {
+      "servers": [
+        "94.140.14.14",
+        "94.140.15.15"
+    ]
+  },"""
+
+
   NODNS = ''
 
 # -------------------------------- VMess JSON --------------------------------- #
@@ -321,7 +344,11 @@ if args.dns :
   google
   cloudflare
   both : google + cloudflare
+  opendns
+  quad9
+  adguard
   nodns""")
+
 # Set To NODNS
 else:
   dns = ''
@@ -333,9 +360,14 @@ if args.dns == 'google':
   dns = google
 if args.dns == 'cloudflare':
   dns = cloudflare
+if args.dns == 'opendns':
+  dns = opendns
+if args.dns == 'quad9':
+  dns = quad9
+if args.dns == 'adguard':
+  dns = adguard
 if args.dns == 'nodns':
   dns = NODNS
-
 
 # vmess config port :
 if args.port == None :

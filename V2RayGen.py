@@ -27,18 +27,31 @@ CONFIGNAME = 'config.json'
 formatter = lambda prog: argparse.HelpFormatter(prog,max_help_position=64)
 parser = argparse.ArgumentParser(prog='V2Ray Config Generator',formatter_class=formatter)
 gp = parser.add_mutually_exclusive_group()
-gp.add_argument('--simple','-s',action='store_true',help='generate simple vmess config and starting it with docker')
+gp.add_argument('--simple','-s',action='store_true',
+help='generate simple vmess config and starting it with docker')
 
 vmess = parser.add_argument_group('VMess')
-vmess.add_argument('--generate','--gen',action='store_true',help='generate vmess json config')
-vmess.add_argument('--link','--vmess-link',action='store_true',help='generate vmess link for v2ray config')
-vmess.add_argument('--protocol','--outband',action='store',type=str,help='set protcol for outband connection. default: [freedom]')
-vmess.add_argument('--port','-p',action='store' , type=int , help='set optional port for V2Ray Config. defualt: [80]' )
-vmess.add_argument('--dns',action='store',type=str,help='set optional dns')
+vmess.add_argument('--generate','--gen',action='store_true',
+
+help='generate vmess json config')
+vmess.add_argument('--link','--vmess-link',action='store_true',
+help='generate vmess link for v2ray config')
+
+vmess.add_argument('--protocol','--outband',action='store',type=str,
+help='set protcol for outband connection. default: [freedom]')
+
+vmess.add_argument('--port','-p',action='store' , type=int ,
+help='set optional port for V2Ray Config. defualt: [80]' )
+
+vmess.add_argument('--dns',action='store',type=str,
+help='set optional dns')
 
 docker = parser.add_argument_group('Docker')
-docker.add_argument('--dockerfile', required=False , action= 'store_true',help='generate docker-compose for v2ray')
-docker.add_argument('--start', required=False , action= 'store_true',help='start v2ray docker-compose in system')
+docker.add_argument('--dockerfile', required=False , action= 'store_true',
+help='generate docker-compose for v2ray')
+
+docker.add_argument('--start', required=False , action= 'store_true',
+help='start v2ray docker-compose in system')
 
 opt = parser.add_argument_group('info')
 opt.add_argument('--version','-v', action='version', version='%(prog)s 0.2')

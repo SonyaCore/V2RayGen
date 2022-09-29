@@ -9,8 +9,9 @@ import os
 import uuid
 import argparse
 import base64
-import socket   
-
+import socket
+import json
+import logging
 
 # -------------------------------- Constants --------------------------------- #
 
@@ -24,38 +25,39 @@ CONFIGNAME = 'config.json'
 
 formatter = lambda prog: argparse.HelpFormatter(prog,max_help_position=64)
 parser = argparse.ArgumentParser(prog='V2Ray Config Generator',formatter_class=formatter)
+
 gp = parser.add_mutually_exclusive_group()
-gp.add_argument('--vmess','-s',action='store_true',
+gp.add_argument('--vmess','-s', action='store_true',
 help='generate simple vmess config and starting it with docker')
 
 vmess = parser.add_argument_group('VMess')
-vmess.add_argument('--generate','--gen',action='store_true',
+vmess.add_argument('--generate','--gen', action='store_true',
 
 help='generate vmess json config')
-vmess.add_argument('--link','--vmesslink',action='store_true',
+vmess.add_argument('--link','--vmesslink', action='store_true',
 help='generate vmess link for v2ray config')
 
-vmess.add_argument('--linkname','--vmessname',action='store' , type=str ,
+vmess.add_argument('--linkname','--vmessname', action='store' , type=str ,
 help='set name for VMess Link. defualt: [v2ray]' )
 
-vmess.add_argument('--protocol','--outband',action='store',type=str,
+vmess.add_argument('--protocol','--outband', action='store' , type=str,
 help='set protcol for outband connection. default: [freedom]')
 
-vmess.add_argument('--port','-p',action='store' , type=int ,
+vmess.add_argument('--port','-p', action='store' , type=int ,
 help='set optional port for V2Ray Config. defualt: [80]' )
 
-vmess.add_argument('--dns',action='store',type=str,
+vmess.add_argument('--dns', action='store' , type=str,
 help='set optional dns. default: [nodns]')
 
 docker = parser.add_argument_group('Docker')
-docker.add_argument('--dockerfile', required=False , action= 'store_true',
+docker.add_argument('--dockerfile', action= 'store_true' , required=False ,
 help='generate docker-compose for v2ray')
 
-docker.add_argument('--dockerup', required=False , action= 'store_true',
+docker.add_argument('--dockerup', action= 'store_true' , required=False ,
 help='start v2ray docker-compose in system')
 
 opt = parser.add_argument_group('info')
-opt.add_argument('--version','-v', action='version', version='%(prog)s 0.2')
+opt.add_argument('--version','-v', action='version' , version='%(prog)s 0.2')
 
 # Arg Parse
 args = parser.parse_args()
@@ -70,17 +72,20 @@ reset = '\u001b[0m'
 
 # Return IP
 def IP():
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.settimeout(0)
-        try:
-            # dummy ip
-            s.connect(('10.254.254.254', 1))
-            IP = s.getsockname()[0]
-        except Exception:
-            IP = '127.0.0.1'
-        finally:
-            s.close()
-        return IP
+  '''
+  return ip address with socket library
+  '''
+  s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  s.settimeout(0)
+  try:
+      # dummy ip
+      s.connect(('10.254.254.254', 1))
+      IP = s.getsockname()[0]
+  except Exception:
+      IP = '127.0.0.1'
+  finally:
+      s.close()
+  return IP
 
 def dnsselect():
   '''
@@ -135,9 +140,10 @@ def dnsselect():
 
 # -------------------------------- VMess JSON --------------------------------- #
 
-def make():
+def vmess_make():
   '''
-  Make JSON config
+  make json config which reads --protocol
+  for making v2ray config with specific protocol
   '''
   
   global protocol_list
@@ -146,29 +152,23 @@ def make():
   # config method
   if args.protocol == 'freedom' or None:
     with open(CONFIGNAME,'w') as txt :
-      txt.write(vmess_config() \
-      + freedom() \
-      + '\n  ]\n }')
-
+      txt.write(json.dumps(vmess_config(method=freedom()),
+      indent= 2))
       txt.close
 
   if args.protocol == 'blackhole':
     with open(CONFIGNAME,'w') as txt :
-      txt.write(vmess_config() \
-      + blackhole() \
-      + '\n  ]\n }')
+      txt.write(json.dumps(vmess_config(method=blackhole()),
+      indent=2))
+      txt.close
 
   if args.protocol == 'both':
     with open(CONFIGNAME,'w') as txt :
-      txt.write(vmess_config() \
-      + freedom() \
-      +',\n' \
-      + blackhole() \
-      + '\n  ]\n }')
-      
+      txt.write(json.dumps(vmess_config(method=freedom() + ',\n' + blackhole()),
+      indent=2))
       txt.close
 
-def vmess_config() -> str:
+def vmess_config(method) -> str:
   '''
   vmess JSON config file template
   '''
@@ -227,15 +227,18 @@ def vmess_config() -> str:
       }
     ],
     "outbounds": [
-""" % (dns,PORT,UUID)
-  return data
+    %s
+    ]
+}
+""" % (dns,PORT,UUID,method)
+  return json.loads(data)
 
 def freedom() -> str:
   '''
   Append freedom protocol to JSON config
   '''
 
-  freedom = """    {
+  freedom = """ {
       "protocol": "freedom",
       "settings": {}
     }"""
@@ -247,7 +250,7 @@ def blackhole() -> str:
   Append blackhole protocol to JSON config
   '''
 
-  blackhole = """    {
+  blackhole = """ {
       "protocol": "blackhole",
       "settings": {
         "response": {
@@ -276,7 +279,7 @@ services:
     volumes:
         - ./%s:/etc/v2ray/config.json:ro""" % (CONFIGNAME)
 
-  print('! Creating v2ray Docker-Compose with this configuration')
+  print(yellow + '! created v2ray Docker-Compose configuration' + reset)
   with open('docker-compose.yml','w') as txt :
     txt.write(data)
     txt.close()
@@ -342,14 +345,14 @@ if args.dns :
   dnsselect()
   
   if args.dns not in dnslist :  # list of DNS
-    print("""List of Avalible DNS :
-  google
+    print(f"""List of Avalible DNS :
+  {green}google
   cloudflare
   both : google + cloudflare
   opendns
   quad9
   adguard
-  nodns""")
+  nodns{reset}""")
 
 # Set To NODNS
 else:
@@ -379,16 +382,16 @@ else :
 
 # MakeConfig
 if args.protocol or args.generate :
-  make()
+  vmess_make()
   if args.protocol not in protocol_list:  # list of outband protocols
     print(f"""{yellow}! use --protocol to set method{reset}
-\nList of methods :
+List of outband methods :
   {green}freedom
   blackhole
   both : freedom + blackhole{reset}""")
   else:
     print('UUID: ' + blue + str(UUID) + reset)
-    print(PORT)
+    print('PORT: ' + blue + str(PORT)  + reset)
 
 # Run Service :
 if args.dockerup:
@@ -400,7 +403,7 @@ if args.link:
   else:
     print(vmess_link_generator(args.linkname))
 
-if args.simple:
+if args.vmess:
   '''
   simple configuration will setup vmess config with configuration :\n
   protocol freedom\n
@@ -413,7 +416,7 @@ if args.simple:
   args.protocol = 'freedom'
   dnsselect()
   dns = google
-  make()
+  vmess_make()
   v2ray_dockercompose()
   run_docker()
   print(vmess_link_generator(args.linkname))

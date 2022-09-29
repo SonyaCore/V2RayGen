@@ -9,15 +9,14 @@ import sys , os
 import uuid
 import argparse
 import base64
+import socket   
+
 
 # UUID Generation
 myuuid = uuid.uuid4()
 
 # Config Name
 configname = 'config.json'
-
-# Return IP
-IP = os.system('hostname -I | cut -d' ' -f1')
 
 # Argument Parser
 formatter = lambda prog: argparse.HelpFormatter(prog,max_help_position=64)
@@ -48,6 +47,20 @@ yellow = '\u001b[33m'
 blue = '\u001b[34m'
 reset = '\u001b[0m'
 
+
+# Return IP
+def IP():
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0)
+        try:
+            # dummy ip
+            s.connect(('10.254.254.254', 1))
+            IP = s.getsockname()[0]
+        except Exception:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP
 
 def dnsselect():
   "DNS Selection"
@@ -81,20 +94,28 @@ def make():
   global protocol_list
   protocol_list = ['freedom','blackhole','both']
     
-  # Config Selection
+  # config method
   if args.protocol == 'freedom' or None:
     with open(configname,'w') as txt :
       txt.write(vmess_config() \
       + freedom() \
       + '\n  ]\n }')
-      
+
       txt.close
+
+  if args.protocol == 'blackhole':
+    with open(configname,'w') as txt :
+      txt.write(vmess_config() \
+      + blackhole() \
+      + '\n  ]\n }')
+
   if args.protocol == 'both':
     with open(configname,'w') as txt :
       txt.write(vmess_config() \
       + freedom() \
       +',\n' \
-      + blackhole() + '\n  ]\n }')
+      + blackhole() \
+      + '\n  ]\n }')
       
       txt.close
 
@@ -202,7 +223,9 @@ services:
 
 def run_docker():
   "start v2ray docker-compose"
+  # check if docker exist 
   if os.path.exists('/usr/bin/docker') or os.path.exists('/usr/local/bin/docker'):
+    # check if docker-compose exist
     if os.path.exists('/usr/bin/docker-compose') or os.path.exists('/usr/local/bin/docker-compose'):
       os.system('docker-compose -f docker-compose.yml up -d')
     else:
@@ -269,7 +292,7 @@ if args.dns == 'nodns':
   dns = NODNS
 
 
-# V2ray Service Port :
+# vmess config port :
 if args.port == None :
   PORT = 80
 else :

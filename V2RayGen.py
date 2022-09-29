@@ -25,15 +25,18 @@ CONFIGNAME = 'config.json'
 formatter = lambda prog: argparse.HelpFormatter(prog,max_help_position=64)
 parser = argparse.ArgumentParser(prog='V2Ray Config Generator',formatter_class=formatter)
 gp = parser.add_mutually_exclusive_group()
-gp.add_argument('--simple','-s',action='store_true',
+gp.add_argument('--vmess','-s',action='store_true',
 help='generate simple vmess config and starting it with docker')
 
 vmess = parser.add_argument_group('VMess')
 vmess.add_argument('--generate','--gen',action='store_true',
 
 help='generate vmess json config')
-vmess.add_argument('--link','--vmess-link',action='store_true',
+vmess.add_argument('--link','--vmesslink',action='store_true',
 help='generate vmess link for v2ray config')
+
+vmess.add_argument('--linkname','--vmessname',action='store' , type=str ,
+help='set name for VMess Link. defualt: [v2ray]' )
 
 vmess.add_argument('--protocol','--outband',action='store',type=str,
 help='set protcol for outband connection. default: [freedom]')
@@ -42,13 +45,13 @@ vmess.add_argument('--port','-p',action='store' , type=int ,
 help='set optional port for V2Ray Config. defualt: [80]' )
 
 vmess.add_argument('--dns',action='store',type=str,
-help='set optional dns')
+help='set optional dns. default: [nodns]')
 
 docker = parser.add_argument_group('Docker')
 docker.add_argument('--dockerfile', required=False , action= 'store_true',
 help='generate docker-compose for v2ray')
 
-docker.add_argument('--start', required=False , action= 'store_true',
+docker.add_argument('--dockerup', required=False , action= 'store_true',
 help='start v2ray docker-compose in system')
 
 opt = parser.add_argument_group('info')
@@ -299,16 +302,17 @@ def run_docker():
 
 # ------------------------------ VMess Link Gen ------------------------------- #
 
-def vmess_link_generator() -> str:
+def vmess_link_generator(vmess_config_name) -> str:
   '''
   generate vmess link
   '''
+  if not vmess_config_name:
+    vmess_config_name = 'v2ray'
 
-  vmess_config_name = 'v2ray'
   prelink = 'vmess://'
   print(yellow + '! use below link for you v2ray client' + reset)
   raw_link = bytes('{' + 
-f"add:{IP},\
+f"add:{IP()},\
 aid:0,\
 host:,\
 id:{UUID},\
@@ -387,28 +391,29 @@ if args.protocol or args.generate :
     print(PORT)
 
 # Run Service :
-if args.start:
+if args.dockerup:
   run_docker()
 
 if args.link:
   if args.generate is None or args.protocol is None:
     parser.error('--generate and --protocol are required')
   else:
-    print(vmess_link_generator())
+    print(vmess_link_generator(args.linkname))
 
 if args.simple:
-  """ simple configuration will setup vmess config with configuration :\n
+  '''
+  simple configuration will setup vmess config with configuration :\n
   protocol freedom\n
   dns google\n
   port 80\n
   docker compose\n
   run docker compose install docker if docker bin not exist\n
   vmess link generate
-  """
+  '''
   args.protocol = 'freedom'
   dnsselect()
   dns = google
   make()
   v2ray_dockercompose()
   run_docker()
-  print(vmess_link_generator())
+  print(vmess_link_generator(args.linkname))

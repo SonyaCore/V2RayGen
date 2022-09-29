@@ -5,8 +5,6 @@
 # author    : SonyaCore
 #	github    : https://github.com/SonyaCore
 
-
-# Librarys
 import os
 import uuid
 import argparse

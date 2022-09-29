@@ -217,7 +217,7 @@ def vmess_link_generator() -> str:
   "generate vmess link"
   vmess_config_name = 'v2ray'
   prelink = 'vmess://'
-
+  print(yellow + '! use below link for you v2ray client' + reset)
   raw_link = bytes('{' + 
 f"add:{IP},\
 aid:0,\
@@ -296,7 +296,6 @@ if args.link:
   if args.generate is None or args.protocol is None:
     parser.error('--generate and --protocol are required')
   else:
-    print(yellow + '! use below link for you v2ray client' + reset)
     print(vmess_link_generator())
 
 if args.simple:
@@ -314,5 +313,4 @@ if args.simple:
   make()
   v2ray_dockercompose()
   #run_docker()
-  print(yellow + '! use below link for you v2ray client' + reset)
   print(vmess_link_generator())

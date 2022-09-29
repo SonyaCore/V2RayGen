@@ -29,7 +29,7 @@ For running this project, you must have these dependencies installed and ready t
 ### Quick Method with Default Setting :
 
 **VMess**
-```
+```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 - --vmess
 # OR
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py --output V2RayGen.py
@@ -39,24 +39,15 @@ python3 V2RayGen.py --vmess
 
 ### Advanced Method :
 
-```
+```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 - --generate --protocol freedom --port 8080 --dns google --link
 ```
 > above command will generate vmess json with freedom outband protocol , port 8080 , google dns and finaly generating vmess link
 
-  <br>
-  
-**Below DNS's can be used for JSON config**
-
-  ```
-  google
-  cloudflare
-  opendns
-  quad9
-  adguard
-  ```
+<br>
   
 **Usage :**
+ 
 ```
 --vmess, -s                           Generate simple vmess config and starting it with docker
 
@@ -71,9 +62,28 @@ VMess:
 Docker:
   --dockerfile                        Generate docker-compose for v2ray
   --dockerup                          Start v2ray docker-compose in system
-```
+``` 
   > --dockerup will install docker and docker-compose if docker are not in the system
 
+
+**Below DNS's can be used for JSON config**
+|DNS's              |
+|-------------------|
+|google             |
+|cloudflare         |
+|opendns            |
+|quad9              |
+|adguard            |
+ 
+**Supported Outband Protocols:**
+|Outband            |
+|-------------------|
+|Freedom|           |
+|BlackHole          |
+|Freedom + BlackHole|
+
+
+ 
 ---
   
 ### Todo List

@@ -7,12 +7,33 @@ V2Ray Gen are desigend for setting Up V2Ray-Core with Customized JSON Template o
 
 **VMess**
 ```
-curl https://github.com/SonyaCore/V2RayGen.git | python3 - --vmess
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 - --vmess
+# OR
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py --output V2RayGen.py
+python3 V2RayGen.py --vmess
 ```
 > for changing port simple use --port <int>
 
 <h4>Advanced Method </h4>
 
 ```
-curl https://github.com/SonyaCore/V2RayGen.git | python3 - --vmess
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 - --generate --protocol freedom --port 8080 --dns google --link
+```
+> above command will generate vmess json with freedom outband protocol , port 8080 , google dns and finaly generating vmess link
+
+**Avaliable Options :**
+```
+--vmess, -s                           Generate simple vmess config and starting it with docker
+
+VMess:
+  --generate, --gen                   Generate vmess json config
+  --link, --vmesslink                 Generate vmess link for v2ray config
+  --linkname , --vmessname            Name for VMess Link. defualt: [v2ray]
+  --protocol , --outband              Protcol for outband connection. default: [freedom]
+  --port , -p                         Optional port for V2Ray Config. defualt: [80]
+  --dns                               Optional dns. default: [nodns]
+
+Docker:
+  --dockerfile                        Generate docker-compose for v2ray
+  --dockerup                          Start v2ray docker-compose in system
 ```

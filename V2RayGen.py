@@ -85,7 +85,7 @@ def dnsselect():
   '''
   global both , google , cloudflare , opendns , quad9 , adguard , NODNS
   global dnslist
-  dnslist = ['both','google','cloudflare','opendns','adguard','nodns']
+  dnslist = ['both','google','cloudflare','opendns','quad9','adguard','nodns']
 
   both = """"dns": {
       "servers": [

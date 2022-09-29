@@ -5,7 +5,7 @@
 # author    : SonyaCore
 #	github    : https://github.com/SonyaCore
 
-import os
+import os , sys
 import uuid
 import argparse
 import base64
@@ -20,6 +20,9 @@ UUID = uuid.uuid4()
 
 # Config Name
 CONFIGNAME = 'config.json'
+
+# PORT
+PORT = 80
 
 # -------------------------------- Argument Parser --------------------------------- #
 
@@ -57,7 +60,7 @@ docker.add_argument('--dockerup', action= 'store_true' , required=False ,
 help='start v2ray docker-compose in system')
 
 opt = parser.add_argument_group('info')
-opt.add_argument('--version','-v', action='version' , version='%(prog)s 0.2')
+opt.add_argument('--version','-v', action='version' , version='%(prog)s 0.3')
 
 # Arg Parse
 args = parser.parse_args()
@@ -87,10 +90,19 @@ def IP():
       s.close()
   return IP
 
+def uuid_port():
+  '''
+  return uuid and port after making config
+  '''
+
+  print('UUID: ' + blue + str(UUID) + reset)
+  print('PORT: ' + blue + str(PORT)  + reset)
+
 def dnsselect():
   '''
   DNS Selection
   '''
+
   global both , google , cloudflare , opendns , quad9 , adguard , NODNS
   global dnslist
   dnslist = ['both','google','cloudflare','opendns','quad9','adguard','nodns']
@@ -172,6 +184,7 @@ def vmess_config(method) -> str:
   '''
   vmess JSON config file template
   '''
+
   data = """{
     %s
     "log": {
@@ -230,7 +243,7 @@ def vmess_config(method) -> str:
     %s
     ]
 }
-""" % (dns,PORT,UUID,method)
+""" % (DNS,PORT,UUID,method)
   return json.loads(data)
 
 def freedom() -> str:
@@ -260,6 +273,25 @@ def blackhole() -> str:
       "tag": "block"
     }"""
   return blackhole
+
+def vmess_simple():
+  '''
+  simple configuration will setup vmess config with configuration :\n
+  protocol freedom\n
+  dns google\n
+  port 80\n
+  docker compose\n
+  run docker compose install docker if docker bin not exist\n
+  vmess link generate
+  '''
+
+  args.protocol = 'freedom'
+  dnsselect()
+  vmess_make()
+  v2ray_dockercompose()
+  #run_docker()
+  uuid_port()
+  print(vmess_link_generator(args.linkname))
 
 # ------------------------------ Docker ------------------------------- #
 
@@ -309,6 +341,7 @@ def vmess_link_generator(vmess_config_name) -> str:
   '''
   generate vmess link
   '''
+
   if not vmess_config_name:
     vmess_config_name = 'v2ray'
 
@@ -340,7 +373,7 @@ v:2" + '}',\
 if args.dockerfile :
   v2ray_dockercompose()
 
-# Call DNS
+# call DNS func
 if args.dns :
   dnsselect()
   
@@ -353,34 +386,35 @@ if args.dns :
   quad9
   adguard
   nodns{reset}""")
+    sys.exit()
 
 # Set To NODNS
 else:
-  dns = ''
+  DNS = ''
 
-# DNS Selection
+# DNS argument parser
 if args.dns == 'both':
-  dns = both
+  DNS = both
 if args.dns == 'google':
-  dns = google
+  DNS = google
 if args.dns == 'cloudflare':
-  dns = cloudflare
+  DNS = cloudflare
 if args.dns == 'opendns':
-  dns = opendns
+  DNS = opendns
 if args.dns == 'quad9':
-  dns = quad9
+  DNS = quad9
 if args.dns == 'adguard':
-  dns = adguard
+  DNS = adguard
 if args.dns == 'nodns':
-  dns = NODNS
+  DNS = NODNS
 
 # vmess config port :
 if args.port == None :
-  PORT = 80
+  pass
 else :
   PORT = args.port
 
-# MakeConfig
+# make config with defined parameters
 if args.protocol or args.generate :
   vmess_make()
   if args.protocol not in protocol_list:  # list of outband protocols
@@ -389,9 +423,13 @@ List of outband methods :
   {green}freedom
   blackhole
   both : freedom + blackhole{reset}""")
+    sys.exit()
   else:
-    print('UUID: ' + blue + str(UUID) + reset)
-    print('PORT: ' + blue + str(PORT)  + reset)
+    uuid_port()
+
+# simple vmess configuration gen
+if args.vmess:
+  vmess_simple()
 
 # Run Service :
 if args.dockerup:
@@ -402,21 +440,3 @@ if args.link:
     parser.error('--generate and --protocol are required')
   else:
     print(vmess_link_generator(args.linkname))
-
-if args.vmess:
-  '''
-  simple configuration will setup vmess config with configuration :\n
-  protocol freedom\n
-  dns google\n
-  port 80\n
-  docker compose\n
-  run docker compose install docker if docker bin not exist\n
-  vmess link generate
-  '''
-  args.protocol = 'freedom'
-  dnsselect()
-  dns = google
-  vmess_make()
-  v2ray_dockercompose()
-  run_docker()
-  print(vmess_link_generator(args.linkname))

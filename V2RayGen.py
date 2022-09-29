@@ -289,7 +289,7 @@ def vmess_simple():
   dnsselect()
   vmess_make()
   v2ray_dockercompose()
-  #run_docker()
+  run_docker()
   uuid_port()
   print(vmess_link_generator(args.linkname))
 

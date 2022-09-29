@@ -350,5 +350,5 @@ if args.simple:
   dns = google
   make()
   v2ray_dockercompose()
-  #run_docker()
+  run_docker()
   print(vmess_link_generator())

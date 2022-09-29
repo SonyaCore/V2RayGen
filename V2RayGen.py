@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # V2Ray Config Generator
 # --------------------------------
 # author    : SonyaCore
@@ -12,13 +14,16 @@ import base64
 import socket   
 
 
+# -------------------------------- Constants --------------------------------- #
+
 # UUID Generation
-myuuid = uuid.uuid4()
+UUID = uuid.uuid4()
 
 # Config Name
-configname = 'config.json'
+CONFIGNAME = 'config.json'
 
-# Argument Parser
+# -------------------------------- Argument Parser --------------------------------- #
+
 formatter = lambda prog: argparse.HelpFormatter(prog,max_help_position=64)
 parser = argparse.ArgumentParser(prog='V2Ray Config Generator',formatter_class=formatter)
 gp = parser.add_mutually_exclusive_group()
@@ -41,12 +46,14 @@ opt.add_argument('--version','-v', action='version', version='%(prog)s 0.2')
 # Arg Parse
 args = parser.parse_args()
 
+
+# ------------------------------ Miscellaneous ------------------------------- #
+
 # Color Format
 green = '\u001b[32m'
 yellow = '\u001b[33m'
 blue = '\u001b[34m'
 reset = '\u001b[0m'
-
 
 # Return IP
 def IP():
@@ -88,6 +95,8 @@ def dnsselect():
   },"""
   NODNS = ''
 
+# -------------------------------- VMess JSON --------------------------------- #
+
 def make():
   "Make JSON config"
   
@@ -96,7 +105,7 @@ def make():
     
   # config method
   if args.protocol == 'freedom' or None:
-    with open(configname,'w') as txt :
+    with open(CONFIGNAME,'w') as txt :
       txt.write(vmess_config() \
       + freedom() \
       + '\n  ]\n }')
@@ -104,13 +113,13 @@ def make():
       txt.close
 
   if args.protocol == 'blackhole':
-    with open(configname,'w') as txt :
+    with open(CONFIGNAME,'w') as txt :
       txt.write(vmess_config() \
       + blackhole() \
       + '\n  ]\n }')
 
   if args.protocol == 'both':
-    with open(configname,'w') as txt :
+    with open(CONFIGNAME,'w') as txt :
       txt.write(vmess_config() \
       + freedom() \
       +',\n' \
@@ -176,7 +185,7 @@ def vmess_config() -> str:
       }
     ],
     "outbounds": [
-""" % (dns,PORT,myuuid)
+""" % (dns,PORT,UUID)
   return data
 
 def freedom() -> str:
@@ -203,6 +212,8 @@ def blackhole() -> str:
     }"""
   return blackhole
 
+# ------------------------------ Docker ------------------------------- #
+
 def v2ray_dockercompose():
   "Create Docker compose for v2ray core"
   data = """version: '3'
@@ -214,7 +225,7 @@ services:
     environment:
       - V2RAY_VMESS_AEAD_FORCED=false
     volumes:
-        - ./%s:/etc/v2ray/config.json:ro""" % (configname)
+        - ./%s:/etc/v2ray/config.json:ro""" % (CONFIGNAME)
 
   print('! Creating v2ray Docker-Compose with this configuration')
   with open('docker-compose.yml','w') as txt :
@@ -236,6 +247,10 @@ def run_docker():
     # install docker if docker are not installed
     os.system('curl https://get.docker.com | sudo sh')
 
+
+# ------------------------------ VMess Link Gen ------------------------------- #
+
+
 def vmess_link_generator() -> str:
   "generate vmess link"
   vmess_config_name = 'v2ray'
@@ -245,7 +260,7 @@ def vmess_link_generator() -> str:
 f"add:{IP},\
 aid:0,\
 host:,\
-id:{myuuid},\
+id:{UUID},\
 net:ws,\
 path:/graphql,\
 port:{PORT},\
@@ -262,7 +277,7 @@ v:2" + '}',\
 
   return vmess_link
 
-###################### Argument Call ######################
+# ----------------------------- argparse Actions ----------------------------- #
 
 if args.dockerfile :
   v2ray_dockercompose()
@@ -308,7 +323,7 @@ if args.protocol or args.generate :
   blackhole
   both : freedom + blackhole{reset}""")
   else:
-    print('UUID: ' + blue + str(myuuid) + reset)
+    print('UUID: ' + blue + str(UUID) + reset)
     print(PORT)
 
 # Run Service :

@@ -4,10 +4,10 @@
 # --------------------------------
 # author    : SonyaCore
 #	      https://github.com/SonyaCore
-#
+
 
 # Librarys
-import sys , os
+import os
 import uuid
 import argparse
 import base64
@@ -59,7 +59,6 @@ opt.add_argument('--version','-v', action='version', version='%(prog)s 0.2')
 # Arg Parse
 args = parser.parse_args()
 
-
 # ------------------------------ Miscellaneous ------------------------------- #
 
 # Color Format
@@ -83,7 +82,9 @@ def IP():
         return IP
 
 def dnsselect():
-  "DNS Selection"
+  '''
+  DNS Selection
+  '''
   global both , google , cloudflare , NODNS
   global dnslist
   dnslist = ['both','google','cloudflare','nodns']
@@ -111,7 +112,9 @@ def dnsselect():
 # -------------------------------- VMess JSON --------------------------------- #
 
 def make():
-  "Make JSON config"
+  '''
+  Make JSON config
+  '''
   
   global protocol_list
   protocol_list = ['freedom','blackhole','both']
@@ -142,7 +145,9 @@ def make():
       txt.close
 
 def vmess_config() -> str:
-  "vmess JSON config file template"
+  '''
+  vmess JSON config file template
+  '''
   data = """{
     %s
     "log": {
@@ -202,7 +207,9 @@ def vmess_config() -> str:
   return data
 
 def freedom() -> str:
-  "Append freedom protocol to JSON config"
+  '''
+  Append freedom protocol to JSON config
+  '''
 
   freedom = """    {
       "protocol": "freedom",
@@ -212,7 +219,9 @@ def freedom() -> str:
   return freedom
 
 def blackhole() -> str:
-  "Append blackhole protocol to JSON config"
+  '''
+  Append blackhole protocol to JSON config
+  '''
 
   blackhole = """    {
       "protocol": "blackhole",
@@ -228,7 +237,10 @@ def blackhole() -> str:
 # ------------------------------ Docker ------------------------------- #
 
 def v2ray_dockercompose():
-  "Create Docker compose for v2ray core"
+  '''
+  Create Docker compose for v2ray core
+  '''
+
   data = """version: '3'
 services:
   v2ray:
@@ -246,7 +258,10 @@ services:
     txt.close()
 
 def run_docker():
-  "start v2ray docker-compose"
+  '''
+  start v2ray docker-compose
+  '''
+
   # check if docker exist 
   if os.path.exists('/usr/bin/docker') or os.path.exists('/usr/local/bin/docker'):
     # check if docker-compose exist
@@ -263,9 +278,11 @@ def run_docker():
 
 # ------------------------------ VMess Link Gen ------------------------------- #
 
-
 def vmess_link_generator() -> str:
-  "generate vmess link"
+  '''
+  generate vmess link
+  '''
+
   vmess_config_name = 'v2ray'
   prelink = 'vmess://'
   print(yellow + '! use below link for you v2ray client' + reset)

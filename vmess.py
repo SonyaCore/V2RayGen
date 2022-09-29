@@ -28,8 +28,21 @@ def vmess_link_generator():
   vmess_config_name = 'v2ray'
   prelink = 'vmess://'
 
-  raw_link = bytes('{' + f"add:s, aid:0, host:, id:{myuuid}, net:ws, path:/graphql, port:s, ps:v2ray, tls:, type:none, v:2" + '}',\
+  raw_link = bytes('{' + 
+f"add:asci,\
+aid:0,\
+host:,\
+id:{myuuid},\
+net:ws,\
+path:/graphql,\
+port:s,\
+ps:{vmess_config_name},\
+tls:,\
+type:none,\
+v:2" + '}',\
   encoding='ascii')
+
+  print('\n'+str(raw_link)+'\n')
   link = base64.b64encode(raw_link) # encode raw link
   
   final = prelink + \

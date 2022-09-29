@@ -8,6 +8,7 @@
 import sys , os
 import uuid
 import argparse
+import base64
 
 # UUID Generation
 myuuid = uuid.uuid4()
@@ -15,15 +16,24 @@ myuuid = uuid.uuid4()
 # Config Name
 configname = 'config.json'
 
+# Return IP
+IP = os.system('hostname -I | cut -d' ' -f1')
+
 # Argument Parser
 parser = argparse.ArgumentParser(prog='V2Ray Config Generator')
 parser.add_argument('--generate','--gen',action='store_true',help='generate json config')
+parser.add_argument('--link','--vmess-link',action='store_true',help='generate vmess link for v2ray config')
 parser.add_argument('--protocol','--outband',action='store',type=str,help='set protcol for outband connection. default: [freedom]')
+
 parser.add_argument('--port','-p',action='store' , type=int , help='set optional port for V2Ray Config. defualt: [80]' )
 parser.add_argument('--dns',action='store',type=str,help='set optional dns')
-parser.add_argument('--dockerfile', required=False , action= 'store_true',help='generate docker-compose for v2ray')
-parser.add_argument('--start', required=False , action= 'store_true',help='start v2ray docker-compose in system')
-parser.add_argument('--version','-v', action='version', version='%(prog)s 0.2')
+
+docker = parser.add_argument_group('Docker')
+docker.add_argument('--dockerfile', required=False , action= 'store_true',help='generate docker-compose for v2ray')
+docker.add_argument('--start', required=False , action= 'store_true',help='start v2ray docker-compose in system')
+
+opt = parser.add_argument_group('info')
+opt.add_argument('--version','-v', action='version', version='%(prog)s 0.2')
 
 # Arg Parse
 args = parser.parse_args()
@@ -199,7 +209,31 @@ def run_docker():
 
 def vmess_link_generator():
   "generate vmess link"
-## Argument Call
+  vmess_config_name = 'v2ray'
+  prelink = 'vmess://'
+
+  raw_link = bytes('{' + 
+f"add:{IP},\
+aid:0,\
+host:,\
+id:{myuuid},\
+net:ws,\
+path:/graphql,\
+port:{PORT},\
+ps:{vmess_config_name},\
+tls:,\
+type:none,\
+v:2" + '}',\
+  encoding='ascii')
+
+  link = base64.b64encode(raw_link) # encode raw link
+  
+  vmess_link = prelink + \
+  str(link.decode('utf-8')) # concatenate prelink with rawlink
+
+  return vmess_link
+
+###################### Argument Call ######################
 
 if args.dockerfile :
   print('! Creating v2ray Docker-Compose with this configuration')
@@ -253,6 +287,12 @@ if args.protocol or args.generate :
 if args.start:
   run_docker()
 
+if args.link:
+  if args.generate is None or args.protocol is None:
+    parser.error('--generate and --protocol are required')
+  else:
+    print(yellow + '! use below link for you v2ray client' + reset)
+    print(vmess_link_generator())
 
   # try:
   #   # List of Protocols

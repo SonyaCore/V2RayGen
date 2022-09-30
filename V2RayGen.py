@@ -64,6 +64,9 @@ help='set optional port for V2Ray Config. defualt: [80]' )
 vmess.add_argument('--dns', action='store' , type=str,
 help='set optional dns. default: [nodns]')
 
+vmess.add_argument('--wspath',"--websocket-path", action='store' , type=str,
+help='set optional websocket path. default: [/graphql]')
+
 docker = parser.add_argument_group('Docker')
 docker.add_argument('--dockerfile', action= 'store_true' , required=False ,
 help='generate docker-compose for v2ray')
@@ -177,7 +180,7 @@ def vmess_make():
   # config method
   if args.protocol == 'freedom' or None:
     with open(CONFIGNAME,'w') as txt :
-      txt.write(json.dumps(vmess_config(method=freedom()),
+      txt.write(json.dumps(vmess_config(method=freedom(),websocket=websocket(args.wspath)),
       indent= 2))
       txt.close
 
@@ -193,7 +196,7 @@ def vmess_make():
       indent=2))
       txt.close
 
-def vmess_config(method) -> str:
+def vmess_config(method,websocket) -> str:
   '''
   vmess JSON config file template
   '''
@@ -221,12 +224,8 @@ def vmess_config(method) -> str:
           ],
           "disableInsecureEncryption": true
         },
-        "streamSettings": {
-          "network": "ws",
-          "wsSettings": {
-            "connectionReuse": true,
-            "path": "/graphql"
-          },
+        "streamSettings": 
+        %s,
           "security": "none",
           "tcpSettings": {
             "header": {
@@ -256,8 +255,23 @@ def vmess_config(method) -> str:
     %s
     ]
 }
-""" % (DNS,PORT,UUID,method)
+""" % (DNS,PORT,UUID,websocket,method)
   return json.loads(data)
+
+def websocket(path) -> str:
+  '''
+  websocket section
+  '''
+  if not path :
+    path = '/graphql'
+
+  websocket = """{
+          "network": "ws",
+          "wsSettings": {
+            "connectionReuse": true,
+            "path": "%s"
+          }""" % (path)
+  return websocket
 
 def freedom() -> str:
   '''
@@ -348,6 +362,7 @@ def run_docker():
   time.sleep(2)
 
   # check if docker-compose exist
+  
   if os.path.exists('/usr/bin/docker-compose') or os.path.exists('/usr/local/bin/docker-compose'):
       subprocess.run('docker-compose -f docker-compose.yml up -d',shell=True,check=True)
   else:

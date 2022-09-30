@@ -65,7 +65,7 @@ vmess.add_argument('--dns', action='store' , type=str,
 help='set optional dns. default: [nodns]')
 
 vmess.add_argument('--wspath',"--websocket-path", action='store' , type=str,
-help='set optional websocket path. default: [/graphql]')
+help='set optional websocket path. default: [/graphql]',default='/graphql')
 
 docker = parser.add_argument_group('Docker')
 docker.add_argument('--dockerfile', action= 'store_true' , required=False ,
@@ -260,7 +260,10 @@ def vmess_config(method,websocket) -> str:
 
 def websocket(path) -> str:
   '''
-  websocket section
+  websocket stream setting template for JSON.
+  by default websocket for transporting data.
+  Websocket connections can be proxied by HTTP server such as Nginx.
+
   '''
   if not path :
     path = '/graphql'
@@ -275,7 +278,12 @@ def websocket(path) -> str:
 
 def freedom() -> str:
   '''
-  Append freedom protocol to JSON config
+  freedom protocol template JSON config.
+
+  adding freedom outbound to json config
+  It passes all TCP or UDP connection to their destinations.
+  This outbound is used when you want to send traffic to its real destination.
+  it can be used as a single outbound connection witch default --vmess arg uses.
   '''
 
   freedom = """ {
@@ -287,7 +295,10 @@ def freedom() -> str:
 
 def blackhole() -> str:
   '''
-  Append blackhole protocol to JSON config
+  blackhole protocol template JSON config.
+
+  with this fucntion blackhole outbound will be added in json
+  it can be combined with freedom or as a single outbound connection
   '''
 
   blackhole = """ {
@@ -324,7 +335,8 @@ def vmess_simple():
 
 def v2ray_dockercompose():
   '''
-  Create Docker compose for v2ray core
+  Create Docker compose file for v2ray-core.
+  in this docker-compose v2fly-core is being used for running v2ray in the container.
   '''
 
   data = """version: '3'
@@ -338,14 +350,17 @@ services:
     volumes:
         - ./%s:/etc/v2ray/config.json:ro""" % (CONFIGNAME)
 
-  print(yellow + '! created v2ray Docker-Compose configuration' + reset)
+  print(yellow + '! Created v2ray docker-compose.yml configuration' + reset)
   with open('docker-compose.yml','w') as txt :
     txt.write(data)
     txt.close()
 
 def run_docker():
   '''
-  start v2ray docker-compose
+  Start v2ray docker-compose.
+  at first, it will check if docker exists and then check if docker-compose exists
+  if docker is not in the path it will install docker with the official script.
+  then it checks the docker-compose path if the condition is True docker-compose.yml will be used for running v2ray.
   '''
 
   # check if docker exist
@@ -377,21 +392,24 @@ def run_docker():
 
 def vmess_link_generator(vmess_config_name) -> str:
   '''
-  generate vmess link
+  Generate vmess link.
+
+  vmess link is being used for importing v2ray config in clients.
+  vmess links are encoded with base64.
   '''
 
   if not vmess_config_name:
     vmess_config_name = 'v2ray'
 
   prelink = 'vmess://'
-  print(yellow + '! use below link for you v2ray client' + reset)
+  print(yellow + '! Use below link for your v2ray client' + reset)
   raw_link = bytes('{' + 
 f""""add":"{IP()}",\
 "aid":"0",\
 "host":"",\
 "id":"{UUID}",\
 "net":"ws",\
-"path":"/graphql",\
+"path":"{args.wspath}",\
 "port":"{PORT}",\
 "ps":"{vmess_config_name}",\
 "tls":"",\

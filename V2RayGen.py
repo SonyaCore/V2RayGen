@@ -377,7 +377,7 @@ f""""add":"{IP()}",\
 "id":"{UUID}",\
 "net":"ws",\
 "path":"/graphql",\
-"port:"{PORT}",\
+"port":"{PORT}",\
 "ps":"{vmess_config_name}",\
 "tls":"",\
 "type":"none",\

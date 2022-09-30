@@ -1,4 +1,4 @@
-<h1 align="center"> V2Ray Gen
+<h1 align="center"> V2RayGen
 
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
@@ -7,67 +7,45 @@
 [![Telegram][telegram-shield]][telegram-url]
 </h1>
 
-## Introduction
-<p> V2Ray Gen aiming at ease of use and configurability. <br>
-V2Ray Gen are desigend for setting Up V2Ray-Core with Customized JSON Template on the Server. <br>
-For now vmess are only supported option and it can be used to bypass Filtering and Censorship.
+<p>
+V2RayGen is a fully automated script that helps you to set up your own v2ray server in the fastest time.
 </p>
 
 ## Prerequisites & Dependencies
-For running this project, you must have these dependencies installed and ready to use:
+For running this script, you must have **docker**, **docker-compose** and **python3** installed on your server **or** you can use `--dockerup` switch which installs docker & docker-compose and runs v2ray-core automatically
 
-***docker***
+## Usage
 
-***docker-compose***
- 
-***python3***
+`curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 - -h`
 
-**or you can use --dockerup switch to install docker & docker-compose and run v2ray-core with script**
+![Sample](contents/content1.png)
 
-## How To Use
+### Quick Setup with Default Setting :
 
-### Quick Method with Default Setting :
-
-**VMess**
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 - --vmess
-# OR
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py --output V2RayGen.py
-python3 V2RayGen.py --vmess
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess
 ```
-> for changing port simple use --port <int>
+Or
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py --output V2RayGen.py
+sudo python3 V2RayGen.py --vmess
+```
+
+![Sample](contents/content3.png)
+
+> for changing port simply use --port <int>
 
 ### Advanced Method :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 - --generate --protocol freedom --port 8080 --dns google --link
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --generate --protocol both --dns cloudflare --dockerfile --dockerup --link --linkname vmess-ca --port 8090
 ```
-> above command will generate vmess json with freedom outband protocol , port 8080 , google dns and finaly generating vmess link
 
-<br>
-  
-**Usage :**
- 
-```
---vmess, -s                           Generate simple vmess config and starting it with docker
+![Sample](contents/content2.png)
 
-VMess:
-  --generate, --gen                   Generate vmess json config
-  --link, --vmesslink                 Generate vmess link for v2ray config
-  --linkname , --vmessname            Name for VMess Link. defualt: [v2ray]
-  --protocol , --outband              Protcol for outband connection. default: [freedom]
-  --port , -p                         Optional port for V2Ray Config. defualt: [80]
-  --dns                               Optional dns. default: [nodns]
-
-Docker:
-  --dockerfile                        Generate docker-compose for v2ray
-  --dockerup                          Start v2ray docker-compose in system
-``` 
-  > --dockerup will install docker and docker-compose if docker are not in the system
-
-
-**Below DNS's can be used for JSON config**
-|DNS's              |
+**Supported DNS providers:**
+|DNS                |
 |-------------------|
 |google             |
 |cloudflare         |
@@ -76,7 +54,7 @@ Docker:
 |adguard            |
  
 **Supported Outband Protocols:**
-|Outband            |
+|Outband  Protocols |
 |-------------------|
 |Freedom|           |
 |BlackHole          |
@@ -90,7 +68,7 @@ Docker:
 
 - [ ] ShadowSocks JSON Template
 - [ ] Trojan JSON Template
-- [ ] Adding more options for changing JSON values
+- [ ] Adding more options for changing configuration
 - [ ] Catch Errors if Error Occured
 - [ ] More Exception Error Handeling
 - [ ] Add Verbose Mode With Logger

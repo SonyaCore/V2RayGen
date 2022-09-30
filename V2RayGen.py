@@ -349,14 +349,14 @@ def run_docker():
 
   # check if docker-compose exist
   if os.path.exists('/usr/bin/docker-compose') or os.path.exists('/usr/local/bin/docker-compose'):
-      subprocess.run('sudo docker-compose -f docker-compose.yml up -d',shell=True,check=True)
+      subprocess.run('docker-compose -f docker-compose.yml up -d',shell=True,check=True)
   else:
-      subprocess.run(f'sudo curl -SL https://github.com/docker/compose/releases/download/v{DOCKERCOMPOSEVERSION}/docker-compose-linux-x86_64 \
+      subprocess.run(f'curl -SL https://github.com/docker/compose/releases/download/v{DOCKERCOMPOSEVERSION}/docker-compose-linux-x86_64 \
       -o /usr/local/bin/docker-compose',shell=True,check=True)
-      subprocess.run('sudo chmod +x /usr/local/bin/docker-compose',shell=True,check=True)
-      subprocess.run('sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose',shell=True,check=True)
+      subprocess.run('chmod +x /usr/local/bin/docker-compose',shell=True,check=True)
+      subprocess.run('ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose',shell=True,check=True)
       
-      subprocess.run('sudo docker-compose -f docker-compose.yml up -d',shell=True,check=True)
+      subprocess.run('docker-compose -f docker-compose.yml up -d',shell=True,check=True)
 
 # ------------------------------ VMess Link Gen ------------------------------- #
 
@@ -373,13 +373,13 @@ def vmess_link_generator(vmess_config_name) -> str:
   raw_link = bytes('{' + 
 f""""add":"{IP()}",\
 "aid":"0",\
-"host":, ""\
+"host":"",\
 "id":"{UUID}",\
 "net":"ws",\
 "path":"/graphql",\
 "port:"{PORT}",\
 "ps":"{vmess_config_name}",\
-"tls":,""\
+"tls":"",\
 "type":"none",\
 "v":"2" """ + '}',\
   encoding='ascii')

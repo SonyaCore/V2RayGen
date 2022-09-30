@@ -18,6 +18,12 @@ import logging
 
 # -------------------------------- Constants --------------------------------- #
 
+# Name
+NAME = 'V2RayGen' 
+
+# Version
+VERSION = '0.2'
+
 # UUID Generation
 UUID = uuid.uuid4()
 
@@ -27,12 +33,13 @@ CONFIGNAME = 'config.json'
 # PORT
 PORT = 80
 
+# Docker Compose Version
 DOCKERCOMPOSEVERSION =  '2.11.1'
 
 # -------------------------------- Argument Parser --------------------------------- #
 
 formatter = lambda prog: argparse.HelpFormatter(prog,max_help_position=64)
-parser = argparse.ArgumentParser(prog='V2Ray Config Generator',formatter_class=formatter)
+parser = argparse.ArgumentParser(prog=f'{NAME}',formatter_class=formatter)
 
 gp = parser.add_mutually_exclusive_group()
 gp.add_argument('--vmess','-s', action='store_true',
@@ -65,7 +72,7 @@ docker.add_argument('--dockerup', action= 'store_true' , required=False ,
 help='start v2ray docker-compose in system')
 
 opt = parser.add_argument_group('info')
-opt.add_argument('--version','-v', action='version' , version='%(prog)s 0.3')
+opt.add_argument('--version','-v', action='version' , version='%(prog)s ' + VERSION)
 
 # Arg Parse
 args = parser.parse_args()
@@ -76,6 +83,7 @@ args = parser.parse_args()
 green = '\u001b[32m'
 yellow = '\u001b[33m'
 blue = '\u001b[34m'
+error = '\u001b[31m'
 reset = '\u001b[0m'
 
 # Return IP
@@ -334,21 +342,21 @@ def run_docker():
       try:
           subprocess.run('curl https://get.docker.com | sudo sh',shell=True,check=True)
       except subprocess.CalledProcessError:
-          print('Download Failed !')
+          print(error + 'Download Failed !' + reset)
           sys.exit()
 
   time.sleep(2)
 
   # check if docker-compose exist
   if os.path.exists('/usr/bin/docker-compose') or os.path.exists('/usr/local/bin/docker-compose'):
-      subprocess.run('docker-compose -f docker-compose.yml up -d',shell=True,check=True)
+      subprocess.run('sudo docker-compose -f docker-compose.yml up -d',shell=True,check=True)
   else:
       subprocess.run(f'sudo curl -SL https://github.com/docker/compose/releases/download/v{DOCKERCOMPOSEVERSION}/docker-compose-linux-x86_64 \
       -o /usr/local/bin/docker-compose',shell=True,check=True)
       subprocess.run('sudo chmod +x /usr/local/bin/docker-compose',shell=True,check=True)
       subprocess.run('sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose',shell=True,check=True)
+      
       subprocess.run('sudo docker-compose -f docker-compose.yml up -d',shell=True,check=True)
-
 
 # ------------------------------ VMess Link Gen ------------------------------- #
 

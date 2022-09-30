@@ -371,17 +371,17 @@ def vmess_link_generator(vmess_config_name) -> str:
   prelink = 'vmess://'
   print(yellow + '! use below link for you v2ray client' + reset)
   raw_link = bytes('{' + 
-f"add:{IP()},\
-aid:0,\
-host:,\
-id:{UUID},\
-net:ws,\
-path:/graphql,\
-port:{PORT},\
-ps:{vmess_config_name},\
-tls:,\
-type:none,\
-v:2" + '}',\
+f""""add":"{IP()}",\
+"aid":"0",\
+"host":, ""\
+"id":"{UUID}",\
+"net":"ws",\
+"path":"/graphql",\
+"port:"{PORT}",\
+"ps":"{vmess_config_name}",\
+"tls":,""\
+"type":"none",\
+"v":"2" """ + '}',\
   encoding='ascii')
 
   link = base64.b64encode(raw_link) # encode raw link

@@ -5,7 +5,10 @@
 # author    : SonyaCore
 #	github    : https://github.com/SonyaCore
 
-import os , sys
+import os
+import sys
+import subprocess
+import time
 import uuid
 import argparse
 import base64
@@ -23,6 +26,8 @@ CONFIGNAME = 'config.json'
 
 # PORT
 PORT = 80
+
+DOCKERCOMPOSEVERSION =  '2.11.1'
 
 # -------------------------------- Argument Parser --------------------------------- #
 
@@ -321,18 +326,28 @@ def run_docker():
   start v2ray docker-compose
   '''
 
-  # check if docker exist 
+  # check if docker exist
   if os.path.exists('/usr/bin/docker') or os.path.exists('/usr/local/bin/docker'):
-    # check if docker-compose exist
-    if os.path.exists('/usr/bin/docker-compose') or os.path.exists('/usr/local/bin/docker-compose'):
-      os.system('docker-compose -f docker-compose.yml up -d')
-    else:
-        os.system('curl -SL https://github.com/docker/compose/releases/download/v2.11.1/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose \
-        chmod +x /usr/local/bin/docker-compose')
-        os.system('sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose')
-  else :
-    # install docker if docker are not installed
-    os.system('curl https://get.docker.com | sudo sh')
+      pass
+  else:
+      # install docker if docker are not installed
+      try:
+          subprocess.run('curl https://get.docker.com | sudo sh',shell=True,check=True)
+      except subprocess.CalledProcessError:
+          print('Download Failed !')
+          sys.exit()
+
+  time.sleep(2)
+
+  # check if docker-compose exist
+  if os.path.exists('/usr/bin/docker-compose') or os.path.exists('/usr/local/bin/docker-compose'):
+      subprocess.run('docker-compose -f docker-compose.yml up -d',shell=True,check=True)
+  else:
+      subprocess.run(f'sudo curl -SL https://github.com/docker/compose/releases/download/v{DOCKERCOMPOSEVERSION}/docker-compose-linux-x86_64 \
+      -o /usr/local/bin/docker-compose',shell=True,check=True)
+      subprocess.run('sudo chmod +x /usr/local/bin/docker-compose',shell=True,check=True)
+      subprocess.run('sudo ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose',shell=True,check=True)
+      subprocess.run('sudo docker-compose -f docker-compose.yml up -d',shell=True,check=True)
 
 
 # ------------------------------ VMess Link Gen ------------------------------- #

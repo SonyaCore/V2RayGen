@@ -22,7 +22,7 @@ import logging
 NAME = 'V2RayGen' 
 
 # Version
-VERSION = '0.2'
+VERSION = '0.3'
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -59,15 +59,15 @@ help='Generate vmess link for v2ray config')
 
 vmess.add_argument('--linkname','--vmessname',
 action='store' , type=str ,
-help='Name for VMess Link. defualt: [v2ray]' )
+help='Name for VMess Link. default: [v2ray]')
 
 vmess.add_argument('--protocol','--outband',
 action='store' , type=str,
-help='Protcol for outband connection. default: [freedom]')
+help='Protocol for outbound connection. default: [freedom]')
 
 vmess.add_argument('--port','-p',
 action='store' , type=int ,
-help='Optional PORT for V2Ray Config. defualt: [80]' )
+help='Optional PORT for v2ray Config. defualt: [80]' )
 
 vmess.add_argument('--dns', 
 action='store' , type=str,
@@ -80,7 +80,7 @@ help='Optional WebSocket path. default: [/graphql]',default='/graphql')
 docker = parser.add_argument_group('Docker')
 docker.add_argument('--dockerfile',
 action= 'store_true' , required=False ,
-help='Generate docker-compose for v2ray')
+help='Generate docker-compose file for v2ray-core')
 
 docker.add_argument('--dockerup', 
 action= 'store_true' , required=False ,
@@ -105,7 +105,7 @@ reset = '\u001b[0m'
 # Return IP
 def IP():
   '''
-  return ip address with socket library
+  Return ip address with socket’s own address.
   '''
   s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
   s.settimeout(0)
@@ -121,7 +121,7 @@ def IP():
 
 def uuid_port():
   '''
-  return uuid and port after making config
+  Return uuid and port after making config
   '''
 
   print('UUID: ' + blue + str(UUID) + reset)
@@ -183,8 +183,7 @@ def dnsselect():
 
 def vmess_make():
   '''
-  make json config which reads --protocol
-  for making v2ray config with specific protocol
+  Make JSON config which reads --protocol for making v2ray config with specific protocol
   '''
   
   global protocol_list
@@ -273,9 +272,9 @@ def vmess_config(method,websocket) -> str:
 
 def websocket(path) -> str:
   '''
-  websocket stream setting template for JSON.
-  by default websocket for transporting data.
-  Websocket connections can be proxied by HTTP server such as Nginx.
+  WebSocket stream setting template for JSON.
+  by default, WebSocket is used for transporting data.
+  Websocket connections can be proxied by HTTP servers such as Nginx.
 
   '''
   if not path :
@@ -291,7 +290,7 @@ def websocket(path) -> str:
 
 def freedom() -> str:
   '''
-  freedom protocol template JSON config.
+  Freedom protocol template JSON config.
 
   adding freedom outbound to json config
   It passes all TCP or UDP connection to their destinations.
@@ -308,7 +307,7 @@ def freedom() -> str:
 
 def blackhole() -> str:
   '''
-  blackhole protocol template JSON config.
+  Blackhole protocol template JSON config.
 
   with this fucntion blackhole outbound will be added in json
   it can be combined with freedom or as a single outbound connection
@@ -327,12 +326,13 @@ def blackhole() -> str:
 
 def vmess_simple():
   '''
-  simple configuration will setup vmess config with configuration :\n
-  protocol freedom\n
-  dns google\n
-  port 80\n
-  docker compose\n
-  run docker compose install docker if docker bin not exist\n
+  Qucik Configuration will setup vmess config with configuration :\n
+  
+  Protocol: freedom\n
+  DNS: google\n
+  Port: 80\n
+  docker-compose file for V2ray-core\n
+  Run docker compose & install Docker if not exist\n
   vmess link generate
   '''
 

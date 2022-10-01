@@ -42,40 +42,53 @@ formatter = lambda prog: argparse.HelpFormatter(prog,max_help_position=64)
 parser = argparse.ArgumentParser(prog=f'{NAME}',formatter_class=formatter)
 
 gp = parser.add_mutually_exclusive_group()
-gp.add_argument('--vmess','-s', action='store_true',
-help='generate simple vmess config and starting it with docker')
+
+gp.add_argument('--vmess','-s',
+action='store_true',
+help='Generate Quick vmess config and start it with docker')
 
 vmess = parser.add_argument_group('VMess')
-vmess.add_argument('--generate','--gen', action='store_true',
 
-help='generate vmess json config')
-vmess.add_argument('--link','--vmesslink', action='store_true',
-help='generate vmess link for v2ray config')
+vmess.add_argument('--generate','--gen',
+action='store_true',
+help='Generate vmess json config')
 
-vmess.add_argument('--linkname','--vmessname', action='store' , type=str ,
-help='set name for VMess Link. defualt: [v2ray]' )
+vmess.add_argument('--link','--vmesslink', 
+action='store_true',
+help='Generate vmess link for v2ray config')
 
-vmess.add_argument('--protocol','--outband', action='store' , type=str,
-help='set protcol for outband connection. default: [freedom]')
+vmess.add_argument('--linkname','--vmessname',
+action='store' , type=str ,
+help='Name for VMess Link. defualt: [v2ray]' )
 
-vmess.add_argument('--port','-p', action='store' , type=int ,
-help='set optional port for V2Ray Config. defualt: [80]' )
+vmess.add_argument('--protocol','--outband',
+action='store' , type=str,
+help='Protcol for outband connection. default: [freedom]')
 
-vmess.add_argument('--dns', action='store' , type=str,
-help='set optional dns. default: [nodns]')
+vmess.add_argument('--port','-p',
+action='store' , type=int ,
+help='Optional PORT for V2Ray Config. defualt: [80]' )
 
-vmess.add_argument('--wspath',"--websocket-path", action='store' , type=str,
-help='set optional websocket path. default: [/graphql]',default='/graphql')
+vmess.add_argument('--dns', 
+action='store' , type=str,
+help='Optional DNS. default: [nodns]')
+
+vmess.add_argument('--wspath',"--websocket-path",
+action='store' , type=str,
+help='Optional WebSocket path. default: [/graphql]',default='/graphql')
 
 docker = parser.add_argument_group('Docker')
-docker.add_argument('--dockerfile', action= 'store_true' , required=False ,
-help='generate docker-compose for v2ray')
+docker.add_argument('--dockerfile',
+action= 'store_true' , required=False ,
+help='Generate docker-compose for v2ray')
 
-docker.add_argument('--dockerup', action= 'store_true' , required=False ,
-help='start v2ray docker-compose in system')
+docker.add_argument('--dockerup', 
+action= 'store_true' , required=False ,
+help='Start v2ray docker-compose in system')
 
 opt = parser.add_argument_group('info')
-opt.add_argument('--version','-v', action='version' , version='%(prog)s ' + VERSION)
+opt.add_argument('--version','-v',
+action='version' , version='%(prog)s ' + VERSION)
 
 # Arg Parse
 args = parser.parse_args()
@@ -369,7 +382,7 @@ def run_docker():
   else:
       # install docker if docker are not installed
       try:
-          subprocess.run('curl https://get.docker.com | sudo sh',shell=True,check=True)
+          subprocess.run('curl https://get.docker.com | sh',shell=True,check=True)
       except subprocess.CalledProcessError:
           print(error + 'Download Failed !' + reset)
           sys.exit()

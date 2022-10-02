@@ -402,7 +402,7 @@ def vmess_simple():
   dnsselect()
   vmess_make()
   vmess_dockercompose()
-  #run_docker()
+  run_docker()
   uuid_port()
   print(vmess_link_generator(args.linkname))
 
@@ -458,7 +458,7 @@ def shadowsocks_simple():
 
   shadowsocks_make(args.ssmethod)
   shadowsocks_dockercompose()
-  #run_docker()
+  run_docker()
   print(shadowsocks_link_generator())
 
 # -------------------------------- Docker --------------------------------- #

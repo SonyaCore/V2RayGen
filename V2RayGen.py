@@ -136,6 +136,19 @@ blue = '\u001b[34m'
 error = '\u001b[31m'
 reset = '\u001b[0m'
 
+# Banner
+def banner():
+	return (f"""{green}
+__      _____  _____              _____            
+\ \    / /__ \|  __ \            / ____|
+ \ \  / /   ) | |__) |__ _ _   _| |  __  ___ _ __  
+  \ \/ /   / /|  _  // _` | | | | | |_ |/ _ \ '_ \ 
+   \  /   / /_| | \ \ (_| | |_| | |__| |  __/ | | |
+    \/   |____|_|  \_\__,_|\__, |\_____|\___|_| |_|
+                            __/ |
+                           |___/
+{reset}""")
+
 # Return IP
 def IP():
   '''
@@ -232,7 +245,10 @@ def vmess_make():
   
   global protocol_list
   protocol_list = ['freedom','blackhole','both']
-    
+  
+  # Show Banner
+  print(banner())
+
   # config method
   if args.protocol == 'freedom' or None:
     with open(VMESS,'w') as txt :
@@ -251,6 +267,8 @@ def vmess_make():
       txt.write(json.dumps(vmess_config(method=freedom() + ',\n' + blackhole()),
       indent=2))
       txt.close
+
+  print(blue + '! VMess Config Generated.' + reset)
 
 def vmess_config(method,websocket) -> str:
   '''
@@ -384,7 +402,7 @@ def vmess_simple():
   dnsselect()
   vmess_make()
   vmess_dockercompose()
-  run_docker()
+  #run_docker()
   uuid_port()
   print(vmess_link_generator(args.linkname))
 
@@ -397,6 +415,8 @@ def shadowsocks_make(method) -> str:
   # Other stream ciphers are implemented but do not provide integrity and authenticity.
   methodlist = ['chacha20-ietf-poly1305','aes-256-gcm','aes-128-gcm']
   
+  print(banner())
+
   if args.ssmethod not in methodlist:
     sys.exit(f"""Select one method :
     {green}chacha20-ietf-poly1305
@@ -438,7 +458,7 @@ def shadowsocks_simple():
 
   shadowsocks_make(args.ssmethod)
   shadowsocks_dockercompose()
-  run_docker()
+  #run_docker()
   print(shadowsocks_link_generator())
 
 # -------------------------------- Docker --------------------------------- #
@@ -500,10 +520,10 @@ def run_docker():
   else:
       # install docker if docker are not installed
       try:
+          print(yellow + 'Docker Not Found.\n installing Docker ...')
           subprocess.run('curl https://get.docker.com | sh',shell=True,check=True)
       except subprocess.CalledProcessError:
-          print(error + 'Download Failed !' + reset)
-          sys.exit()
+          sys.exit(error + 'Download Failed !' + reset)
 
   time.sleep(2)
 
@@ -512,6 +532,7 @@ def run_docker():
   if os.path.exists('/usr/bin/docker-compose') or os.path.exists('/usr/local/bin/docker-compose'):
       subprocess.run('docker-compose -f docker-compose.yml up -d',shell=True,check=True)
   else:
+      print(yellow + f'docker-compose Not Found.\n installing docker-compose v{DOCKERCOMPOSEVERSION} ...')
       subprocess.run(f'curl -SL https://github.com/docker/compose/releases/download/v{DOCKERCOMPOSEVERSION}/docker-compose-linux-x86_64 \
       -o /usr/local/bin/docker-compose',shell=True,check=True)
       subprocess.run('chmod +x /usr/local/bin/docker-compose',shell=True,check=True)
@@ -633,7 +654,7 @@ else :
 if args.protocol or args.generate :
   vmess_make()
   if args.protocol not in protocol_list:  # list of outband protocols
-    sys.exit(f"""{yellow}! use --protocol to set method{reset}
+    sys.exit(f"""{yellow}! Use --protocol to set method{reset}
 List of outband methods :
   {green}freedom
   blackhole

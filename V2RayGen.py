@@ -17,6 +17,7 @@ import json
 import random
 import string
 import logging
+from urllib.request import urlopen, Request
 
 # -------------------------------- Constants --------------------------------- #
 
@@ -152,19 +153,18 @@ __      _____  _____              _____
 # Return IP
 def IP():
   '''
-  Return ip address with socket’s own address.
+  Return IP with ip-api.com
   '''
-  s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-  s.settimeout(0)
-  try:
-      # dummy ip
-      s.connect(('10.254.254.254', 1))
-      IP = s.getsockname()[0]
-  except Exception:
-      IP = '127.0.0.1'
-  finally:
-      s.close()
-  return IP
+  url = "http://ip-api.com/json/?fields=query"
+
+  if not url.startswith("http"):
+      raise RuntimeError("Incorrect and possibly insecure protocol in url")
+
+  httprequest = Request(url, headers={"Accept": "application/json"})
+
+  with urlopen(httprequest) as response:
+    data = (json.loads(response.read().decode()))
+    return(data['query'])
 
 def get_random_password(length=24):
   '''

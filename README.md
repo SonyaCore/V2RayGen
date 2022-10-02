@@ -41,6 +41,7 @@ sudo python3 V2RayGen.py --vmess
 ```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --shadowsocks
 ```
+![Sample](contents/content4.png)
 
 ### Advanced Method :
 

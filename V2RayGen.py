@@ -474,12 +474,12 @@ def shadowsocks_dockercompose():
   data = """shadowsocks:
   image: shadowsocks/shadowsocks-libev
   ports:
-    - "%s:%s"
+    - "%s:8388"
   environment:
     - TIMEOUT=300
     - METHOD=%s
     - PASSWORD=%s
-  restart: always""" % (PORT,PORT,args.ssmethod,args.sspass)
+  restart: always""" % (PORT,args.ssmethod,args.sspass)
 
   print(yellow + '! Created ShadowSocks docker-compose.yml configuration' + reset)
   with open('docker-compose.yml','w') as txt :

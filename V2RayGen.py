@@ -14,6 +14,8 @@ import argparse
 import base64
 import socket
 import json
+import random
+import string
 import logging
 
 # -------------------------------- Constants --------------------------------- #
@@ -28,7 +30,8 @@ VERSION = '0.3'
 UUID = uuid.uuid4()
 
 # Config Name
-CONFIGNAME = 'config.json'
+VMESS = 'config.json'
+SHADOWSOCKS = 'shadowsocks.json'
 
 # PORT
 PORT = 80
@@ -47,6 +50,10 @@ gp.add_argument('--vmess','-s',
 action='store_true',
 help='Generate Quick vmess config and start it with docker')
 
+gp.add_argument('--shadowsocks','-ss',
+action='store_true',
+help='Generate Quick ShadowSocks config')
+
 vmess = parser.add_argument_group('VMess')
 
 vmess.add_argument('--generate','--gen',
@@ -58,26 +65,37 @@ action='store_true',
 help='Generate vmess link for v2ray config')
 
 vmess.add_argument('--linkname','--vmessname',
-action='store' , type=str ,
+action='store' , type=str , metavar='' ,
 help='Name for VMess Link. default: [v2ray]')
 
 vmess.add_argument('--protocol','--outband',
-action='store' , type=str,
+action='store' , type=str,  metavar='' ,
 help='Protocol for outbound connection. default: [freedom]')
 
 vmess.add_argument('--port','-p',
-action='store' , type=int ,
+action='store' , type=int , metavar='' ,
 help='Optional PORT for v2ray Config. defualt: [80]' )
 
 vmess.add_argument('--dns', 
-action='store' , type=str,
+action='store' , type=str, metavar='' ,
 help='Optional DNS. default: [nodns]')
 
 vmess.add_argument('--wspath',"--websocket-path",
-action='store' , type=str,
+action='store' , type=str, metavar='' ,
 help='Optional WebSocket path. default: [/graphql]',default='/graphql')
 
+shadowsocks = parser.add_argument_group('ShadowSocks')
+
+shadowsocks.add_argument('--sspass','--shadowsocks-password',
+action='store' , type=str, metavar='' ,
+help='Set Password for ShadowSocks. default: [random]')
+
+shadowsocks.add_argument('--ssmethod','--shadowsocks-method',
+action='store' , type=str, metavar='' ,
+help='Set Method for ShadowSocks. default: [chacha20-ietf-poly1305]')
+
 docker = parser.add_argument_group('Docker')
+
 docker.add_argument('--dockerfile',
 action= 'store_true' , required=False ,
 help='Generate docker-compose file for v2ray-core')
@@ -118,6 +136,16 @@ def IP():
   finally:
       s.close()
   return IP
+
+def get_random_password(length=24):
+  '''
+  Get random password pf length with letters, digits, and symbols
+  '''
+
+  characters = string.ascii_letters + string.digits
+  password = ''.join(random.choice(characters) for i in range(length))
+
+  return  password
 
 def uuid_port():
   '''
@@ -191,19 +219,19 @@ def vmess_make():
     
   # config method
   if args.protocol == 'freedom' or None:
-    with open(CONFIGNAME,'w') as txt :
+    with open(VMESS,'w') as txt :
       txt.write(json.dumps(vmess_config(method=freedom(),websocket=websocket(args.wspath)),
       indent= 2))
       txt.close
 
   if args.protocol == 'blackhole':
-    with open(CONFIGNAME,'w') as txt :
+    with open(VMESS,'w') as txt :
       txt.write(json.dumps(vmess_config(method=blackhole()),
       indent=2))
       txt.close
 
   if args.protocol == 'both':
-    with open(CONFIGNAME,'w') as txt :
+    with open(VMESS,'w') as txt :
       txt.write(json.dumps(vmess_config(method=freedom() + ',\n' + blackhole()),
       indent=2))
       txt.close
@@ -344,7 +372,42 @@ def vmess_simple():
   uuid_port()
   print(vmess_link_generator(args.linkname))
 
-# ------------------------------ Docker ------------------------------- #
+
+# -------------------------------- ShadowSocks JSON --------------------------------- #
+
+def shadowsocks_make(method) -> str:
+
+  # Below methods are the recommended choice.
+  # Other stream ciphers are implemented but do not provide integrity and authenticity.
+  methodlist = ['chacha20-ietf-poly1305','aes-256-gcm','aes-128-gcm']
+  
+  if args.ssmethod not in methodlist:
+    sys.exit(f"""Select one method :
+    {green}chacha20-ietf-poly1305
+    aes-256-gcm
+    aes-128-gcm{reset}""")
+
+  with open(SHADOWSOCKS,'w') as txt :
+    txt.write(json.dumps(shadowsocks_config(method,password=args.sspass),
+    indent= 2))
+    txt.close
+
+
+def shadowsocks_config(method,password) -> str:  
+
+  timeout = 300
+  
+  shadowsocks = """{
+    "server":"%s",
+    "server_port":%s,
+    "password":"%s",
+    "timeout":%s,
+    "method":"%s",
+    "fast_open": true
+}""" % (IP(),PORT,password,timeout,method)
+  return json.loads(shadowsocks)
+
+# -------------------------------- Docker --------------------------------- #
 
 def v2ray_dockercompose():
   '''
@@ -361,7 +424,7 @@ services:
     environment:
       - V2RAY_VMESS_AEAD_FORCED=false
     volumes:
-        - ./%s:/etc/v2ray/config.json:ro""" % (CONFIGNAME)
+        - ./%s:/etc/v2ray/config.json:ro""" % (VMESS)
 
   print(yellow + '! Created v2ray docker-compose.yml configuration' + reset)
   with open('docker-compose.yml','w') as txt :
@@ -499,6 +562,19 @@ List of outband methods :
 # simple vmess configuration gen
 if args.vmess:
   vmess_simple()
+
+
+# ShadowSocks Password
+if args.sspass == None:
+  args.sspass = get_random_password()
+
+# ShadowSocks Method
+if args.ssmethod == None :
+  args.ssmethod = 'chacha20-ietf-poly1305'
+
+# Make ShadowSocks Config
+if args.shadowsocks:
+  shadowsocks_make(args.ssmethod)
 
 # Run Service :
 if args.dockerup:

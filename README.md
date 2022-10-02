@@ -20,7 +20,7 @@ For running this script, you must have **docker**, **docker-compose** and **pyth
 
 ![Sample](contents/content1.png)
 
-### Quick Setup with Default Setting :
+### Quick VMess Setup with Default Setting :
 
 ```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess
@@ -35,6 +35,12 @@ sudo python3 V2RayGen.py --vmess
 ![Sample](contents/content3.png)
 
 > for changing port simply use --port <int>
+
+### Quick ShadowSocks Setup with Default Setting :
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --shadowsocks
+```
 
 ### Advanced Method :
 

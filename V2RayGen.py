@@ -46,19 +46,19 @@ parser = argparse.ArgumentParser(prog=f'{NAME}',formatter_class=formatter)
 
 gp = parser.add_mutually_exclusive_group()
 
-gp.add_argument('--vmess','-s',
+gp.add_argument('--vmess','-vm',
 action='store_true',
-help='Generate Quick vmess config and start it with docker')
+help='Generate Quick vmess config & Start it with docker')
 
 gp.add_argument('--shadowsocks','-ss',
 action='store_true',
-help='Generate Quick ShadowSocks config')
+help='Generate Quick ShadowSocks config & Start it with docker')
 
 vmess = parser.add_argument_group('VMess')
 
 vmess.add_argument('--generate','--gen',
 action='store_true',
-help='Generate vmess json config')
+help='Generate VMess JSON config')
 
 vmess.add_argument('--link','--vmesslink', 
 action='store_true',
@@ -86,6 +86,10 @@ help='Optional WebSocket path. default: [/graphql]',default='/graphql')
 
 shadowsocks = parser.add_argument_group('ShadowSocks')
 
+shadowsocks.add_argument('--ssmake','--shadowsocks-make',
+action='store_true' ,
+help='Generate Shadowsocks JSON config')
+
 shadowsocks.add_argument('--sspass','--shadowsocks-password',
 action='store' , type=str, metavar='' ,
 help='Set Password for ShadowSocks. default: [random]')
@@ -94,15 +98,28 @@ shadowsocks.add_argument('--ssmethod','--shadowsocks-method',
 action='store' , type=str, metavar='' ,
 help='Set Method for ShadowSocks. default: [chacha20-ietf-poly1305]')
 
+shadowsocks.add_argument('--sslink','--shadowsockslink',
+action='store_true' ,
+help='Generate ShadowSocks link')
+
+# shadowsocks.add_argument('--ssname','--shadowsocks-name',
+# action='store' , type=str, metavar='' ,
+# help='Set Name for ShadowSocks. default: [shadowsocks/IP]')
+
 docker = parser.add_argument_group('Docker')
 
-docker.add_argument('--dockerfile',
+docker.add_argument('--vmessdocker','--vmess-dockerfile',
 action= 'store_true' , required=False ,
-help='Generate docker-compose file for v2ray-core')
+help='Generate VMess docker-compose file for v2ray-core')
+
+docker.add_argument('--ssdocker','--shadowsocks-dockerfile',
+action= 'store_true' , required=False ,
+help='Generate ShadowSocks docker-compose file for shadowsocks-libev')
+
 
 docker.add_argument('--dockerup', 
 action= 'store_true' , required=False ,
-help='Start v2ray docker-compose in system')
+help='Start docker-compose in system')
 
 opt = parser.add_argument_group('info')
 opt.add_argument('--version','-v',
@@ -110,7 +127,6 @@ action='version' , version='%(prog)s ' + VERSION)
 
 # Arg Parse
 args = parser.parse_args()
-
 # ------------------------------ Miscellaneous ------------------------------- #
 
 # Color Format
@@ -354,7 +370,7 @@ def blackhole() -> str:
 
 def vmess_simple():
   '''
-  Qucik Configuration will setup vmess config with configuration :\n
+  Quick Configuration will setup vmess config with configuration :\n
   
   Protocol: freedom\n
   DNS: google\n
@@ -367,7 +383,7 @@ def vmess_simple():
   args.protocol = 'freedom'
   dnsselect()
   vmess_make()
-  v2ray_dockercompose()
+  vmess_dockercompose()
   run_docker()
   uuid_port()
   print(vmess_link_generator(args.linkname))
@@ -392,6 +408,7 @@ def shadowsocks_make(method) -> str:
     indent= 2))
     txt.close
 
+  print(blue + '! ShadowSocks Config Generated.' + reset)
 
 def shadowsocks_config(method,password) -> str:  
 
@@ -407,11 +424,28 @@ def shadowsocks_config(method,password) -> str:
 }""" % (IP(),PORT,password,timeout,method)
   return json.loads(shadowsocks)
 
+def shadowsocks_simple():
+  '''
+  Qucik Configuration will setup ShadowSocks config with configuration :\n
+  
+  method: chacha20-ietf-poly1305\n
+  Password : Random\n
+  Port: 80\n
+  docker-compose file for shadowsocks-libev\n
+  Run docker compose & install Docker if not exist\n
+  ShadowSocks link generate
+  '''
+
+  shadowsocks_make(args.ssmethod)
+  shadowsocks_dockercompose()
+  run_docker()
+  print(shadowsocks_link_generator())
+
 # -------------------------------- Docker --------------------------------- #
 
-def v2ray_dockercompose():
+def vmess_dockercompose():
   '''
-  Create Docker compose file for v2ray-core.
+  Create VMess docker-compose file for v2ray-core.
   in this docker-compose v2fly-core is being used for running v2ray in the container.
   '''
 
@@ -426,7 +460,28 @@ services:
     volumes:
         - ./%s:/etc/v2ray/config.json:ro""" % (VMESS)
 
-  print(yellow + '! Created v2ray docker-compose.yml configuration' + reset)
+  print(yellow + '! Created vmess-v2ray docker-compose.yml configuration' + reset)
+  with open('docker-compose.yml','w') as txt :
+    txt.write(data)
+    txt.close()
+
+def shadowsocks_dockercompose():
+  '''
+  Create ShadowSocks docker-compose file for shadowsocks-libev.
+  in this docker-compose shadowsocks-libev is being used for running shadowsocks in the container.
+  '''
+
+  data = """shadowsocks:
+  image: shadowsocks/shadowsocks-libev
+  ports:
+    - "%s:%s"
+  environment:
+    - TIMEOUT=300
+    - METHOD=%s
+    - PASSWORD=%s
+  restart: always""" % (PORT,PORT,args.ssmethod,args.sspass)
+
+  print(yellow + '! Created ShadowSocks docker-compose.yml configuration' + reset)
   with open('docker-compose.yml','w') as txt :
     txt.write(data)
     txt.close()
@@ -500,17 +555,46 @@ f""""add":"{IP()}",\
 
   return vmess_link
 
+
+# ------------------------------ ShadowSocks Link Gen ------------------------------- #
+
+def shadowsocks_link_generator() -> str:
+  '''
+  Generate ShadowSocks link.
+
+  Shadowsocks link is being used for importing v2ray config in clients.
+  ShadowSocks links are also encoded with base64.
+  Visit https://github.com/shadowsocks/shadowsocks-org/wiki/SIP002-URI-Scheme for SS URI Scheme.
+  '''
+
+  # if not shadowsocks_config_name:
+  #   shadowsocks_config_name = 'shadowsocks'
+
+  prelink = 'ss://'
+  print(yellow + '! Use below link for your ShadowSocks client' + reset)
+
+  raw_link = bytes(f"{args.ssmethod}:{args.sspass}@{IP()}:{PORT}",
+  encoding='ascii')
+
+  link = base64.b64encode(raw_link) # encode raw link
+  
+  shadowsocks_link = prelink + \
+  str(link.decode('utf-8')) # concatenate prelink with rawlink
+
+  return shadowsocks_link
+
+
 # ----------------------------- argparse Actions ----------------------------- #
 
-if args.dockerfile :
-  v2ray_dockercompose()
+if args.vmessdocker :
+  vmess_dockercompose()
 
 # call DNS func
 if args.dns :
   dnsselect()
   
   if args.dns not in dnslist :  # list of DNS
-    print(f"""List of Avalible DNS :
+    sys.exit(f"""List of Avalible DNS :
   {green}google
   cloudflare
   both : google + cloudflare
@@ -518,7 +602,6 @@ if args.dns :
   quad9
   adguard
   nodns{reset}""")
-    sys.exit()
 
 # Set To NODNS
 else:
@@ -550,12 +633,11 @@ else :
 if args.protocol or args.generate :
   vmess_make()
   if args.protocol not in protocol_list:  # list of outband protocols
-    print(f"""{yellow}! use --protocol to set method{reset}
+    sys.exit(f"""{yellow}! use --protocol to set method{reset}
 List of outband methods :
   {green}freedom
   blackhole
   both : freedom + blackhole{reset}""")
-    sys.exit()
   else:
     uuid_port()
 
@@ -573,8 +655,23 @@ if args.ssmethod == None :
   args.ssmethod = 'chacha20-ietf-poly1305'
 
 # Make ShadowSocks Config
-if args.shadowsocks:
+if args.ssmake:
   shadowsocks_make(args.ssmethod)
+
+if args.shadowsocks:
+  shadowsocks_simple()
+
+# if args.ssname == None :
+#   args.ssname = f"shadowsocks/{IP()}"
+
+if args.sslink:
+  if args.ssmake is None or args.shadowsocks is None:
+    parser.error('--ssmake or --shadowsocks are required')
+  else:
+    print(shadowsocks_link_generator())
+
+if args.ssdocker :
+  shadowsocks_dockercompose()
 
 # Run Service :
 if args.dockerup:

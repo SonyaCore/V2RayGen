@@ -66,7 +66,7 @@ curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sud
   
 ### Todo List
 
-- [ ] ShadowSocks JSON Template
+- [x] ShadowSocks JSON Template
 - [ ] Trojan JSON Template
 - [ ] Adding more options for changing configuration
 - [ ] Catch Errors if Error Occured

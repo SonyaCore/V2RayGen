@@ -32,6 +32,7 @@ UUID = uuid.uuid4()
 # Config Name
 VMESS = 'config.json'
 SHADOWSOCKS = 'shadowsocks.json'
+OBFS = 'docker-compose.yml'
 
 # PORT
 PORT = 80
@@ -48,11 +49,16 @@ gp = parser.add_mutually_exclusive_group()
 
 gp.add_argument('--vmess','-vm',
 action='store_true',
-help='Generate Quick vmess config & Start it with docker')
+help='Quick VMess & Start with docker')
 
 gp.add_argument('--shadowsocks','-ss',
 action='store_true',
-help='Generate Quick ShadowSocks config & Start it with docker')
+help='Quick ShadowSocks & Start with docker')
+
+gp.add_argument('--obfs','-ob',
+action='store_true',
+help='Quick ShadowSocks-OBFS & Start with docker')
+
 
 vmess = parser.add_argument_group('VMess')
 
@@ -105,6 +111,24 @@ help='Generate ShadowSocks link')
 # shadowsocks.add_argument('--ssname','--shadowsocks-name',
 # action='store' , type=str, metavar='' ,
 # help='Set Name for ShadowSocks. default: [shadowsocks/IP]')
+
+obfs = parser.add_argument_group('OBFS')
+
+obfs.add_argument('--obfsmake','--obfs-make',
+action='store_true' ,
+help='Generate Shadowsocks-OBFS JSON config')
+
+obfs.add_argument('--obfspass','--obfs-password',
+action='store' , type=str, metavar='' ,
+help='Set Password for ShadowSocks-OBFS. default: [random]')
+
+obfs.add_argument('--obfsmethod','--obfs-method',
+action='store' , type=str, metavar='' ,
+help='Set Method for ShadowSocks-OBFS. default: [chacha20-ietf-poly1305]')
+
+obfs.add_argument('--obfslink',
+action='store_true' ,
+help='Generate ShadowSocks-OBFS link')
 
 docker = parser.add_argument_group('Docker')
 
@@ -175,13 +199,28 @@ def get_random_password(length=24):
 
   return  password
 
-def uuid_port():
+def _uuid():
   '''
-  Return uuid and port after making config
+  Return Randomized UUID and port after making config
   '''
+  return ('UUID: ' + blue + str(UUID) + reset)
 
-  print('UUID: ' + blue + str(UUID) + reset)
-  print('PORT: ' + blue + str(PORT)  + reset)
+def _port():
+  '''
+  Return PORT  after making config
+  ''' 
+  return ('PORT: ' + blue + str(PORT)  + reset)
+
+def shadowsocks_methods():
+  # Below methods are the recommended choice.
+  # Other stream ciphers are implemented but do not provide integrity and authenticity.
+
+  methodlist = ['chacha20-ietf-poly1305','aes-256-gcm','aes-128-gcm']
+  if args.ssmethod not in methodlist or args.obfsmethod not in methodlist:
+    sys.exit(f"""Select one method :
+    {green}chacha20-ietf-poly1305
+    aes-256-gcm
+    aes-128-gcm{reset}""")
 
 def dnsselect():
   '''
@@ -402,25 +441,18 @@ def vmess_simple():
   vmess_make()
   vmess_dockercompose()
   run_docker()
-  uuid_port()
+  print(_port())
+  print(_uuid())
   print(vmess_link_generator(args.linkname))
 
 
 # -------------------------------- ShadowSocks JSON --------------------------------- #
 
 def shadowsocks_make(method) -> str:
-
-  # Below methods are the recommended choice.
-  # Other stream ciphers are implemented but do not provide integrity and authenticity.
-  methodlist = ['chacha20-ietf-poly1305','aes-256-gcm','aes-128-gcm']
   
   print(banner())
+  shadowsocks_methods()
 
-  if args.ssmethod not in methodlist:
-    sys.exit(f"""Select one method :
-    {green}chacha20-ietf-poly1305
-    aes-256-gcm
-    aes-128-gcm{reset}""")
 
   with open(SHADOWSOCKS,'w') as txt :
     txt.write(json.dumps(shadowsocks_config(method,password=args.sspass),
@@ -446,19 +478,71 @@ def shadowsocks_config(method,password) -> str:
 def shadowsocks_simple():
   '''
   Qucik Configuration will setup ShadowSocks config with configuration :\n
-  
-  method: chacha20-ietf-poly1305\n
-  Password : Random\n
-  Port: 80\n
-  docker-compose file for shadowsocks-libev\n
-  Run docker compose & install Docker if not exist\n
-  ShadowSocks link generate
   '''
 
   shadowsocks_make(args.ssmethod)
   shadowsocks_dockercompose()
   run_docker()
   print(shadowsocks_link_generator())
+
+# -------------------------------- ShadowSocks OBFS --------------------------------- #
+
+def obfs_make(method) -> str:
+
+  print(banner())
+  shadowsocks_methods()
+
+  with open(OBFS,'w') as txt :
+    txt.write(obfs_config(method,password=args.obfspass))
+    txt.close
+
+  print(blue + '! ShadowSocks-OBFS Config Generated.' + reset)
+
+def obfs_config(method,password) -> str:  
+
+  obfs = """version: '3'
+services:
+    shadowsocks:
+        container_name: shadowsocks
+        image: shadowsocks/shadowsocks-libev
+        ports:
+            - "%s:8388/udp"
+        networks:
+            overlay:
+        environment:
+          - PASSWORD=%s
+          - METHOD=%s
+        restart: always
+    simple-obfs:
+      container_name: obfs
+      image: gists/simple-obfs
+      ports:
+          - "%s:8388/tcp"
+      environment:
+          - FORWARD=shadowsocks:8388
+      depends_on:
+          - shadowsocks
+      networks:
+          overlay:
+      restart: always
+
+networks:
+    overlay:
+        driver: bridge""" % (PORT,password,method,PORT)
+  return obfs
+
+
+def obfs_simple():
+  '''
+  Quick Configuration will setup ShadowSocks. :\n
+  '''
+
+  obfs_make(args.obfsmethod)
+  run_docker()
+  print(_port())
+  print('PASSWORD: ' + blue + str(args.obfspass)  + reset)
+  print(shadowsocks_link_generator())
+
 
 # -------------------------------- Docker --------------------------------- #
 
@@ -519,7 +603,7 @@ def run_docker():
   else:
       # install docker if docker are not installed
       try:
-          print(yellow + 'Docker Not Found.\n installing Docker ...')
+          print(yellow + 'Docker Not Found.\nInstalling Docker ...')
           subprocess.run('curl https://get.docker.com | sh',shell=True,check=True)
       except subprocess.CalledProcessError:
           sys.exit(error + 'Download Failed !' + reset)
@@ -531,7 +615,7 @@ def run_docker():
   if os.path.exists('/usr/bin/docker-compose') or os.path.exists('/usr/local/bin/docker-compose'):
       subprocess.run('docker-compose -f docker-compose.yml up -d',shell=True,check=True)
   else:
-      print(yellow + f'docker-compose Not Found.\n installing docker-compose v{DOCKERCOMPOSEVERSION} ...')
+      print(yellow + f'docker-compose Not Found.\nInstalling docker-compose v{DOCKERCOMPOSEVERSION} ...')
       subprocess.run(f'curl -SL https://github.com/docker/compose/releases/download/v{DOCKERCOMPOSEVERSION}/docker-compose-linux-x86_64 \
       -o /usr/local/bin/docker-compose',shell=True,check=True)
       subprocess.run('chmod +x /usr/local/bin/docker-compose',shell=True,check=True)
@@ -659,7 +743,8 @@ List of outband methods :
   blackhole
   both : freedom + blackhole{reset}""")
   else:
-    uuid_port()
+    print(_port())
+    print(_uuid())
 
 # simple vmess configuration gen
 if args.vmess:
@@ -669,17 +754,27 @@ if args.vmess:
 # ShadowSocks Password
 if args.sspass == None:
   args.sspass = get_random_password()
+if args.obfspass == None:
+   args.obfspass = get_random_password()
 
 # ShadowSocks Method
-if args.ssmethod == None :
+if args.ssmethod == None:
   args.ssmethod = 'chacha20-ietf-poly1305'
+if args.obfsmethod == None :
+  args.obfsmethod = 'chacha20-ietf-poly1305'
 
 # Make ShadowSocks Config
 if args.ssmake:
   shadowsocks_make(args.ssmethod)
+if args.obfsmake:
+  obfs_make(args.obfsmethod)
+  print(_port())
+  print('PASSWORD: ' + blue + args.obfspass + reset)
 
 if args.shadowsocks:
   shadowsocks_simple()
+if args.obfs:
+  obfs_simple()
 
 # if args.ssname == None :
 #   args.ssname = f"shadowsocks/{IP()}"
@@ -689,6 +784,13 @@ if args.sslink:
     parser.error('--ssmake or --shadowsocks are required')
   else:
     print(shadowsocks_link_generator())
+
+if args.obfslink:
+  if args.obfsmake is None or args.obfs is None:
+    parser.error('--obfsmake or --obfs are required')
+  else:
+    print(shadowsocks_link_generator())
+
 
 if args.ssdocker :
   shadowsocks_dockercompose()

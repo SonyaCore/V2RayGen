@@ -41,6 +41,12 @@ sudo python3 V2RayGen.py --vmess
 ```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --shadowsocks
 ```
+OR 
+### Quick ShadowSocks-OBFS Setup with Default Setting :
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --obfs
+```
+
 ![Sample](contents/content4.png)
 
 ### Advanced Method :
@@ -74,9 +80,8 @@ curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sud
 ### Todo List
 
 - [x] ShadowSocks JSON Template
-- [ ] Trojan JSON Template
-- [ ] Adding more options for changing configuration
-- [ ] Catch Errors if Error Occured
+- [x] Adding more options for changing configuration
+- [x] Catch Errors if Error Occured
 - [ ] More Exception Error Handeling
 - [ ] Add Verbose Mode With Logger
 

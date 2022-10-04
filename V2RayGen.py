@@ -108,10 +108,6 @@ shadowsocks.add_argument('--sslink','--shadowsockslink',
 action='store_true' ,
 help='Generate ShadowSocks link')
 
-# shadowsocks.add_argument('--ssname','--shadowsocks-name',
-# action='store' , type=str, metavar='' ,
-# help='Set Name for ShadowSocks. default: [shadowsocks/IP]')
-
 obfs = parser.add_argument_group('OBFS')
 
 obfs.add_argument('--obfsmake','--obfs-make',
@@ -210,17 +206,6 @@ def _port():
   Return PORT  after making config
   ''' 
   return ('PORT: ' + blue + str(PORT)  + reset)
-
-def shadowsocks_methods():
-  # Below methods are the recommended choice.
-  # Other stream ciphers are implemented but do not provide integrity and authenticity.
-
-  methodlist = ['chacha20-ietf-poly1305','aes-256-gcm','aes-128-gcm']
-  if args.ssmethod not in methodlist or args.obfsmethod not in methodlist:
-    sys.exit(f"""Select one method :
-    {green}chacha20-ietf-poly1305
-    aes-256-gcm
-    aes-128-gcm{reset}""")
 
 def dnsselect():
   '''
@@ -426,14 +411,7 @@ def blackhole() -> str:
 
 def vmess_simple():
   '''
-  Quick Configuration will setup vmess config with configuration :\n
-  
-  Protocol: freedom\n
-  DNS: google\n
-  Port: 80\n
-  docker-compose file for V2ray-core\n
-  Run docker compose & install Docker if not exist\n
-  vmess link generate
+  Quick VMess Configuration.
   '''
 
   args.protocol = 'freedom'
@@ -451,7 +429,7 @@ def vmess_simple():
 def shadowsocks_make(method) -> str:
   
   print(banner())
-  shadowsocks_methods()
+  shadowsocks_check()
 
 
   with open(SHADOWSOCKS,'w') as txt :
@@ -477,7 +455,7 @@ def shadowsocks_config(method,password) -> str:
 
 def shadowsocks_simple():
   '''
-  Qucik Configuration will setup ShadowSocks config with configuration :\n
+  Quick Shadowsocks Configuration.
   '''
 
   shadowsocks_make(args.ssmethod)
@@ -490,7 +468,7 @@ def shadowsocks_simple():
 def obfs_make(method) -> str:
 
   print(banner())
-  shadowsocks_methods()
+  shadowsocks_check()
 
   with open(OBFS,'w') as txt :
     txt.write(obfs_config(method,password=args.obfspass))
@@ -534,7 +512,7 @@ networks:
 
 def obfs_simple():
   '''
-  Quick Configuration will setup ShadowSocks. :\n
+  Quick ShadowSocks-OBFS Configuration.
   '''
 
   obfs_make(args.obfsmethod)
@@ -671,9 +649,6 @@ def shadowsocks_link_generator() -> str:
   Visit https://github.com/shadowsocks/shadowsocks-org/wiki/SIP002-URI-Scheme for SS URI Scheme.
   '''
 
-  # if not shadowsocks_config_name:
-  #   shadowsocks_config_name = 'shadowsocks'
-
   prelink = 'ss://'
   print(yellow + '! Use below link for your ShadowSocks client' + reset)
 
@@ -688,24 +663,48 @@ def shadowsocks_link_generator() -> str:
   return shadowsocks_link
 
 
-# ----------------------------- argparse Actions ----------------------------- #
+# ----------------------------- argparse Conditions ----------------------------- #
 
-if args.vmessdocker :
-  vmess_dockercompose()
+def shadowsocks_check():
+  # Below methods are the recommended choice.
+  # Other stream ciphers are implemented but do not provide integrity and authenticity.
 
-# call DNS func
-if args.dns :
-  dnsselect()
-  
+  methodlist = ['chacha20-ietf-poly1305','aes-256-gcm','aes-128-gcm']
+  if args.ssmethod not in methodlist or args.obfsmethod not in methodlist:
+    raise TypeError(sys.exit(f"""Select one method :
+    {green}chacha20-ietf-poly1305
+    aes-256-gcm
+    aes-128-gcm{reset}"""))
+
+def protocol_check():
+  if args.protocol  not in protocol_list:  # list of outband protocols
+    raise TypeError(sys.exit(f"""{yellow}! Use --protocol to set method{reset}
+List of outband methods :
+  {green}freedom
+  blackhole
+  both : freedom + blackhole{reset}"""))
+
+def dns_check():
   if args.dns not in dnslist :  # list of DNS
-    sys.exit(f"""List of Avalible DNS :
+    raise TypeError(sys.exit(f"""List of Avalible DNS :
   {green}google
   cloudflare
   both : google + cloudflare
   opendns
   quad9
   adguard
-  nodns{reset}""")
+  nodns{reset}"""))
+
+
+# ----------------------------- argparse Actions ----------------------------- #
+
+if len(sys.argv) <= 1:
+    parser.print_help()
+
+# call DNS func
+if args.dns :
+  dnsselect()
+  dns_check()
 
 # Set To NODNS
 else:
@@ -727,29 +726,18 @@ if args.dns == 'adguard':
 if args.dns == 'nodns':
   DNS = NODNS
 
-# vmess config port :
+# VMess Port :
 if args.port == None :
   pass
 else :
   PORT = args.port
 
-# make config with defined parameters
+# Make VMess Config with Defined parameters
 if args.protocol or args.generate :
   vmess_make()
-  if args.protocol not in protocol_list:  # list of outband protocols
-    sys.exit(f"""{yellow}! Use --protocol to set method{reset}
-List of outband methods :
-  {green}freedom
-  blackhole
-  both : freedom + blackhole{reset}""")
-  else:
-    print(_port())
-    print(_uuid())
-
-# simple vmess configuration gen
-if args.vmess:
-  vmess_simple()
-
+  protocol_check()
+  print(_port())
+  print(_uuid())
 
 # ShadowSocks Password
 if args.sspass == None:
@@ -771,34 +759,42 @@ if args.obfsmake:
   print(_port())
   print('PASSWORD: ' + blue + args.obfspass + reset)
 
+# Quick VMess Setup
+if args.vmess:
+  vmess_simple()
+
+# Quick ShadowSocks | Shadowsocks-OBFS Setup
 if args.shadowsocks:
   shadowsocks_simple()
 if args.obfs:
   obfs_simple()
 
-# if args.ssname == None :
-#   args.ssname = f"shadowsocks/{IP()}"
-
+# Make ShadowSocks Link
 if args.sslink:
   if args.ssmake is None or args.shadowsocks is None:
     parser.error('--ssmake or --shadowsocks are required')
   else:
     print(shadowsocks_link_generator())
 
+# Make OBFS Link (Same as SS)
 if args.obfslink:
   if args.obfsmake is None or args.obfs is None:
     parser.error('--obfsmake or --obfs are required')
   else:
     print(shadowsocks_link_generator())
 
-
+# Make docker-compose for VMess
+if args.vmessdocker :
+  vmess_dockercompose()
+# Make docker-compose for ShadowSocks
 if args.ssdocker :
   shadowsocks_dockercompose()
 
-# Run Service :
+# Run docker-compose
 if args.dockerup:
   run_docker()
 
+# Make VMess Link
 if args.link:
   if args.generate is None or args.protocol is None:
     parser.error('--generate and --protocol are required')

@@ -59,7 +59,6 @@ gp.add_argument('--obfs','-ob',
 action='store_true',
 help='Quick ShadowSocks-OBFS & Start with docker')
 
-
 vmess = parser.add_argument_group('VMess')
 
 vmess.add_argument('--generate','--gen',
@@ -136,7 +135,6 @@ docker.add_argument('--ssdocker','--shadowsocks-dockerfile',
 action= 'store_true' , required=False ,
 help='Generate ShadowSocks docker-compose file for shadowsocks-libev')
 
-
 docker.add_argument('--dockerup', 
 action= 'store_true' , required=False ,
 help='Start docker-compose in system')
@@ -147,6 +145,7 @@ action='version' , version='%(prog)s ' + VERSION)
 
 # Arg Parse
 args = parser.parse_args()
+
 # ------------------------------ Miscellaneous ------------------------------- #
 
 # Color Format
@@ -169,15 +168,13 @@ __      _____  _____              _____
                            |___/
 {reset}""")
 
+
 # Return IP
 def IP():
   '''
   Return IP with ip-api.com
   '''
   url = "http://ip-api.com/json/?fields=query"
-
-  if not url.startswith("http"):
-      raise RuntimeError("Incorrect and possibly insecure protocol in url")
 
   httprequest = Request(url, headers={"Accept": "application/json"})
 
@@ -275,32 +272,28 @@ def vmess_make():
   # config method
   if args.protocol == 'freedom' or None:
     with open(VMESS,'w') as txt :
-      txt.write(json.dumps(vmess_config(method=freedom(),
-      websocket=websocket_config(args.wspath)),
+      txt.write(json.dumps(vmess_config(method=freedom()),
       indent= 2))
       txt.close
 
   if args.protocol == 'blackhole':
     with open(VMESS,'w') as txt :
-      txt.write(json.dumps(vmess_config(method=blackhole(),
-      websocket=websocket_config(args.wspath)),
+      txt.write(json.dumps(vmess_config(method=blackhole()),
       indent=2))
       txt.close
 
   if args.protocol == 'both':
     with open(VMESS,'w') as txt :
-      txt.write(json.dumps(vmess_config(method=freedom() + ',\n' + blackhole() ,
-      websocket=websocket_config(args.wspath)),
+      txt.write(json.dumps(vmess_config(method=freedom() + ',\n' + blackhole()) ,
       indent=2))
       txt.close
 
   print(blue + '! VMess Config Generated.' + reset)
 
-def vmess_config(method,websocket) -> str:
+def vmess_config(method) -> str:
   '''
   vmess JSON config file template
   '''
-
   data = """{
     %s
     "log": {
@@ -355,7 +348,7 @@ def vmess_config(method,websocket) -> str:
     %s
     ]
 }
-""" % (DNS,PORT,UUID,websocket,method)
+""" % (DNS,PORT,UUID,websocket_config(args.wspath),method)
   return json.loads(data)
 
 def websocket_config(path) -> str:
@@ -417,7 +410,6 @@ def vmess_simple():
   Quick VMess Configuration.
   '''
 
-  args.protocol = 'freedom'
   dnsselect()
   vmess_make()
   vmess_dockercompose()
@@ -734,6 +726,10 @@ if args.port == None :
   pass
 else :
   PORT = args.port
+
+# Set to freedom if nothing entered
+if args.protocol == None :
+  args.protocol = 'freedom'
 
 # Make VMess Config with Defined parameters
 if args.protocol or args.generate :

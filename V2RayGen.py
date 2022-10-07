@@ -275,19 +275,22 @@ def vmess_make():
   # config method
   if args.protocol == 'freedom' or None:
     with open(VMESS,'w') as txt :
-      txt.write(json.dumps(vmess_config(method=freedom(),websocket=websocket(args.wspath)),
+      txt.write(json.dumps(vmess_config(method=freedom(),
+      websocket=websocket_config(args.wspath)),
       indent= 2))
       txt.close
 
   if args.protocol == 'blackhole':
     with open(VMESS,'w') as txt :
-      txt.write(json.dumps(vmess_config(method=blackhole()),
+      txt.write(json.dumps(vmess_config(method=blackhole(),
+      websocket=websocket_config(args.wspath)),
       indent=2))
       txt.close
 
   if args.protocol == 'both':
     with open(VMESS,'w') as txt :
-      txt.write(json.dumps(vmess_config(method=freedom() + ',\n' + blackhole()),
+      txt.write(json.dumps(vmess_config(method=freedom() + ',\n' + blackhole() ,
+      websocket=websocket_config(args.wspath)),
       indent=2))
       txt.close
 
@@ -355,7 +358,7 @@ def vmess_config(method,websocket) -> str:
 """ % (DNS,PORT,UUID,websocket,method)
   return json.loads(data)
 
-def websocket(path) -> str:
+def websocket_config(path) -> str:
   '''
   WebSocket stream setting template for JSON.
   by default, WebSocket is used for transporting data.

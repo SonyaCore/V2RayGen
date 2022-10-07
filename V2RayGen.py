@@ -24,7 +24,7 @@ from urllib.request import urlopen, Request
 NAME = 'V2RayGen' 
 
 # Version
-VERSION = '0.3'
+VERSION = '0.5'
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -38,7 +38,7 @@ OBFS = 'docker-compose.yml'
 PORT = 80
 
 # Docker Compose Version
-DOCKERCOMPOSEVERSION =  '2.11.1'
+DOCKERCOMPOSEVERSION =  '2.11.2'
 
 # -------------------------------- Argument Parser --------------------------------- #
 
@@ -269,8 +269,8 @@ def vmess_make():
   # Show Banner
   print(banner())
 
-  # config method
-  if args.protocol == 'freedom' or None:
+  # Config Protocol Method
+  if args.protocol == 'freedom':
     with open(VMESS,'w') as txt :
       txt.write(json.dumps(vmess_config(method=freedom()),
       indent= 2))
@@ -570,11 +570,11 @@ def run_docker():
   then it checks the docker-compose path if the condition is True docker-compose.yml will be used for running v2ray.
   '''
 
-  # check if docker exist
+  # Check if docker exist
   if os.path.exists('/usr/bin/docker') or os.path.exists('/usr/local/bin/docker'):
       pass
   else:
-      # install docker if docker are not installed
+      # Install docker if docker are not installed
       try:
           print(yellow + 'Docker Not Found.\nInstalling Docker ...')
           subprocess.run('curl https://get.docker.com | sh',shell=True,check=True)
@@ -583,7 +583,7 @@ def run_docker():
 
   time.sleep(2)
 
-  # check if docker-compose exist
+  # Check if docker-compose exist
   
   if os.path.exists('/usr/bin/docker-compose') or os.path.exists('/usr/local/bin/docker-compose'):
       subprocess.run('docker-compose -f docker-compose.yml up -d',shell=True,check=True)
@@ -639,7 +639,7 @@ def shadowsocks_link_generator() -> str:
   '''
   Generate ShadowSocks link.
 
-  Shadowsocks link is being used for importing v2ray config in clients.
+  Shadowsocks link is being used for importing shadowsocks config in clients.
   ShadowSocks links are also encoded with base64.
   Visit https://github.com/shadowsocks/shadowsocks-org/wiki/SIP002-URI-Scheme for SS URI Scheme.
   '''
@@ -727,16 +727,15 @@ if args.port == None :
 else :
   PORT = args.port
 
-# Set to freedom if nothing entered
-if args.protocol == None :
-  args.protocol = 'freedom'
-
 # Make VMess Config with Defined parameters
 if args.protocol or args.generate :
   vmess_make()
   protocol_check()
   print(_port())
   print(_uuid())
+  print(green + '! You Can Use docker-compose up -d to run V2ray-core\n'
+  '! Also You Can use --dockerup argument to run v2ray docker when Creating config',
+  reset)
 
 # ShadowSocks Password
 if args.sspass == None:
@@ -760,6 +759,9 @@ if args.obfsmake:
 
 # Quick VMess Setup
 if args.vmess:
+  # Set to freedom if nothing entered
+  if args.protocol == None :
+    args.protocol = 'freedom'
   vmess_simple()
 
 # Quick ShadowSocks | Shadowsocks-OBFS Setup

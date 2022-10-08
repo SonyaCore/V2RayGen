@@ -89,6 +89,10 @@ vmess.add_argument('--wspath',"--websocket-path",
 action='store' , type=str, metavar='' ,
 help='Optional WebSocket path. default: [/graphql]',default='/graphql')
 
+vmess.add_argument('--uuid',"--custom-uuid",
+action='store' , type=str, metavar='' ,
+help='Optional UUID. default: [random]',default=f'{UUID}')
+
 shadowsocks = parser.add_argument_group('ShadowSocks')
 
 shadowsocks.add_argument('--ssmake','--shadowsocks-make',
@@ -726,6 +730,12 @@ if args.port == None :
   pass
 else :
   PORT = args.port
+
+# Custom uuid
+if args.uuid == None:
+  args.uuid = UUID
+else:
+  UUID = args.uuid 
 
 # Make VMess Config with Defined parameters
 if args.protocol or args.generate :

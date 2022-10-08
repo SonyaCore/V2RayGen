@@ -2,8 +2,8 @@
 
 # V2Ray Config Generator
 # --------------------------------
-# author    : SonyaCore
-#	github    : https://github.com/SonyaCore
+# Author    : SonyaCore
+#	Github    : https://github.com/SonyaCore
 
 import os
 import sys
@@ -195,6 +195,21 @@ def get_random_password(length=24):
   password = ''.join(random.choice(characters) for i in range(length))
 
   return  password
+
+def COUNTRY():
+
+  countrycode = "http://ip-api.com/json/?fields=countryCode"
+
+  httprequest = Request(countrycode, headers={"Accept": "application/json"})
+
+  with urlopen(httprequest) as response:
+    data = (json.loads(response.read().decode()))
+
+  if data['countryCode'] != "IR" or "CN" or "VN":
+   print(yellow + f"\n! You Are Using External Server [{data['countryCode']}]\n" +
+   "Nginx Template:" + reset)
+   print(nginx())
+   print(yellow + "! Append to /etc/nginx/nginx.conf" + reset)
 
 def _uuid():
   '''
@@ -421,7 +436,7 @@ def vmess_simple():
   print(_port())
   print(_uuid())
   print(vmess_link_generator(args.linkname))
-
+  COUNTRY()
 
 # -------------------------------- ShadowSocks JSON --------------------------------- #
 
@@ -461,6 +476,7 @@ def shadowsocks_simple():
   shadowsocks_dockercompose()
   run_docker()
   print(shadowsocks_link_generator())
+  COUNTRY()
 
 # -------------------------------- ShadowSocks OBFS --------------------------------- #
 
@@ -519,7 +535,7 @@ def obfs_simple():
   print(_port())
   print('PASSWORD: ' + blue + str(args.obfspass)  + reset)
   print(shadowsocks_link_generator())
-
+  COUNTRY()
 
 # -------------------------------- Docker --------------------------------- #
 
@@ -636,7 +652,6 @@ f""""add":"{IP()}",\
 
   return vmess_link
 
-
 # ------------------------------ ShadowSocks Link Gen ------------------------------- #
 
 def shadowsocks_link_generator() -> str:
@@ -661,6 +676,18 @@ def shadowsocks_link_generator() -> str:
 
   return shadowsocks_link
 
+
+# ------------------------------ Nginx Template ------------------------------- #
+
+def nginx():
+  nginx = """stream {
+    upstream external {
+        server %s:%s;  }
+    server {
+        listen     1080;
+        proxy_pass external ; }  }""" %(IP(),PORT)
+
+  return nginx
 
 # ----------------------------- argparse Conditions ----------------------------- #
 
@@ -693,7 +720,6 @@ def dns_check():
   quad9
   adguard
   nodns{reset}"""))
-
 
 # ----------------------------- argparse Actions ----------------------------- #
 
@@ -743,6 +769,7 @@ if args.protocol or args.generate :
   protocol_check()
   print(_port())
   print(_uuid())
+  COUNTRY()
   print(green + '! You Can Use docker-compose up -d to run V2ray-core\n'
   '! Also You Can use --dockerup argument to run v2ray docker when Creating config',
   reset)
@@ -762,10 +789,12 @@ if args.obfsmethod == None :
 # Make ShadowSocks Config
 if args.ssmake:
   shadowsocks_make(args.ssmethod)
+  COUNTRY()
 if args.obfsmake:
   obfs_make(args.obfsmethod)
   print(_port())
   print('PASSWORD: ' + blue + args.obfspass + reset)
+  COUNTRY()
 
 # Quick VMess Setup
 if args.vmess:

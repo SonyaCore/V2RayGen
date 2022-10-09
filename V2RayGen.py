@@ -601,6 +601,13 @@ def run_docker():
       except subprocess.CalledProcessError:
           sys.exit(error + 'Download Failed !' + reset)
 
+  # Check if Docker Service is Enabled
+  systemctl = subprocess.call(["systemctl", "is-active", "--quiet", "docker"])
+  if(systemctl == 0):
+    pass
+  else:
+    subprocess.call(["systemctl", "enable", "--now", "--quiet", "docker"])
+
   time.sleep(2)
 
   # Check if docker-compose exist

@@ -25,7 +25,7 @@ from urllib.request import urlopen, Request
 NAME = "V2RayGen"
 
 # Version
-VERSION = "0.5"
+VERSION = "0.8"
 
 # UUID Generation
 UUID = uuid.uuid4()

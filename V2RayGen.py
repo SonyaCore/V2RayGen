@@ -25,7 +25,7 @@ from urllib.request import urlopen, Request
 NAME = "V2RayGen"
 
 # Version
-VERSION = "0.8"
+VERSION = "0.9.0"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -45,6 +45,18 @@ DOCKERCOMPOSEVERSION = "2.11.2"
 
 formatter = lambda prog: argparse.HelpFormatter(prog, max_help_position=64)
 parser = argparse.ArgumentParser(prog=f"{NAME}", formatter_class=formatter)
+
+
+def str2bool(v):
+    if isinstance(v, bool):
+        return v
+    if v.lower() in ("yes", "true", "t", "y", "1"):
+        return True
+    elif v.lower() in ("no", "false", "f", "n", "0"):
+        return False
+    else:
+        raise argparse.ArgumentTypeError("Boolean value expected.")
+
 
 gp = parser.add_mutually_exclusive_group()
 
@@ -86,11 +98,12 @@ vmess.add_argument(
     type=str,
     metavar="",
     help="Name for VMess Link. default: [v2ray]",
+    default='v2ray',
 )
 
 vmess.add_argument(
-    "--protocol",
     "--outband",
+    "--outband-protocol",
     action="store",
     type=str,
     metavar="",
@@ -128,6 +141,37 @@ vmess.add_argument(
     metavar="",
     help="Optional UUID. default: [random]",
     default=f"{UUID}",
+)
+
+vmess.add_argument(
+    "--id",
+    "--alterid",
+    action="store",
+    type=int,
+    metavar="",
+    help="Optional alterid. default: [0]",
+    default=0,
+)
+
+vmess.add_argument(
+    "--insecure",
+    "--insecure-encryption",
+    action="store",
+    type=str2bool,
+    nargs="?",
+    metavar="",
+    const=True,
+    help="Disable Insecure Encryption. default: [True]",
+    default=True,
+)
+
+vmess.add_argument(
+    "--header",
+    "--tcp-header",
+    action="store",
+    type=argparse.FileType("r"),
+    metavar="",
+    help="Optional JSON TCP Header.",
 )
 
 shadowsocks = parser.add_argument_group("ShadowSocks")
@@ -221,7 +265,7 @@ docker.add_argument(
 )
 
 opt = parser.add_argument_group("info")
-opt.add_argument("--version", "-v", action="version", version="%(prog)s " + VERSION)
+opt.add_argument("-v","--version", action="version", version="%(prog)s " + VERSION)
 
 # Arg Parse
 args = parser.parse_args()
@@ -236,8 +280,8 @@ error = "\u001b[31m"
 reset = "\u001b[0m"
 
 # Banner
-def banner():
-    return f"""{green}
+def banner(t=0.0005):
+    data = f"""{green}
 __      _____  _____              _____            
 \ \    / /__ \|  __ \            / ____|
  \ \  / /   ) | |__) |__ _ _   _| |  __  ___ _ __  
@@ -247,6 +291,10 @@ __      _____  _____              _____
                             __/ |
                            |___/
 {reset}"""
+    for char in data:
+            sys.stdout.write(char)
+            time.sleep(t)
+    sys.stdout.write("\n")
 
 
 # Return IP
@@ -262,6 +310,7 @@ def IP():
         data = json.loads(response.read().decode())
         return data["query"]
 
+ServerIP = IP()
 
 def get_random_password(length=24):
     """
@@ -365,27 +414,27 @@ def dnsselect():
 
 def vmess_make():
     """
-    Make JSON config which reads --protocol for making v2ray config with specific protocol
+    Make JSON config which reads --outband for making v2ray config with specific protocol
     """
 
     global protocol_list
     protocol_list = ["freedom", "blackhole", "both"]
 
     # Show Banner
-    print(banner())
+    banner()
 
     # Config Protocol Method
-    if args.protocol == "freedom":
+    if args.outband == "freedom":
         with open(VMESS, "w") as txt:
             txt.write(json.dumps(vmess_config(method=freedom()), indent=2))
             txt.close
 
-    if args.protocol == "blackhole":
+    if args.outband == "blackhole":
         with open(VMESS, "w") as txt:
             txt.write(json.dumps(vmess_config(method=blackhole()), indent=2))
             txt.close
 
-    if args.protocol == "both":
+    if args.outband == "both":
         with open(VMESS, "w") as txt:
             txt.write(
                 json.dumps(
@@ -418,36 +467,16 @@ def vmess_config(method) -> str:
             {
               "id": "%s",
               "level": 1,
-              "alterId": 0,
+              "alterId": %s,
               "email": "client@example.com"
             }
           ],
-          "disableInsecureEncryption": true
+          "disableInsecureEncryption": %s
         },
         "streamSettings": 
         %s,
           "security": "none",
-          "tcpSettings": {
-            "header": {
-              "type": "http",
-              "response": {
-                "version": "1.1",
-                "status": "200",
-                "reason": "OK",
-                "headers": {
-                  "Content-Type": [
-                    "application/octet-stream",
-                    "application/x-msdownload",
-                    "text/html",
-                    "application/x-shockwave-flash"
-                  ],
-                  "Transfer-Encoding": ["chunked"],
-                  "Connection": ["keep-alive"],
-                  "Pragma": "no-cache"
-                }
-              }
-            }
-          }
+          "tcpSettings": %s
         }
       }
     ],
@@ -459,7 +488,10 @@ def vmess_config(method) -> str:
         DNS,
         PORT,
         UUID,
+        args.id,
+        args.insecure,
         websocket_config(args.wspath),
+        args.header,
         method,
     )
     return json.loads(data)
@@ -524,6 +556,31 @@ def blackhole() -> str:
     return blackhole
 
 
+def tcpsettings() -> str:
+    data = """{
+            "header": {
+              "type": "http",
+              "response": {
+                "version": "1.1",
+                "status": "200",
+                "reason": "OK",
+                "headers": {
+                  "Content-Type": [
+                    "application/octet-stream",
+                    "application/x-msdownload",
+                    "text/html",
+                    "application/x-shockwave-flash"
+                  ],
+                  "Transfer-Encoding": ["chunked"],
+                  "Connection": ["keep-alive"],
+                  "Pragma": "no-cache"
+                }
+              }
+            }
+          }"""
+    return data
+
+
 def vmess_simple():
     """
     Quick VMess Configuration.
@@ -533,8 +590,7 @@ def vmess_simple():
     vmess_make()
     vmess_dockercompose()
     run_docker()
-    print(_port())
-    print(_uuid())
+    vmess_raw()
     print(vmess_link_generator(args.linkname))
     COUNTRY()
 
@@ -544,7 +600,7 @@ def vmess_simple():
 
 def shadowsocks_make(method) -> str:
 
-    print(banner())
+    banner()
     shadowsocks_check()
 
     with open(SHADOWSOCKS, "w") as txt:
@@ -568,7 +624,7 @@ def shadowsocks_config(method, password) -> str:
     "method":"%s",
     "fast_open": true
 }""" % (
-        IP(),
+        ServerIP,
         PORT,
         password,
         timeout,
@@ -594,7 +650,7 @@ def shadowsocks_simple():
 
 def obfs_make(method) -> str:
 
-    print(banner())
+    banner()
     shadowsocks_check()
 
     with open(OBFS, "w") as txt:
@@ -771,6 +827,13 @@ def run_docker():
 
 # ------------------------------ VMess Link Gen ------------------------------- #
 
+def vmess_raw() -> str:
+    print("IP: " + blue + str((ServerIP)) + reset)
+    print("ID: " + blue + str(args.id) + reset)
+    print("UUID: " + blue + str(UUID) + reset)
+    print("WSPATH: " + blue + str(args.wspath) + reset)
+    print("PORT: " + blue + str(PORT) + reset)
+    print("LINKNAME: " + blue + str(args.linkname) + reset)
 
 def vmess_link_generator(vmess_config_name) -> str:
     """
@@ -787,8 +850,8 @@ def vmess_link_generator(vmess_config_name) -> str:
     print(yellow + "! Use below link for your v2ray client" + reset)
     raw_link = bytes(
         "{"
-        + f""""add":"{IP()}",\
-"aid":"0",\
+        + f""""add":"{ServerIP}",\
+"aid":"{args.id}",\
 "host":"",\
 "id":"{UUID}",\
 "net":"ws",\
@@ -824,7 +887,7 @@ def shadowsocks_link_generator() -> str:
     prelink = "ss://"
     print(yellow + "! Use below link for your ShadowSocks client" + reset)
 
-    raw_link = bytes(f"{args.ssmethod}:{args.sspass}@{IP()}:{PORT}", encoding="ascii")
+    raw_link = bytes(f"{args.ssmethod}:{args.sspass}@{ServerIP}:{PORT}", encoding="ascii")
 
     link = base64.b64encode(raw_link)  # encode raw link
 
@@ -845,7 +908,7 @@ def nginx():
     server {
         listen     1080;
         proxy_pass external ; }  }""" % (
-        IP(),
+        ServerIP,
         PORT,
     )
 
@@ -872,10 +935,10 @@ def shadowsocks_check():
 
 
 def protocol_check():
-    if args.protocol not in protocol_list:  # list of outband protocols
+    if args.outband not in protocol_list:  # list of outband protocols
         raise TypeError(
             sys.exit(
-                f"""{yellow}! Use --protocol to set method{reset}
+                f"""{yellow}! Use --outband to set method{reset}
 List of outband methods :
   {green}freedom
   blackhole
@@ -930,6 +993,20 @@ if args.dns == "adguard":
 if args.dns == "nodns":
     DNS = NODNS
 
+# JSON custom template load
+if args.header:
+    with open(f"{args.header.name}", "r") as setting:
+        stream = setting.read()
+        args.header = stream
+else:
+    args.header = tcpsettings()
+
+# Insecure option
+if args.insecure == True :
+    args.insecure = 'true'
+if args.insecure == False :
+    args.insecure = 'false' 
+
 # VMess Port :
 if args.port == None:
     pass
@@ -943,11 +1020,10 @@ else:
     UUID = args.uuid
 
 # Make VMess Config with Defined parameters
-if args.protocol or args.generate:
+if args.outband or args.generate:
     vmess_make()
     protocol_check()
-    print(_port())
-    print(_uuid())
+    vmess_raw()
     COUNTRY()
     print(
         green + "! You Can Use docker-compose up -d to run V2ray-core\n"
@@ -980,8 +1056,8 @@ if args.obfsmake:
 # Quick VMess Setup
 if args.vmess:
     # Set to freedom if nothing entered
-    if args.protocol == None:
-        args.protocol = "freedom"
+    if args.outband == None:
+        args.outband = "freedom"
     vmess_simple()
 
 # Quick ShadowSocks | Shadowsocks-OBFS Setup
@@ -1017,7 +1093,7 @@ if args.dockerup:
 
 # Make VMess Link
 if args.link:
-    if args.generate is None or args.protocol is None:
-        parser.error("--generate and --protocol are required")
+    if args.generate is None or args.outband is None:
+        parser.error("--generate and --outband are required")
     else:
         print(vmess_link_generator(args.linkname))

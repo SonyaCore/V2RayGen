@@ -167,11 +167,11 @@ vmess.add_argument(
 
 vmess.add_argument(
     "--header",
-    "--tcp-header",
+    "--http-header",
     action="store",
     type=argparse.FileType("r"),
     metavar="",
-    help="Optional JSON TCP Header.",
+    help="Optional JSON HTTPRequest Header.",
 )
 
 shadowsocks = parser.add_argument_group("ShadowSocks")

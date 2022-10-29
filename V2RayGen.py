@@ -18,6 +18,7 @@ import random
 import string
 import logging
 from urllib.request import urlopen, Request
+from urllib.error import HTTPError, URLError
 
 # -------------------------------- Constants --------------------------------- #
 
@@ -25,7 +26,7 @@ from urllib.request import urlopen, Request
 NAME = "V2RayGen"
 
 # Version
-VERSION = "0.9.0"
+VERSION = "0.9.2"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -77,6 +78,13 @@ gp.add_argument(
     action="store_true",
     help="Quick ShadowSocks-OBFS & Start with docker",
 )
+gp.add_argument(
+    "--xui",
+    "-xui",
+    action="store_true",
+    help="Setup X-Ui with the official installer script",
+)
+
 
 vmess = parser.add_argument_group("VMess")
 
@@ -118,6 +126,15 @@ vmess.add_argument(
     metavar="",
     help="Optional PORT for v2ray Config. defualt: [80]",
 )
+
+# vmess.add_argument(
+#     "--domain",
+#     "--domain-websocket",
+#     action="store",
+#     type=str,
+#     metavar="",
+#     help="Use Domain insted of IP for WebSocket. default: [ServerIP]",
+# )
 
 vmess.add_argument(
     "--dns", action="store", type=str, metavar="", help="Optional DNS. default: [nodns]"
@@ -408,6 +425,22 @@ def dnsselect():
 
     NODNS = ""
 
+
+# def websocket_domaincheck(url = args.domain,t = 10) :
+#     """
+#     when using the domain for WebSocket the status code should be 400
+#     else exception will occur.
+#     """
+#     try:
+#         response = urlopen(f'{args.domain}{args.wspath}',timeout= t)
+
+#     except HTTPError as error:
+#         response_code = error.code
+#         print( blue + 'Domain status : '+ reset + str(response_code))
+#         if response_code == 400:
+#             return True
+#         else:
+#             raise URLError(error.reason)
 
 # -------------------------------- VMess JSON --------------------------------- #
 
@@ -712,6 +745,15 @@ def obfs_simple():
     COUNTRY()
 
 
+# -------------------------------- x-ui  --------------------------------- #
+
+def x_ui():
+    try :
+    # setup xui needs root privileges
+        run = subprocess.run("curl https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh | bash", shell=True , check=True, executable='/bin/bash')
+    except subprocess.CalledProcessError as e:
+        print(error + 'Root privileges required!')
+
 # -------------------------------- Docker --------------------------------- #
 
 
@@ -900,8 +942,33 @@ def shadowsocks_link_generator() -> str:
 
 # ------------------------------ Nginx Template ------------------------------- #
 
-
 def nginx():
+#     if args.header :
+#         nginx = """http {
+#     map $http_upgrade $connection_upgrade {
+#         default upgrade;
+#         '' close;
+#     }
+ 
+#     upstream websocket {
+#         server %s:%s;
+#     }
+ 
+#     server {
+#         listen 1080;
+#         location %s {
+#             proxy_pass http://websocket;
+#             proxy_http_version 1.1;
+#             proxy_set_header Upgrade $http_upgrade;
+#             proxy_set_header Connection $connection_upgrade;
+#             proxy_set_header Host $host;
+#             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+#             proxy_set_header X-Real-IP $remote_addr;
+
+#         }
+#     }
+# }"""%(ServerIP,PORT,args.wspath)
+
     nginx = """stream {
     upstream external {
         server %s:%s;  }
@@ -1019,6 +1086,13 @@ if args.uuid == None:
 else:
     UUID = args.uuid
 
+# # Check WebSocket Domain Status Code 
+# if args.domain :
+#     websocket_domaincheck()
+#     print(green + 'Domain ٰValid!' + reset)
+#     ServerIP = f"{args.domain}"
+
+
 # Make VMess Config with Defined parameters
 if args.outband or args.generate:
     vmess_make()
@@ -1065,6 +1139,10 @@ if args.shadowsocks:
     shadowsocks_simple()
 if args.obfs:
     obfs_simple()
+
+# Install XUI
+if args.xui :
+    x_ui()
 
 # Make ShadowSocks Link
 if args.sslink:

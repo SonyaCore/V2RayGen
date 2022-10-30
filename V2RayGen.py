@@ -1068,9 +1068,9 @@ if __name__ == '__main__':
     if len(sys.argv) <= 1:
         parser.print_help()
 
-    # set log to warning by default
+    # set log to error by default
     if args.loglevel == None:
-        LOG = 'warning'
+        LOG = 'error'
     else :
         # call log func
         loglevel()

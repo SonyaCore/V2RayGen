@@ -26,7 +26,7 @@ from urllib.error import HTTPError, URLError
 NAME = "V2RayGen"
 
 # Version
-VERSION = "0.9.2"
+VERSION = "0.9.3"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -189,6 +189,15 @@ vmess.add_argument(
     type=argparse.FileType("r"),
     metavar="",
     help="Optional JSON HTTPRequest Header.",
+)
+
+vmess.add_argument(
+    "--loglevel",
+    "--vmess-loglevel",
+    action="store",
+    type=str,
+    metavar="",
+    help="loglevel for vmess config. default: [warning]",
 )
 
 shadowsocks = parser.add_argument_group("ShadowSocks")
@@ -486,7 +495,9 @@ def vmess_config(method) -> str:
     data = """{
     %s
     "log": {
-      "loglevel": "info"
+      "loglevel": "%s",
+      "access": "/var/log/v2ray/access.log",
+      "error": "/var/log/v2ray/error.log"
     },
     "inbounds": [
       {
@@ -519,6 +530,7 @@ def vmess_config(method) -> str:
 }
 """ % (
         DNS,
+        LOG,
         PORT,
         UUID,
         args.id,
@@ -613,6 +625,38 @@ def tcpsettings() -> str:
           }"""
     return data
 
+
+def loglevel(): 
+    """
+    loglevel are for changing Server-side loglevel
+    for more information check below link :
+    https://guide.v2fly.org/en_US/basics/log.html#server-side-configuration
+    """
+    global LOG
+
+    # list of loglevels
+    loglevel = ['debug','info','warning','error','none']
+
+    cmd = args.loglevel.lower()
+
+    # checking loglevel argument
+    if cmd == "debug":
+        LOG = loglevel[0]
+    if cmd == "info":
+        LOG = loglevel[1]
+    if cmd == "warning":
+        LOG = loglevel[2]
+    if cmd == "error":
+        LOG = loglevel[3]
+    if cmd == "none":
+        LOG = loglevel[4]
+
+    # printing list of log levels if user input is not in loglevels
+    if cmd not in loglevel :
+        print('list of loglevels :')
+        for levels in range(len(loglevel)):
+            print(green + loglevel[levels] + reset)
+        sys.exit()
 
 def vmess_simple():
     """
@@ -1000,178 +1044,174 @@ def shadowsocks_check():
             )
         )
 
-
 def protocol_check():
     if args.outband not in protocol_list:  # list of outband protocols
-        raise TypeError(
-            sys.exit(
-                f"""{yellow}! Use --outband to set method{reset}
-List of outband methods :
-  {green}freedom
-  blackhole
-  both : freedom + blackhole{reset}"""
-            )
-        )
-
+        print(yellow + '! Use --outband to set method' + reset),
+        print("List of outband methods :")
+        for protocol in range(len(protocol_list)):
+            protocol_list[2] = 'both : freedom + blackhole'
+            print(green + protocol_list[protocol] + reset)
+        sys.exit(2)
 
 def dns_check():
     if args.dns not in dnslist:  # list of DNS
-        raise TypeError(
-            sys.exit(
-                f"""List of Avalible DNS :
-  {green}google
-  cloudflare
-  both : google + cloudflare
-  opendns
-  quad9
-  adguard
-  nodns{reset}"""
-            )
-        )
-
+        print('List of Avalible DNS :')
+        for dnsnames in range(len(dnslist)):
+            dnslist[2] = 'both : google + cloudflare'
+            print(green + dnslist[dnsnames] + reset)
+        sys.exit(2)
 
 # ----------------------------- argparse Actions ----------------------------- #
 
-if len(sys.argv) <= 1:
-    parser.print_help()
+if __name__ == '__main__':
 
-# call DNS func
-if args.dns:
-    dnsselect()
-    dns_check()
+    if len(sys.argv) <= 1:
+        parser.print_help()
 
-# Set To NODNS
-else:
-    DNS = ""
+    # set log to warning by default
+    if args.loglevel == None:
+        LOG = 'warning'
+    else :
+        # call log func
+        loglevel()
 
-# DNS argument parser
-if args.dns == "both":
-    DNS = both
-if args.dns == "google":
-    DNS = google
-if args.dns == "cloudflare":
-    DNS = cloudflare
-if args.dns == "opendns":
-    DNS = opendns
-if args.dns == "quad9":
-    DNS = quad9
-if args.dns == "adguard":
-    DNS = adguard
-if args.dns == "nodns":
-    DNS = NODNS
+    # call DNS func
+    if args.dns:
+        dnsselect()
+        dns_check()
 
-# JSON custom template load
-if args.header:
-    with open(f"{args.header.name}", "r") as setting:
-        stream = setting.read()
-        args.header = stream
-else:
-    args.header = tcpsettings()
-
-# Insecure option
-if args.insecure == True :
-    args.insecure = 'true'
-if args.insecure == False :
-    args.insecure = 'false' 
-
-# VMess Port :
-if args.port == None:
-    pass
-else:
-    PORT = args.port
-
-# Custom uuid
-if args.uuid == None:
-    args.uuid = UUID
-else:
-    UUID = args.uuid
-
-# # Check WebSocket Domain Status Code 
-# if args.domain :
-#     websocket_domaincheck()
-#     print(green + 'Domain ٰValid!' + reset)
-#     ServerIP = f"{args.domain}"
-
-
-# Make VMess Config with Defined parameters
-if args.outband or args.generate:
-    vmess_make()
-    protocol_check()
-    vmess_raw()
-    COUNTRY()
-    print(
-        green + "! You Can Use docker-compose up -d to run V2ray-core\n"
-        "! Also You Can use --dockerup argument to run v2ray docker when Creating config",
-        reset,
-    )
-
-# ShadowSocks Password
-if args.sspass == None:
-    args.sspass = get_random_password()
-if args.obfspass == None:
-    args.obfspass = get_random_password()
-
-# ShadowSocks Method
-if args.ssmethod == None:
-    args.ssmethod = "chacha20-ietf-poly1305"
-if args.obfsmethod == None:
-    args.obfsmethod = "chacha20-ietf-poly1305"
-
-# Make ShadowSocks Config
-if args.ssmake:
-    shadowsocks_make(args.ssmethod)
-    COUNTRY()
-if args.obfsmake:
-    obfs_make(args.obfsmethod)
-    print(_port())
-    print("PASSWORD: " + blue + args.obfspass + reset)
-    COUNTRY()
-
-# Quick VMess Setup
-if args.vmess:
-    # Set to freedom if nothing entered
-    if args.outband == None:
-        args.outband = "freedom"
-    vmess_simple()
-
-# Quick ShadowSocks | Shadowsocks-OBFS Setup
-if args.shadowsocks:
-    shadowsocks_simple()
-if args.obfs:
-    obfs_simple()
-
-# Install XUI
-if args.xui :
-    x_ui()
-
-# Make ShadowSocks Link
-if args.sslink:
-    if args.ssmake is None or args.shadowsocks is None:
-        parser.error("--ssmake or --shadowsocks are required")
+    # Set To NODNS
     else:
-        print(shadowsocks_link_generator())
+        DNS = ""
 
-# Make OBFS Link (Same as SS)
-if args.obfslink:
-    if args.obfsmake is None or args.obfs is None:
-        parser.error("--obfsmake or --obfs are required")
+    # DNS argument parser
+    if args.dns == "both":
+        DNS = both
+    if args.dns == "google":
+        DNS = google
+    if args.dns == "cloudflare":
+        DNS = cloudflare
+    if args.dns == "opendns":
+        DNS = opendns
+    if args.dns == "quad9":
+        DNS = quad9
+    if args.dns == "adguard":
+        DNS = adguard
+    if args.dns == "nodns":
+        DNS = NODNS
+
+    # JSON custom template load
+    if args.header:
+        with open(f"{args.header.name}", "r") as setting:
+            stream = setting.read()
+            args.header = stream
     else:
-        print(shadowsocks_link_generator())
+        args.header = tcpsettings()
 
-# Make docker-compose for VMess
-if args.vmessdocker:
-    vmess_dockercompose()
-# Make docker-compose for ShadowSocks
-if args.ssdocker:
-    shadowsocks_dockercompose()
+    # Insecure option
+    if args.insecure == True :
+        args.insecure = 'true'
+    if args.insecure == False :
+        args.insecure = 'false' 
 
-# Run docker-compose
-if args.dockerup:
-    run_docker()
-
-# Make VMess Link
-if args.link:
-    if args.generate is None or args.outband is None:
-        parser.error("--generate and --outband are required")
+    # VMess Port :
+    if args.port == None:
+        pass
     else:
-        print(vmess_link_generator(args.linkname))
+        PORT = args.port
+
+    # Custom uuid
+    if args.uuid == None:
+        args.uuid = UUID
+    else:
+        UUID = args.uuid
+
+    # # Check WebSocket Domain Status Code 
+    # if args.domain :
+    #     websocket_domaincheck()
+    #     print(green + 'Domain ٰValid!' + reset)
+    #     ServerIP = f"{args.domain}"
+
+
+    # Make VMess Config with Defined parameters
+    if args.outband or args.generate:
+        vmess_make()
+        protocol_check()
+        vmess_raw()
+        COUNTRY()
+        print(
+            green + "! You Can Use docker-compose up -d to run V2ray-core\n"
+            "! Also You Can use --dockerup argument to run v2ray docker when Creating config",
+            reset,
+        )
+
+    # ShadowSocks Password
+    if args.sspass == None:
+        args.sspass = get_random_password()
+    if args.obfspass == None:
+        args.obfspass = get_random_password()
+
+    # ShadowSocks Method
+    if args.ssmethod == None:
+        args.ssmethod = "chacha20-ietf-poly1305"
+    if args.obfsmethod == None:
+        args.obfsmethod = "chacha20-ietf-poly1305"
+
+    # Make ShadowSocks Config
+    if args.ssmake:
+        shadowsocks_make(args.ssmethod)
+        COUNTRY()
+    if args.obfsmake:
+        obfs_make(args.obfsmethod)
+        print(_port())
+        print("PASSWORD: " + blue + args.obfspass + reset)
+        COUNTRY()
+
+    # Quick VMess Setup
+    if args.vmess:
+        # Set to freedom if nothing entered
+        if args.outband == None:
+            args.outband = "freedom"
+        vmess_simple()
+
+    # Quick ShadowSocks | Shadowsocks-OBFS Setup
+    if args.shadowsocks:
+        shadowsocks_simple()
+    if args.obfs:
+        obfs_simple()
+
+    # Install XUI
+    if args.xui :
+        x_ui()
+
+    # Make ShadowSocks Link
+    if args.sslink:
+        if args.ssmake is None or args.shadowsocks is None:
+            parser.error("--ssmake or --shadowsocks are required")
+        else:
+            print(shadowsocks_link_generator())
+
+    # Make OBFS Link (Same as SS)
+    if args.obfslink:
+        if args.obfsmake is None or args.obfs is None:
+            parser.error("--obfsmake or --obfs are required")
+        else:
+            print(shadowsocks_link_generator())
+
+    # Make docker-compose for VMess
+    if args.vmessdocker:
+        vmess_dockercompose()
+    # Make docker-compose for ShadowSocks
+    if args.ssdocker:
+        shadowsocks_dockercompose()
+
+    # Run docker-compose
+    if args.dockerup:
+        run_docker()
+
+    # Make VMess Link
+    if args.link:
+        if args.generate is None or args.outband is None:
+            parser.error("--generate and --outband are required")
+        else:
+            print(vmess_link_generator(args.linkname))

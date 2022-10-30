@@ -1035,14 +1035,10 @@ def shadowsocks_check():
 
     methodlist = ["chacha20-ietf-poly1305", "aes-256-gcm", "aes-128-gcm"]
     if args.ssmethod not in methodlist or args.obfsmethod not in methodlist:
-        raise TypeError(
-            sys.exit(
-                f"""Select one method :
-    {green}chacha20-ietf-poly1305
-    aes-256-gcm
-    aes-128-gcm{reset}"""
-            )
-        )
+        print('Select one method :')
+        for methods in range(len(methodlist)):
+            print(green + methodlist[methods] + reset)
+        sys.exit(2)
 
 def protocol_check():
     if args.outband not in protocol_list:  # list of outband protocols

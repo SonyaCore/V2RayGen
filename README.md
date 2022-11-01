@@ -7,9 +7,18 @@
 [![Telegram][telegram-shield]][telegram-url]
 </h1>
 
-<p>
+<h3>
 V2RayGen is a fully automated script that helps you to set up your own v2ray server in the fastest time.
-</p>
+
+</h3>
+
+  [**Usage**](#usage)
+  
+  [**QuickSetup**](#quicksetup)
+  
+  [**Options**](#options)
+  
+  [**License**](#license)
 
 ## **Prerequisites & Dependencies**
 For running this script, you must have **docker**, **docker-compose** and **python3** installed on your server **or** you can use `--dockerup` switch which installs docker & docker-compose and runs v2ray-core automatically
@@ -18,9 +27,16 @@ For running this script, you must have **docker**, **docker-compose** and **pyth
 
 `curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 - -h`
 
+<br>
+
 ![Sample](contents/content1.png)
 
-### **Quick VMess Setup with Default Setting** :
+<br>
+
+
+## QuickSetup
+
+### **Quick `VMess` Setup with Default Setting** :
 
 ```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess
@@ -36,28 +52,25 @@ sudo python3 V2RayGen.py --vmess
 
 > for changing port simply use --port <int>
 
-### **Quick ShadowSocks Setup with Default Setting** :
+### **Quick `ShadowSocks` Setup with Default Setting** :
 
 ```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --shadowsocks
 ```
 OR 
-### **Quick ShadowSocks-OBFS Setup with Default Setting** :
+### **Quick `ShadowSocks-OBFS` Setup with Default Setting** :
 ```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --obfs
 ```
 
 ![Sample](contents/content4.png)
 
-### **Advanced Method** :
 
-```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --generate --outband both --dns cloudflare --vmessdocker --dockerup --link --linkname vmess-ca --port 8090
-```
-
-![Sample](contents/content2.png)
+## **Options**
 
 **Supported DNS providers:**
+> use `--dns` to set one of below dns's for.
+
 |DNS                |
 |-------------------|
 |google             |
@@ -65,13 +78,22 @@ curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sud
 |opendns            |
 |quad9              |
 |adguard            |
- 
+
+> https://www.v2ray.com/en/configuration/dns.html
+
+
 **Supported Outband Protocols:**
+> use `--generate --outband` to set one of below protocols.
+
 |Outband  Protocols |
 |-------------------|
 |Freedom|           |
 |BlackHole          |
 |Freedom + BlackHole|
+
+> https://www.v2ray.com/en/configuration/protocols.html
+
+ <br>
 
 ### **Custom JSON header**
 
@@ -106,16 +128,18 @@ curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sud
   }
 }
 ```
----
-  
-### Todo List
+### Link formats : 
+#### VMess :
+```json
+vmess://{"add":"ip / domain ","aid":"alterid","host":"","id":"random-uuid","net":"ws","path":"websocket-path","port":"80","ps":"linkname","tls":"","type":"none","v":"2" }
+```
+#### ShadowSocks :
+```json
+ss://shadowsocks-security-method:random-uuid@domain/ip :port
+```
 
-- [x] ShadowSocks JSON Template
-- [x] Adding more options for changing configuration
-- [x] Catch Errors if Error Occured
-- [ ] More Exception Error Handeling
-- [ ] Add Verbose Mode With Logger
-
+## License
+Licensed under the [GPL-3](LICENSE) license.
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
@@ -130,3 +154,4 @@ curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sud
 [issues-url]: https://github.com/SonyaCore/V2RayGen/issues
 [telegram-shield]: https://img.shields.io/badge/Telegram-blue.svg?style=flat&logo=telegram
 [telegram-url]: https://t.me/ReiNotes
+[LICENSE]: https://www.gnu.org/licenses/gpl-3.0.en.html

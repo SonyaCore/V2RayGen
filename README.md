@@ -139,7 +139,7 @@ ss://shadowsocks-security-method:random-uuid@domain/ip :port
 ```
 
 ## License
-Licensed under the [GPL-3](LICENSE) license.
+Licensed under the [GPL-3][LICENSE] license.
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
@@ -154,4 +154,4 @@ Licensed under the [GPL-3](LICENSE) license.
 [issues-url]: https://github.com/SonyaCore/V2RayGen/issues
 [telegram-shield]: https://img.shields.io/badge/Telegram-blue.svg?style=flat&logo=telegram
 [telegram-url]: https://t.me/ReiNotes
-[LICENSE]: https://www.gnu.org/licenses/gpl-3.0.en.html
+[LICENSE]: LICENCE

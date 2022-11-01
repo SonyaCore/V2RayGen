@@ -26,7 +26,7 @@ from urllib.error import HTTPError, URLError
 NAME = "V2RayGen"
 
 # Version
-VERSION = "0.9.3"
+VERSION = "0.9.4"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -106,7 +106,7 @@ vmess.add_argument(
     type=str,
     metavar="",
     help="Name for VMess Link. default: [v2ray]",
-    default='v2ray',
+    default="v2ray",
 )
 
 vmess.add_argument(
@@ -200,6 +200,15 @@ vmess.add_argument(
     help="loglevel for vmess config. default: [warning]",
 )
 
+vmess.add_argument(
+    "--security",
+    "--client-security",
+    action="store",
+    type=str,
+    metavar="",
+    help="Security for Client-side JSON config. default: [aes-128-gcm]",
+)
+
 shadowsocks = parser.add_argument_group("ShadowSocks")
 
 shadowsocks.add_argument(
@@ -291,7 +300,7 @@ docker.add_argument(
 )
 
 opt = parser.add_argument_group("info")
-opt.add_argument("-v","--version", action="version", version="%(prog)s " + VERSION)
+opt.add_argument("-v", "--version", action="version", version="%(prog)s " + VERSION)
 
 # Arg Parse
 args = parser.parse_args()
@@ -318,8 +327,8 @@ __      _____  _____              _____
                            |___/
 {reset}"""
     for char in data:
-            sys.stdout.write(char)
-            time.sleep(t)
+        sys.stdout.write(char)
+        time.sleep(t)
     sys.stdout.write("\n")
 
 
@@ -336,7 +345,9 @@ def IP():
         data = json.loads(response.read().decode())
         return data["query"]
 
+
 ServerIP = IP()
+
 
 def get_random_password(length=24):
     """
@@ -626,16 +637,15 @@ def tcpsettings() -> str:
     return data
 
 
-def loglevel(): 
+def loglevel():
     """
     loglevel are for changing Server-side loglevel
-    for more information check below link :
     https://guide.v2fly.org/en_US/basics/log.html#server-side-configuration
     """
     global LOG
 
     # list of loglevels
-    loglevel = ['debug','info','warning','error','none']
+    loglevel = ["debug", "info", "warning", "error", "none"]
 
     cmd = args.loglevel.lower()
 
@@ -652,11 +662,108 @@ def loglevel():
         LOG = loglevel[4]
 
     # printing list of log levels if user input is not in loglevels
-    if cmd not in loglevel :
-        print('list of loglevels :')
+    if cmd not in loglevel:
+        print("list of loglevels :")
         for levels in range(len(loglevel)):
             print(green + loglevel[levels] + reset)
         sys.exit()
+
+
+def client_security():
+    """
+    client_security are for changing Client-side Security method
+    https://www.v2ray.com/en/configuration/protocols/vmess.html#userobject
+    """
+    global SECURITY
+
+    # list of loglevels
+    security_methods = ["aes-128-gcm", "chacha20-poly1305", "none"]
+
+    cmd = args.security.lower()
+
+    # checking loglevel argument
+    if cmd == "aes-128-gcm":
+        SECURITY = security_methods[0]
+    if cmd == "chacha20-poly1305":
+        SECURITY = security_methods[1]
+    if cmd == "none":
+        SECURITY = security_methods[2]
+
+    # printing list of security methods if user input is not in security_methods var.
+    if cmd not in security_methods:
+        print("list of security methods :")
+        for methods in range(len(security_methods)):
+            print(green + security_methods[methods] + reset)
+        sys.exit()
+
+
+def client_side_vmess_configuration():
+    data = """{
+    "inbounds": [
+      {
+        "port": 1080,
+        "protocol": "socks",
+        "settings": {
+          "auth": "noauth"
+        }
+      }
+    ],
+    "log": {
+    "loglevel": "%s"
+},
+    "outbounds": [
+        {
+            "mux": {
+            },
+            "protocol": "vmess",
+            "sendThrough": "0.0.0.0",
+            "settings": {
+                "vnext": [
+                    {
+                        "address": "%s",
+                        "port": %s,
+                        "users": [
+                            {
+                                "id": "%s",
+                                "security": "%s"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "streamSettings": {
+                "network": "ws",
+                "tlsSettings": {
+                    "disableSystemRoot": false
+                },
+                "wsSettings": {
+                    "path": "%s"
+                },
+                "xtlsSettings": {
+                    "disableSystemRoot": false
+                }
+            },
+            "tag": "%s"
+        }
+    ]
+  }""" % (
+        LOG,
+        ServerIP,
+        PORT,
+        UUID,
+        SECURITY,
+        args.wspath,
+        args.linkname,
+    )
+    name = f"client-{args.linkname}.json"
+    with open(name, "w") as wb:
+        wb.write(data)
+        wb.close
+
+        print("")
+        print(blue + "! Client-side VMess Config Generated.", reset)
+        print(blue + f"! Use {name} for using proxy with v2ray-core directly.", reset)
+
 
 def vmess_simple():
     """
@@ -669,6 +776,7 @@ def vmess_simple():
     run_docker()
     vmess_raw()
     print(vmess_link_generator(args.linkname))
+    client_side_vmess_configuration()
     COUNTRY()
 
 
@@ -791,12 +899,19 @@ def obfs_simple():
 
 # -------------------------------- x-ui  --------------------------------- #
 
+
 def x_ui():
-    try :
-    # setup xui needs root privileges
-        run = subprocess.run("curl https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh | bash", shell=True , check=True, executable='/bin/bash')
+    try:
+        # setup xui needs root privileges
+        run = subprocess.run(
+            "curl https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh | bash",
+            shell=True,
+            check=True,
+            executable="/bin/bash",
+        )
     except subprocess.CalledProcessError as e:
-        print(error + 'Root privileges required!')
+        print(error + "Root privileges required!")
+
 
 # -------------------------------- Docker --------------------------------- #
 
@@ -913,6 +1028,7 @@ def run_docker():
 
 # ------------------------------ VMess Link Gen ------------------------------- #
 
+
 def vmess_raw() -> str:
     print("IP: " + blue + str((ServerIP)) + reset)
     print("ID: " + blue + str(args.id) + reset)
@@ -920,6 +1036,7 @@ def vmess_raw() -> str:
     print("WSPATH: " + blue + str(args.wspath) + reset)
     print("PORT: " + blue + str(PORT) + reset)
     print("LINKNAME: " + blue + str(args.linkname) + reset)
+
 
 def vmess_link_generator(vmess_config_name) -> str:
     """
@@ -933,6 +1050,7 @@ def vmess_link_generator(vmess_config_name) -> str:
         vmess_config_name = "v2ray"
 
     prelink = "vmess://"
+    print("")
     print(yellow + "! Use below link for your v2ray client" + reset)
     raw_link = bytes(
         "{"
@@ -971,9 +1089,12 @@ def shadowsocks_link_generator() -> str:
     """
 
     prelink = "ss://"
+    print("")
     print(yellow + "! Use below link for your ShadowSocks client" + reset)
 
-    raw_link = bytes(f"{args.ssmethod}:{args.sspass}@{ServerIP}:{PORT}", encoding="ascii")
+    raw_link = bytes(
+        f"{args.ssmethod}:{args.sspass}@{ServerIP}:{PORT}", encoding="ascii"
+    )
 
     link = base64.b64encode(raw_link)  # encode raw link
 
@@ -986,32 +1107,33 @@ def shadowsocks_link_generator() -> str:
 
 # ------------------------------ Nginx Template ------------------------------- #
 
-def nginx():
-#     if args.header :
-#         nginx = """http {
-#     map $http_upgrade $connection_upgrade {
-#         default upgrade;
-#         '' close;
-#     }
- 
-#     upstream websocket {
-#         server %s:%s;
-#     }
- 
-#     server {
-#         listen 1080;
-#         location %s {
-#             proxy_pass http://websocket;
-#             proxy_http_version 1.1;
-#             proxy_set_header Upgrade $http_upgrade;
-#             proxy_set_header Connection $connection_upgrade;
-#             proxy_set_header Host $host;
-#             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-#             proxy_set_header X-Real-IP $remote_addr;
 
-#         }
-#     }
-# }"""%(ServerIP,PORT,args.wspath)
+def nginx():
+    #     if args.header :
+    #         nginx = """http {
+    #     map $http_upgrade $connection_upgrade {
+    #         default upgrade;
+    #         '' close;
+    #     }
+
+    #     upstream websocket {
+    #         server %s:%s;
+    #     }
+
+    #     server {
+    #         listen 1080;
+    #         location %s {
+    #         proxy_pass http://websocket;
+    #         proxy_http_version 1.1;
+    #         proxy_set_header Upgrade $http_upgrade;
+    #         proxy_set_header Connection $connection_upgrade;
+    #         proxy_set_header Host $host;
+    #         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    #         proxy_set_header X-Real-IP $remote_addr;
+
+    #         }
+    #     }
+    # }"""%(ServerIP,PORT,args.wspath)
 
     nginx = """stream {
     upstream external {
@@ -1035,41 +1157,51 @@ def shadowsocks_check():
 
     methodlist = ["chacha20-ietf-poly1305", "aes-256-gcm", "aes-128-gcm"]
     if args.ssmethod not in methodlist or args.obfsmethod not in methodlist:
-        print('Select one method :')
+        print("Select one method :")
         for methods in range(len(methodlist)):
             print(green + methodlist[methods] + reset)
         sys.exit(2)
 
+
 def protocol_check():
     if args.outband not in protocol_list:  # list of outband protocols
-        print(yellow + '! Use --outband to set method' + reset),
+        print(yellow + "! Use --outband to set method" + reset),
         print("List of outband methods :")
         for protocol in range(len(protocol_list)):
-            protocol_list[2] = 'both : freedom + blackhole'
+            protocol_list[2] = "both : freedom + blackhole"
             print(green + protocol_list[protocol] + reset)
         sys.exit(2)
 
+
 def dns_check():
     if args.dns not in dnslist:  # list of DNS
-        print('List of Avalible DNS :')
+        print("List of Avalible DNS :")
         for dnsnames in range(len(dnslist)):
-            dnslist[2] = 'both : google + cloudflare'
+            dnslist[2] = "both : google + cloudflare"
             print(green + dnslist[dnsnames] + reset)
         sys.exit(2)
 
+
 # ----------------------------- argparse Actions ----------------------------- #
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     if len(sys.argv) <= 1:
         parser.print_help()
 
-    # set log to error by default
+    # set log to 'error' by default
     if args.loglevel == None:
-        LOG = 'error'
-    else :
+        LOG = "error"
+    else:
         # call log func
         loglevel()
+
+    # set security to 'aes-128-gcm' by default
+    if args.security == None:
+        SECURITY = "aes-128-gcm"
+    else:
+        # call log func
+        client_security()
 
     # call DNS func
     if args.dns:
@@ -1105,10 +1237,10 @@ if __name__ == '__main__':
         args.header = tcpsettings()
 
     # Insecure option
-    if args.insecure == True :
-        args.insecure = 'true'
-    if args.insecure == False :
-        args.insecure = 'false' 
+    if args.insecure == True:
+        args.insecure = "true"
+    if args.insecure == False:
+        args.insecure = "false"
 
     # VMess Port :
     if args.port == None:
@@ -1122,12 +1254,11 @@ if __name__ == '__main__':
     else:
         UUID = args.uuid
 
-    # # Check WebSocket Domain Status Code 
+    # # Check WebSocket Domain Status Code
     # if args.domain :
     #     websocket_domaincheck()
     #     print(green + 'Domain ٰValid!' + reset)
     #     ServerIP = f"{args.domain}"
-
 
     # Make VMess Config with Defined parameters
     if args.outband or args.generate:
@@ -1177,7 +1308,7 @@ if __name__ == '__main__':
         obfs_simple()
 
     # Install XUI
-    if args.xui :
+    if args.xui:
         x_ui()
 
     # Make ShadowSocks Link

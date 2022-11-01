@@ -1265,6 +1265,7 @@ if __name__ == "__main__":
         vmess_make()
         protocol_check()
         vmess_raw()
+        client_side_vmess_configuration()
         COUNTRY()
         print(
             green + "! You Can Use docker-compose up -d to run V2ray-core\n"

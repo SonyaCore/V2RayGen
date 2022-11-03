@@ -163,7 +163,7 @@ vmess.add_argument(
 vmess.add_argument(
     "--id",
     "--alterid",
-    action="store",
+    action  ="store",
     type=int,
     metavar="",
     help="Optional alterid. default: [0]",
@@ -947,15 +947,17 @@ def shadowsocks_dockercompose():
     in this docker-compose shadowsocks-libev is being used for running shadowsocks in the container.
     """
 
-    data = """shadowsocks:
-  image: shadowsocks/shadowsocks-libev
-  ports:
-    - "%s:8388"
-  environment:
-    - TIMEOUT=300
-    - METHOD=%s
-    - PASSWORD=%s
-  restart: always""" % (
+    data = """version: '3'
+services:
+  shadowsocks:
+    image: shadowsocks/shadowsocks-libev
+    ports:
+      - "%s:8388"
+    environment:
+      - TIMEOUT=300
+      - METHOD=%s
+      - PASSWORD=%s
+    restart: always""" % (
         PORT,
         args.ssmethod,
         args.sspass,

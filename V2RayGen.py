@@ -17,6 +17,7 @@ import json
 import random
 import string
 import logging
+# import csv
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
 
@@ -444,6 +445,26 @@ def dnsselect():
   },"""
 
     NODNS = ""
+        
+# def get_distro() -> str:
+# 	"""
+# 	return distro name
+# 	"""
+# 	RELEASE_INFO = {}
+# 	with open("/etc/os-release") as f:
+# 		reader = csv.reader(f, delimiter="=")
+# 		for row in reader:
+# 			if row:
+# 				RELEASE_INFO[row[0]] = row[1]
+
+# 	return("{}".format(RELEASE_INFO["NAME"]))
+
+# def install_certbot():
+#     if get_distro() == "Ubuntu" or "Debian":
+#         subprocess.run("apt install -yqq certbot ", shell=True, check=True)
+
+# def create_key():
+#     subprocess.run("openssl req -new -newkey rsa:4096 -days 735 -nodes -x509 -subj '/C=UK/ST=Denial/L=String/O=Dis/CN=www.ray.uk' -keyout ssl.key -out ssl.cert", shell=True, check=True)
 
 
 # def websocket_domaincheck(url = args.domain,t = 10) :
@@ -925,7 +946,7 @@ def vmess_dockercompose():
     data = """version: '3'
 services:
   v2ray:
-    image: v2fly/v2fly-core
+    image: v2fly/v2fly-core:v4.45.2
     restart: always
     network_mode: host
     environment:

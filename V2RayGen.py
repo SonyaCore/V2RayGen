@@ -16,8 +16,7 @@ import base64
 import json
 import random
 import string
-import logging
-# import csv
+import csv
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
 
@@ -27,7 +26,7 @@ from urllib.error import HTTPError, URLError
 NAME = "V2RayGen"
 
 # Version
-VERSION = "0.9.4"
+VERSION = "0.9.6"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -41,12 +40,13 @@ OBFS = "docker-compose.yml"
 PORT = 80
 
 # Docker Compose Version
-DOCKERCOMPOSEVERSION = "2.11.2"
+DOCKERCOMPOSEVERSION = "2.12.2"
 
 # -------------------------------- Argument Parser --------------------------------- #
 
+usage = f"python3 {NAME}.py \u001b[31m <protocol>\u001b[0m \u001b[34m <optional args> \u001b[0m"
 formatter = lambda prog: argparse.HelpFormatter(prog, max_help_position=64)
-parser = argparse.ArgumentParser(prog=f"{NAME}", formatter_class=formatter)
+parser = argparse.ArgumentParser(prog=f"{NAME}", formatter_class=formatter, usage=usage)
 
 
 def str2bool(v):
@@ -79,13 +79,13 @@ gp.add_argument(
     action="store_true",
     help="Quick ShadowSocks-OBFS & Start with docker",
 )
+
 gp.add_argument(
     "--xui",
     "-xui",
     action="store_true",
     help="Setup X-Ui with the official installer script",
 )
-
 
 vmess = parser.add_argument_group("VMess")
 
@@ -164,7 +164,7 @@ vmess.add_argument(
 vmess.add_argument(
     "--id",
     "--alterid",
-    action  ="store",
+    action="store",
     type=int,
     metavar="",
     help="Optional alterid. default: [0]",
@@ -189,7 +189,7 @@ vmess.add_argument(
     action="store",
     type=argparse.FileType("r"),
     metavar="",
-    help="Optional JSON HTTPRequest Header.",
+    help="Optional JSON HTTPRequest Header",
 )
 
 vmess.add_argument(
@@ -300,6 +300,15 @@ docker.add_argument(
     help="Start docker-compose in system",
 )
 
+firewall = parser.add_argument_group("Firewall")
+
+firewall.add_argument(
+    "--firewall",
+    "-fw",
+    action="store_true",
+    help="Adding firewall rules after generating configuration",
+)
+
 opt = parser.add_argument_group("info")
 opt.add_argument("-v", "--version", action="version", version="%(prog)s " + VERSION)
 
@@ -336,17 +345,25 @@ __      _____  _____              _____
 # Return IP
 def IP():
     """
-    Return IP with ip-api.com
+    return actual IP of the server.
+    if there are multiple interfaces with private IP the public IP will be used for the config
     """
-    url = "http://ip-api.com/json/?fields=query"
+    try:
+        url = "http://ip-api.com/json/?fields=query"
+        httprequest = Request(url, headers={"Accept": "application/json"})
 
-    httprequest = Request(url, headers={"Accept": "application/json"})
+        with urlopen(httprequest) as response:
+            data = json.loads(response.read().decode())
+            return data["query"]
+    except HTTPError:
+        print(
+            error
+            + f'failed to send request to {url.split("/json")[0]} please check your connection'
+            + reset
+        )
 
-    with urlopen(httprequest) as response:
-        data = json.loads(response.read().decode())
-        return data["query"]
 
-
+# set server IP t
 ServerIP = IP()
 
 
@@ -362,82 +379,105 @@ def get_random_password(length=24):
 
 
 def COUNTRY():
+    """
+    return Country Code of the server.
+    country code are used for detecting server location
+    if server are not in the filtered list nginx template will be generated
+    """
+    try:
+        countrycode = "http://ip-api.com/json/?fields=countryCode"
+        httprequest = Request(countrycode, headers={"Accept": "application/json"})
 
-    countrycode = "http://ip-api.com/json/?fields=countryCode"
+        with urlopen(httprequest) as response:
+            data = json.loads(response.read().decode())
 
-    httprequest = Request(countrycode, headers={"Accept": "application/json"})
-
-    with urlopen(httprequest) as response:
-        data = json.loads(response.read().decode())
-
-    if data["countryCode"] != "IR" or "CN" or "VN":
+        if data["countryCode"] != "IR" or "CN" or "VN":
+            print(
+                yellow
+                + f"\n! You Are Using External Server [{data['countryCode']}]\n"
+                + "Nginx Template:"
+                + reset
+            )
+            print(nginx())
+            print(yellow + "! Append to /etc/nginx/nginx.conf" + reset)
+    except HTTPError:
         print(
-            yellow
-            + f"\n! You Are Using External Server [{data['countryCode']}]\n"
-            + "Nginx Template:"
+            error
+            + f'failed to send request to {countrycode.split("/json")[0]} please check your connection'
             + reset
         )
-        print(nginx())
-        print(yellow + "! Append to /etc/nginx/nginx.conf" + reset)
 
 
 def _uuid():
     """
-    Return Randomized UUID and port after making config
+    return randomized UUID and port after making config
     """
     return "UUID: " + blue + str(UUID) + reset
 
 
 def _port():
     """
-    Return PORT  after making config
+    return PORT after making config
     """
     return "PORT: " + blue + str(PORT) + reset
 
 
 def dnsselect():
     """
-    DNS Selection
+    DNS Selection.
+    dnsselect are used for set a dns to the generated config
+    https://www.v2ray.com/en/configuration/dns.html#dnsobject
     """
-
-    global both, google, cloudflare, opendns, quad9, adguard, NODNS
-    global dnslist
+    global dnslist, NODNS , dnsserver
     dnslist = ["both", "google", "cloudflare", "opendns", "quad9", "adguard", "nodns"]
-
-    both = """"dns": {
+    
+    dnsserver = {}
+    dnsserver[
+        0
+    ] = """"dns": {
       "servers": [
         "8.8.8.8",
         "1.1.1.1",
         "4.2.2.4"
     ]
   },"""
-    google = """"dns": {
+    dnsserver[
+        1
+    ] = """"dns": {
       "servers": [
         "8.8.8.8",
         "4.2.2.4"
     ]
   },"""
-    cloudflare = """"dns": {
+    dnsserver[
+        2
+    ] = """"dns": {
       "servers": [
         "1.1.1.1"
     ]
   },"""
 
-    opendns = """"dns": {
+    dnsserver[
+        3
+    ] = """"dns": {
       "servers": [
         "208.67.222.222",
         "208.67.220.220"
     ]
   },"""
 
-    quad9 = """"dns": {
+    dnsserver[
+        4
+    ] = """"dns": {
       "servers": [
         "9.9.9.9",
         "149.112.112.112"
     ]
   },"""
 
-    adguard = """"dns": {
+    dnsserver[
+        5
+    ] = """"dns": {
       "servers": [
         "94.140.14.14",
         "94.140.15.15"
@@ -445,19 +485,21 @@ def dnsselect():
   },"""
 
     NODNS = ""
-        
-# def get_distro() -> str:
-# 	"""
-# 	return distro name
-# 	"""
-# 	RELEASE_INFO = {}
-# 	with open("/etc/os-release") as f:
-# 		reader = csv.reader(f, delimiter="=")
-# 		for row in reader:
-# 			if row:
-# 				RELEASE_INFO[row[0]] = row[1]
 
-# 	return("{}".format(RELEASE_INFO["NAME"]))
+
+def get_distro() -> str:
+    """
+    return distro name based on os-release info
+    """
+    RELEASE_INFO = {}
+    with open("/etc/os-release") as f:
+        reader = csv.reader(f, delimiter="=")
+        for row in reader:
+            if row:
+                RELEASE_INFO[row[0]] = row[1]
+
+    return "{}".format(RELEASE_INFO["NAME"])
+
 
 # def install_certbot():
 #     if get_distro() == "Ubuntu" or "Debian":
@@ -488,7 +530,8 @@ def dnsselect():
 
 def vmess_make():
     """
-    Make JSON config which reads --outband for making v2ray config with specific protocol
+    Make JSON config which reads --outband for making v2ray vmess config with specific protocol
+    https://www.v2ray.com/en/configuration/protocols/vmess.html
     """
 
     global protocol_list
@@ -579,7 +622,7 @@ def websocket_config(path) -> str:
     WebSocket stream setting template for JSON.
     by default, WebSocket is used for transporting data.
     Websocket connections can be proxied by HTTP servers such as Nginx.
-
+    https://www.v2ray.com/en/configuration/transport/websocket.html
     """
     if not path:
         path = "/graphql"
@@ -603,6 +646,7 @@ def freedom() -> str:
     It passes all TCP or UDP connection to their destinations.
     This outbound is used when you want to send traffic to its real destination.
     it can be used as a single outbound connection witch default --vmess arg uses.
+    https://www.v2ray.com/en/configuration/protocols/freedom.html
     """
 
     freedom = """ {
@@ -619,6 +663,7 @@ def blackhole() -> str:
 
     with this fucntion blackhole outbound will be added in json
     it can be combined with freedom or as a single outbound connection
+    https://www.v2ray.com/en/configuration/protocols/blackhole.html
     """
 
     blackhole = """ {
@@ -634,6 +679,10 @@ def blackhole() -> str:
 
 
 def tcpsettings() -> str:
+    """
+    default tcp setting header for json configuration.
+    for using custom configuration use ( --header file.json ) option to configure your own header
+    """
     data = """{
             "header": {
               "type": "http",
@@ -719,6 +768,10 @@ def client_security():
 
 
 def client_side_vmess_configuration():
+    """
+    client side configuration for generating client side json configuration.
+    it can be used as configuration file for v2ray-core.
+    """
     data = """{
     "inbounds": [
       {
@@ -841,7 +894,7 @@ def shadowsocks_config(method, password) -> str:
 
 def shadowsocks_simple():
     """
-    Quick Shadowsocks Configuration.
+    quick shadowsocks configuration
     """
 
     shadowsocks_make(args.ssmethod)
@@ -855,6 +908,9 @@ def shadowsocks_simple():
 
 
 def obfs_make(method) -> str:
+    """
+    generating shadowsocks-obfs configuration from command
+    """
 
     banner()
     shadowsocks_check()
@@ -922,6 +978,9 @@ def obfs_simple():
 
 
 def x_ui():
+    """
+    installing x-ui using official installation script.
+    """
     try:
         # setup xui needs root privileges
         run = subprocess.run(
@@ -941,18 +1000,20 @@ def vmess_dockercompose():
     """
     Create VMess docker-compose file for v2ray-core.
     in this docker-compose v2fly-core is being used for running v2ray in the container.
+    https://hub.docker.com/r/v2fly/v2fly-core
     """
 
     data = """version: '3'
 services:
   v2ray:
-    image: v2fly/v2fly-core:v4.45.2
+    image: v2fly/v2fly-core
     restart: always
     network_mode: host
     environment:
       - V2RAY_VMESS_AEAD_FORCED=false
     volumes:
-        - ./%s:/etc/v2ray/config.json:ro""" % (
+        - ./%s:/etc/v2ray/config.json:ro
+    entrypoint: ["v2ray", "run", "-c", "/etc/v2ray/config.json"]""" % (
         VMESS
     )
 
@@ -966,6 +1027,7 @@ def shadowsocks_dockercompose():
     """
     Create ShadowSocks docker-compose file for shadowsocks-libev.
     in this docker-compose shadowsocks-libev is being used for running shadowsocks in the container.
+    https://hub.docker.com/r/shadowsocks/shadowsocks-libev
     """
 
     data = """version: '3'
@@ -1047,6 +1109,50 @@ def run_docker():
         subprocess.run(
             "docker-compose -f docker-compose.yml up -d", shell=True, check=True
         )
+
+
+# ------------------------------ Firewall ------------------------------- #
+
+
+def firewall_config():
+    """
+    add configuration port to firewall.
+    by default, it checks if the ufw exists and adds the rule to the firewall
+    else iptables firewall rule will be added
+    """
+    if os.path.exists("/usr/sbin/ufw"):
+        service = "ufw"
+        # check ufw state
+        ufw = subprocess.call(["ufw", "status"])
+        if ufw == 0:
+            subprocess.call(["ufw", "allow", PORT])
+        else:
+            pass
+    elif os.path.exists("/usr/sbin/firewalld"):
+        service = "firewalld"
+        # check firewalld state
+        firewalld = subprocess.call(["firewall-cmd", "--state"])
+        if firewalld == 0:
+            subprocess.run(
+                f"firewall-cmd --permanent --add-port={PORT}/tcp",
+                shell=True,
+                check=True,
+            )
+        else:
+            pass
+    else:
+        service = "iptables"
+        subprocess.run(
+            f"iptables -t filter -A INPUT -p tcp --dport {PORT} -j ACCEPT",
+            shell=True,
+            check=True,
+        )
+        subprocess.run(
+            f"iptables -t filter -A OUTPUT -p tcp --dport {PORT} -j ACCEPT",
+            shell=True,
+            check=True,
+        )
+    print(green + "Added " + PORT + "to" + service + reset)
 
 
 # ------------------------------ VMess Link Gen ------------------------------- #
@@ -1132,6 +1238,10 @@ def shadowsocks_link_generator() -> str:
 
 
 def nginx():
+    """
+    nginx template for forwarding v2ray service with nginx
+    """
+
     #     if args.header :
     #         nginx = """http {
     #     map $http_upgrade $connection_upgrade {
@@ -1237,17 +1347,17 @@ if __name__ == "__main__":
 
     # DNS argument parser
     if args.dns == "both":
-        DNS = both
+        DNS = dnsserver[0]
     if args.dns == "google":
-        DNS = google
+        DNS = dnsserver[1]
     if args.dns == "cloudflare":
-        DNS = cloudflare
+        DNS = dnsserver[2]
     if args.dns == "opendns":
-        DNS = opendns
+        DNS = dnsserver[3]
     if args.dns == "quad9":
-        DNS = quad9
+        DNS = dnsserver[4]
     if args.dns == "adguard":
-        DNS = adguard
+        DNS = dnsserver[5]
     if args.dns == "nodns":
         DNS = NODNS
 
@@ -1284,7 +1394,7 @@ if __name__ == "__main__":
     #     ServerIP = f"{args.domain}"
 
     # Make VMess Config with Defined parameters
-    if args.outband or args.generate:
+    if args.generate:
         vmess_make()
         protocol_check()
         vmess_raw()
@@ -1320,9 +1430,9 @@ if __name__ == "__main__":
 
     # Quick VMess Setup
     if args.vmess:
-        # Set to freedom if nothing entered
+        # Set to freedom + blackhole if nothing entered
         if args.outband == None:
-            args.outband = "freedom"
+            args.outband = "both"
         vmess_simple()
 
     # Quick ShadowSocks | Shadowsocks-OBFS Setup
@@ -1366,3 +1476,6 @@ if __name__ == "__main__":
             parser.error("--generate and --outband are required")
         else:
             print(vmess_link_generator(args.linkname))
+    # add firewall rules
+    if args.firewall:
+        firewall_config()

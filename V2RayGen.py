@@ -26,7 +26,7 @@ from urllib.error import HTTPError, URLError
 NAME = "V2RayGen"
 
 # Version
-VERSION = "0.9.6"
+VERSION = "0.9.7"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -42,9 +42,18 @@ PORT = 80
 # Docker Compose Version
 DOCKERCOMPOSEVERSION = "2.12.2"
 
+# -------------------------------- Colors --------------------------------- #
+
+# Color Format
+green = "\u001b[32m"
+yellow = "\u001b[33m"
+blue = "\u001b[34m"
+error = "\u001b[31m"
+reset = "\u001b[0m"
+
 # -------------------------------- Argument Parser --------------------------------- #
 
-usage = f"python3 {NAME}.py \u001b[31m <protocol>\u001b[0m \u001b[34m <optional args> \u001b[0m"
+usage = f"python3 {NAME}.py {error} <protocol> {reset} {blue} <optional args> {reset}"
 formatter = lambda prog: argparse.HelpFormatter(prog, max_help_position=64)
 parser = argparse.ArgumentParser(prog=f"{NAME}", formatter_class=formatter, usage=usage)
 
@@ -60,34 +69,42 @@ def str2bool(v):
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
-gp = parser.add_mutually_exclusive_group()
+quick = parser.add_argument_group(f"{green}Quick Setup{reset}")
 
-gp.add_argument(
+quick.add_argument(
     "--vmess", "-vm", action="store_true", help="Quick VMess & Start with docker"
 )
 
-gp.add_argument(
+quick.add_argument(
     "--shadowsocks",
     "-ss",
     action="store_true",
     help="Quick ShadowSocks & Start with docker",
 )
 
-gp.add_argument(
+quick.add_argument(
     "--obfs",
     "-ob",
     action="store_true",
     help="Quick ShadowSocks-OBFS & Start with docker",
 )
 
-gp.add_argument(
+panel = parser.add_argument_group(f"{green}Panels{reset}")
+
+panel.add_argument(
     "--xui",
     "-xui",
     action="store_true",
     help="Setup X-Ui with the official installer script",
 )
+panel.add_argument(
+    "--trojanpanel",
+    "-tp",
+    action="store_true",
+    help="Setup Trojan Panel with the official installer script",
+)
 
-vmess = parser.add_argument_group("VMess")
+vmess = parser.add_argument_group(f"{green}VMess{reset}")
 
 vmess.add_argument(
     "--generate", "--gen", action="store_true", help="Generate VMess JSON config"
@@ -210,7 +227,7 @@ vmess.add_argument(
     help="Security for Client-side JSON config. default: [aes-128-gcm]",
 )
 
-shadowsocks = parser.add_argument_group("ShadowSocks")
+shadowsocks = parser.add_argument_group(f"{green}ShadowSocks{reset}")
 
 shadowsocks.add_argument(
     "--ssmake",
@@ -244,7 +261,7 @@ shadowsocks.add_argument(
     help="Generate ShadowSocks link",
 )
 
-obfs = parser.add_argument_group("OBFS")
+obfs = parser.add_argument_group(f"{green}OBFS{reset}")
 
 obfs.add_argument(
     "--obfsmake",
@@ -275,7 +292,7 @@ obfs.add_argument(
     "--obfslink", action="store_true", help="Generate ShadowSocks-OBFS link"
 )
 
-docker = parser.add_argument_group("Docker")
+docker = parser.add_argument_group(f"{green}Docker{reset}")
 
 docker.add_argument(
     "--vmessdocker",
@@ -300,7 +317,7 @@ docker.add_argument(
     help="Start docker-compose in system",
 )
 
-firewall = parser.add_argument_group("Firewall")
+firewall = parser.add_argument_group(f"{green}Firewall{reset}")
 
 firewall.add_argument(
     "--firewall",
@@ -309,20 +326,13 @@ firewall.add_argument(
     help="Adding firewall rules after generating configuration",
 )
 
-opt = parser.add_argument_group("info")
+opt = parser.add_argument_group(f"{green}info{reset}")
 opt.add_argument("-v", "--version", action="version", version="%(prog)s " + VERSION)
 
 # Arg Parse
 args = parser.parse_args()
 
 # ------------------------------ Miscellaneous ------------------------------- #
-
-# Color Format
-green = "\u001b[32m"
-yellow = "\u001b[33m"
-blue = "\u001b[34m"
-error = "\u001b[31m"
-reset = "\u001b[0m"
 
 # Banner
 def banner(t=0.0005):
@@ -428,9 +438,9 @@ def dnsselect():
     dnsselect are used for set a dns to the generated config
     https://www.v2ray.com/en/configuration/dns.html#dnsobject
     """
-    global dnslist, NODNS , dnsserver
+    global dnslist, NODNS, dnsserver
     dnslist = ["both", "google", "cloudflare", "opendns", "quad9", "adguard", "nodns"]
-    
+
     dnsserver = {}
     dnsserver[
         0
@@ -536,9 +546,6 @@ def vmess_make():
 
     global protocol_list
     protocol_list = ["freedom", "blackhole", "both"]
-
-    # Show Banner
-    banner()
 
     # Config Protocol Method
     if args.outband == "freedom":
@@ -859,7 +866,6 @@ def vmess_simple():
 
 def shadowsocks_make(method) -> str:
 
-    banner()
     shadowsocks_check()
 
     with open(SHADOWSOCKS, "w") as txt:
@@ -912,7 +918,6 @@ def obfs_make(method) -> str:
     generating shadowsocks-obfs configuration from command
     """
 
-    banner()
     shadowsocks_check()
 
     with open(OBFS, "w") as txt:
@@ -974,21 +979,48 @@ def obfs_simple():
     COUNTRY()
 
 
-# -------------------------------- x-ui  --------------------------------- #
+# -------------------------------- Panels  --------------------------------- #
 
 
-def x_ui():
+def panels(type):
     """
-    installing x-ui using official installation script.
+    installing the panel automates the process of deploying v2ray configuration with a simple UI
+    but it may not works properly.
     """
+
+    if type == "XUI":
+        appname = "X-UI"
+    elif type == "Trojan-Panel":
+        appname = "Trojan-Panel"
+    msg = f"{green + appname + reset} may install unnecessary binaries do yo want to install ? {error}[y/n]{reset} "
+
     try:
-        # setup xui needs root privileges
-        run = subprocess.run(
-            "curl https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh | bash",
-            shell=True,
-            check=True,
-            executable="/bin/bash",
-        )
+        # installing x-ui using official installation script.
+        if type == "XUI":
+            confirm = input(msg)
+            if str2bool(confirm) == True:
+                subprocess.run(
+                    "curl https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh | bash",
+                    shell=True,
+                    check=True,
+                    executable="/bin/bash",
+                )
+            else:
+                sys.exit(1)
+
+        # installing trojan-panel using official installation script.
+        elif type == "Trojan-Panel":
+            confirm = input(msg)
+            if str2bool(confirm) == True:
+                subprocess.run(
+                    "source <(curl -L https://github.com/trojanpanel/install-script/raw/main/install_script.sh)",
+                    shell=True,
+                    check=True,
+                    executable="/bin/bash",
+                )
+            else:
+                sys.exit(1)
+
     except subprocess.CalledProcessError as e:
         print(error + "Root privileges required!")
 
@@ -1122,24 +1154,14 @@ def firewall_config():
     """
     if os.path.exists("/usr/sbin/ufw"):
         service = "ufw"
-        # check ufw state
-        ufw = subprocess.call(["ufw", "status"])
-        if ufw == 0:
-            subprocess.call(["ufw", "allow", PORT])
-        else:
-            pass
+        subprocess.run(f"ufw allow {PORT}", check=True, shell=True)
     elif os.path.exists("/usr/sbin/firewalld"):
         service = "firewalld"
-        # check firewalld state
-        firewalld = subprocess.call(["firewall-cmd", "--state"])
-        if firewalld == 0:
-            subprocess.run(
-                f"firewall-cmd --permanent --add-port={PORT}/tcp",
-                shell=True,
-                check=True,
-            )
-        else:
-            pass
+        subprocess.run(
+            f"firewall-cmd --permanent --add-port={PORT}/tcp",
+            shell=True,
+            check=True,
+        )
     else:
         service = "iptables"
         subprocess.run(
@@ -1152,7 +1174,7 @@ def firewall_config():
             shell=True,
             check=True,
         )
-    print(green + "Added " + PORT + "to" + service + reset)
+    print(green + "Added " + str(PORT) + " " + "to " + service + reset)
 
 
 # ------------------------------ VMess Link Gen ------------------------------- #
@@ -1321,6 +1343,8 @@ if __name__ == "__main__":
 
     if len(sys.argv) <= 1:
         parser.print_help()
+    else:
+        banner()
 
     # set log to 'error' by default
     if args.loglevel == None:
@@ -1443,7 +1467,10 @@ if __name__ == "__main__":
 
     # Install XUI
     if args.xui:
-        x_ui()
+        panels("XUI")
+    # Install Trojan-Panel
+    if args.trojanpanel:
+        panels("Trojan-Panel")
 
     # Make ShadowSocks Link
     if args.sslink:

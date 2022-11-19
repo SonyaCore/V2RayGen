@@ -992,34 +992,31 @@ def panels(type):
         appname = "X-UI"
     elif type == "Trojan-Panel":
         appname = "Trojan-Panel"
-    msg = f"{green + appname + reset} may install unnecessary binaries do yo want to install ? {error}[y/n]{reset} "
+    msg = f"{green + appname + reset} may install unnecessary binaries. press {error}Ctrl+C{reset} to cancel the installation."
 
     try:
         # installing x-ui using official installation script.
         if type == "XUI":
-            confirm = input(msg)
-            if str2bool(confirm) == True:
-                subprocess.run(
-                    "curl https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh | bash",
-                    shell=True,
-                    check=True,
-                    executable="/bin/bash",
-                )
-            else:
-                sys.exit(1)
+            print(msg)
+            time.sleep(5)
+            subprocess.run(
+                "curl https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh | bash",
+                shell=True,
+                check=True,
+                executable="/bin/bash",
+            )
 
         # installing trojan-panel using official installation script.
         elif type == "Trojan-Panel":
-            confirm = input(msg)
-            if str2bool(confirm) == True:
-                subprocess.run(
-                    "source <(curl -L https://github.com/trojanpanel/install-script/raw/main/install_script.sh)",
-                    shell=True,
-                    check=True,
-                    executable="/bin/bash",
-                )
-            else:
-                sys.exit(1)
+            print(msg)
+            time.sleep(5)
+            subprocess.run(
+                "source <(curl -L https://github.com/trojanpanel/install-script/raw/main/install_script.sh)",
+                shell=True,
+                check=True,
+                executable="/bin/bash",
+            )
+
 
     except subprocess.CalledProcessError as e:
         print(error + "Root privileges required!")

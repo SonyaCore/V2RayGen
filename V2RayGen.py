@@ -204,6 +204,13 @@ v2ray.add_argument(
 )
 
 v2ray.add_argument(
+    "--block",
+    "--block-routing",
+    action="store_true",
+    help="Block Bittorrent and Private IPS. [default: False]",
+)
+
+v2ray.add_argument(
     "--security",
     "--client-security",
     action="store",
@@ -542,6 +549,7 @@ def vmess_config(method) -> str:
     },
     "inbounds": [
       {
+        %s
         "port": %s,
         "protocol": "vmess",
         "allocate": {
@@ -567,11 +575,13 @@ def vmess_config(method) -> str:
     ],
     "outbounds": [
     %s
-    ]
+    ]%s
+    %s
 }
 """ % (
         DNS,
         LOG,
+        sniffing() if args.block else "",
         PORT,
         UUID,
         args.id,
@@ -579,6 +589,8 @@ def vmess_config(method) -> str:
         websocket_config(args.wspath),
         args.header,
         method,
+        "," if args.block else "",
+        routing() if args.block else "",
     )
     return json.loads(data)
 
@@ -611,6 +623,7 @@ def vless_config() -> str:
   },
   "inbounds": [
     {
+      %s
       "port": %s,
       "protocol": "vless",
       "settings": {
@@ -650,6 +663,7 @@ def vless_config() -> str:
 """ % (
         DNS,
         LOG,
+        sniffing() if args.block else "",
         PORT,
         UUID,
         crtkey,
@@ -657,7 +671,7 @@ def vless_config() -> str:
         args.wspath,
         freedom(),
         blackhole(),
-        routing(),
+        routing() if args.block else "",
     )
     return json.loads(data)
 
@@ -703,6 +717,10 @@ def shadowsocks_config(method, password) -> str:
 
 
 def routing() -> str:
+    """
+    routing configuration for block bittorrent and private ip addresses.
+    https://guide.v2fly.org/en_US/routing/bittorrent.html#server-side-configuration
+    """
     data = """
       "routing": {
     "domainStrategy": "AsIs",
@@ -726,6 +744,20 @@ def routing() -> str:
   }"""
     return data
 
+def sniffing() -> str:
+    """
+    sniffing must be turned on for routing option.
+    """
+    data = """
+        "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls"
+        ]
+      },
+    """
+    return data
 
 def websocket_config(path) -> str:
     """

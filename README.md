@@ -21,7 +21,7 @@ V2RayGen is a fully automated script that helps you to set up your own v2ray ser
   [**License**](#license)
 
 ## **Prerequisites & Dependencies**
-For running this script, you must have **docker**, **docker-compose** and **python3** installed on your server **or** you can use `--dockerup` switch which installs docker & docker-compose and runs v2ray-core automatically
+For running this script, you must have **docker**, **docker-compose** and **python3** on your server **but** this script installs docker & docker-compose if your server doesn't have docker and runs v2ray-core automatically
 
 ## **Usage**
 
@@ -56,11 +56,6 @@ sudo python3 V2RayGen.py --vmess
 
 ```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --shadowsocks
-```
-OR 
-### **Quick `ShadowSocks-OBFS` Setup with Default Setting** :
-```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --obfs
 ```
 
 ![Sample](contents/content4.png)

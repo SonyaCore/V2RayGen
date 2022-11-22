@@ -1063,7 +1063,7 @@ def vmess_create():
     vmess_make()
     protocol_check()
     v2ray_dockercompose("VMESS")
-    # run_docker()
+    run_docker()
     info_raw()
     print(vmess_link_generator(args.linkname))
     client_side_configuration("VMESS")
@@ -1078,7 +1078,7 @@ def vless_create():
     create_key()
     vless_make()
     v2ray_dockercompose("VLESS")
-    # run_docker()
+    run_docker()
     info_raw()
     print(vless_link_generator(args.linkname))
     client_side_configuration("VLESS")
@@ -1086,7 +1086,7 @@ def vless_create():
 
 def shadowsocks_create():
     """
-    quick shadowsocks configuration
+    Quick shadowsocks configuration
     """
 
     shadowsocks_make(args.ssmethod)

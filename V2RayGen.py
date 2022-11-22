@@ -1273,7 +1273,7 @@ def run_docker():
         "/usr/local/bin/docker-compose"
     ):
         subprocess.run(
-            "docker-compose -f docker-compose.yml up -d", shell=True, check=True
+            "docker-compose -f docker-compose.yml up -d --force", shell=True, check=True
         )
     else:
         print(

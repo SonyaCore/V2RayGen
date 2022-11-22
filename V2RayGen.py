@@ -657,8 +657,7 @@ def vless_config() -> str:
   "outbounds": [
     %s,
     %s
-  ],
-  %s
+  ]%s
 }
 """ % (
         DNS,
@@ -671,7 +670,7 @@ def vless_config() -> str:
         args.wspath,
         freedom(),
         blackhole(),
-        routing() if args.block else "",
+        ",\n"+ routing() if args.block else "",
     )
     return json.loads(data)
 
@@ -1273,7 +1272,7 @@ def run_docker():
         "/usr/local/bin/docker-compose"
     ):
         subprocess.run(
-            "docker-compose -f docker-compose.yml up -d --force", shell=True, check=True
+            "docker-compose -f docker-compose.yml up -d", shell=True, check=True
         )
     else:
         print(

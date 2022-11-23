@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# V2Ray Config Generator
+# XRay Config Generator
 # ------------------------------------------
 #   Author    : SonyaCore
 # 	Github    : https://github.com/SonyaCore
@@ -23,7 +23,7 @@ from urllib.error import HTTPError, URLError
 # -------------------------------- Constants --------------------------------- #
 
 # Name
-NAME = "V2RayGen"
+NAME = "XRayGen"
 
 # Version
 VERSION = "0.9.8"
@@ -100,19 +100,19 @@ panel.add_argument(
     help="Setup Trojan Panel with the official installer script",
 )
 
-v2ray = parser.add_argument_group(f"{green}V2ray{reset}")
+xray = parser.add_argument_group(f"{green}Xray{reset}")
 
-v2ray.add_argument(
+xray.add_argument(
     "--linkname",
     "-ln",
     action="store",
     type=str,
     metavar="",
-    help="Name for VMess Link. default: [v2ray]",
-    default="v2ray",
+    help="Name for VMess Link. default: [xray]",
+    default="xray",
 )
 
-v2ray.add_argument(
+xray.add_argument(
     "--outband",
     "--outband-protocol",
     action="store",
@@ -121,16 +121,16 @@ v2ray.add_argument(
     help="custom Vmess outbound connection. default: [both]",
 )
 
-v2ray.add_argument(
+xray.add_argument(
     "--port",
     "-p",
     action="store",
     type=int,
     metavar="",
-    help="Optional PORT for v2ray Config. defualt: [80,443]",
+    help="Optional PORT for xray Config. defualt: [80,443]",
 )
 
-# v2ray.add_argument(
+# xray.add_argument(
 #     "--domain",
 #     "--domain-websocket",
 #     action="store",
@@ -139,11 +139,11 @@ v2ray.add_argument(
 #     help="Use Domain insted of IP for WebSocket. default: [ServerIP]",
 # )
 
-v2ray.add_argument(
+xray.add_argument(
     "--dns", action="store", type=str, metavar="", help="Optional DNS. default: [nodns]"
 )
 
-v2ray.add_argument(
+xray.add_argument(
     "--wspath",
     "--websocket-path",
     action="store",
@@ -153,7 +153,7 @@ v2ray.add_argument(
     default="/graphql",
 )
 
-v2ray.add_argument(
+xray.add_argument(
     "--uuid",
     "--custom-uuid",
     action="store",
@@ -163,7 +163,7 @@ v2ray.add_argument(
     default=f"{UUID}",
 )
 
-v2ray.add_argument(
+xray.add_argument(
     "--id",
     "--alterid",
     action="store",
@@ -173,7 +173,7 @@ v2ray.add_argument(
     default=0,
 )
 
-v2ray.add_argument(
+xray.add_argument(
     "--loglevel",
     "--vmess-loglevel",
     action="store",
@@ -182,7 +182,7 @@ v2ray.add_argument(
     help="loglevel for configuration . default: [warning]",
 )
 
-v2ray.add_argument(
+xray.add_argument(
     "--insecure",
     "--insecure-encryption",
     action="store",
@@ -194,7 +194,7 @@ v2ray.add_argument(
     default=True,
 )
 
-v2ray.add_argument(
+xray.add_argument(
     "--header",
     "--http-header",
     action="store",
@@ -203,14 +203,14 @@ v2ray.add_argument(
     help="Optional JSON HTTPRequest Header",
 )
 
-v2ray.add_argument(
+xray.add_argument(
     "--block",
     "--block-routing",
     action="store_true",
     help="Block Bittorrent and Private IPS. [default: False]",
 )
 
-v2ray.add_argument(
+xray.add_argument(
     "--security",
     "--client-security",
     action="store",
@@ -259,7 +259,7 @@ docker.add_argument(
     "--dockerfile",
     action="store_true",
     required=False,
-    help="Generate v2ray-core docker-compose file",
+    help="Generate xray-core docker-compose file",
 )
 
 docker.add_argument(
@@ -544,8 +544,8 @@ def vmess_config(method) -> str:
     %s
     "log": {
       "loglevel": "%s",
-      "access": "/var/log/v2ray/access.log",
-      "error": "/var/log/v2ray/error.log"
+      "access": "/var/log/xray/access.log",
+      "error": "/var/log/xray/error.log"
     },
     "inbounds": [
       {
@@ -613,8 +613,8 @@ def vless_config() -> str:
     """
     VLESS JSON config file template
     """
-    crtkey = f"/etc/v2ray/{SELFSIGEND_CERT}"
-    hostkey = f"/etc/v2ray/{SELFSIGEND_KEY}"
+    crtkey = f"/etc/xray/{SELFSIGEND_CERT}"
+    hostkey = f"/etc/xray/{SELFSIGEND_KEY}"
 
     data = """{
   %s
@@ -914,7 +914,7 @@ def client_security():
 def client_side_configuration(protocol):
     """
     client side configuration for generating client side json configuration.
-    it can be used as configuration file for v2ray-core.
+    it can be used as configuration file for xray-core.
     """
     if protocol == "VMESS":
         data = """{
@@ -1079,7 +1079,7 @@ def client_side_configuration(protocol):
 
         print("")
         print(blue + "! Client-side VMess Config Generated.", reset)
-        print(blue + f"! Use {name} for using proxy with v2ray-core directly.", reset)
+        print(blue + f"! Use {name} for using proxy with xray-core directly.", reset)
 
 
 # -------------------------------- Config Creation --------------------------------- #
@@ -1093,7 +1093,7 @@ def vmess_create():
     dnsselect()
     vmess_make()
     protocol_check()
-    v2ray_dockercompose("VMESS")
+    xray_dockercompose("VMESS")
     run_docker()
     info_raw()
     print(vmess_link_generator(args.linkname))
@@ -1108,7 +1108,7 @@ def vless_create():
     dnsselect()
     create_key()
     vless_make()
-    v2ray_dockercompose("VLESS")
+    xray_dockercompose("VLESS")
     run_docker()
     info_raw()
     print(vless_link_generator(args.linkname))
@@ -1172,30 +1172,30 @@ def panels(type):
 # -------------------------------- Docker --------------------------------- #
 
 
-def v2ray_dockercompose(protocol):
+def xray_dockercompose(protocol):
     """
-    Create docker-compose file for v2ray-core.
-    in this docker-compose v2fly-core is being used for running v2ray in the container.
-    https://hub.docker.com/r/v2fly/v2fly-core
+    Create docker-compose file for xray-core.
+    in this docker-compose xray-core is being used for running xray in the container.
+    https://hub.docker.com/r/teddysun/xray
     """
     if protocol == "VMESS":
         arg = VMESS
     elif protocol == "VLESS":
         arg = VLESS
-        crtkey = f"- ./{SELFSIGEND_CERT}:/etc/v2ray/{SELFSIGEND_CERT}:ro"
-        hostkey = f"- ./{SELFSIGEND_KEY}:/etc/v2ray/{SELFSIGEND_KEY}:ro"
+        crtkey = f"- ./{SELFSIGEND_CERT}:/etc/xray/{SELFSIGEND_CERT}:ro"
+        hostkey = f"- ./{SELFSIGEND_KEY}:/etc/xray/{SELFSIGEND_KEY}:ro"
 
     data = """version: '3'
 services:
-  v2ray:
-    image: v2fly/v2fly-core
+  xray:
+    image: teddysun/xray
     restart: always
     network_mode: host
     environment:
       - V2RAY_VMESS_AEAD_FORCED=false
-    entrypoint: ["v2ray", "run", "-c", "/etc/v2ray/config.json"]
+    entrypoint: ["/usr/bin/xray", "-config", "/etc/xray/config.json"]
     volumes:
-        - ./%s:/etc/v2ray/config.json:ro
+        - ./%s:/etc/xray/config.json:ro
         %s
         %s""" % (
         arg,
@@ -1203,7 +1203,7 @@ services:
         hostkey if protocol == "VLESS" else "",
     )
 
-    print(yellow + "! Created v2ray-core docker-compose.yml configuration" + reset)
+    print(yellow + "! Created xray-core docker-compose.yml configuration" + reset)
     with open("docker-compose.yml", "w") as txt:
         txt.write(data)
         txt.close()
@@ -1240,10 +1240,10 @@ services:
 
 def run_docker():
     """
-    Start v2ray docker-compose.
+    Start xray docker-compose.
     at first, it will check if docker exists and then check if docker-compose exists
     if docker is not in the path it will install docker with the official script.
-    then it checks the docker-compose path if the condition is True docker-compose.yml will be used for running v2ray.
+    then it checks the docker-compose path if the condition is True docker-compose.yml will be used for running xray.
     """
 
     # Check if docker exist
@@ -1355,7 +1355,7 @@ def vmess_link_generator(vmess_config_name) -> str:
     """
 
     if not vmess_config_name:
-        vmess_config_name = "v2ray"
+        vmess_config_name = "xray"
 
     prelink = "vmess://"
     print("")
@@ -1649,7 +1649,7 @@ if __name__ == "__main__":
 
     # Make docker-compose for VMess
     if args.dockerfile:
-        v2ray_dockercompose("VMESS")
+        xray_dockercompose("VMESS")
     # Make docker-compose for ShadowSocks
     if args.ssdocker:
         shadowsocks_dockercompose()

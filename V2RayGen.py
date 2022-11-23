@@ -1647,7 +1647,7 @@ if __name__ == "__main__":
         args.insecure = "false"
 
     # Port Settings :
-    if args.port == None and args.vless == True:
+    if args.port == None and args.vless == True or args.vmesstls == True:
         PORT = 443
 
     if args.port == None:

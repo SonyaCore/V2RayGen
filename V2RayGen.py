@@ -26,7 +26,7 @@ from urllib.error import HTTPError, URLError
 NAME = "XRayGen"
 
 # Version
-VERSION = "0.9.8"
+VERSION = "0.9.9"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -56,7 +56,7 @@ reset = "\u001b[0m"
 
 # -------------------------------- Argument Parser --------------------------------- #
 
-usage = f"python3 {NAME}.py {error} <protocol> {reset} {blue} <optional args> {reset}"
+usage = f"python3 {NAME.replace('X','V2')}.py {error} <protocol> {reset} {blue} <optional args> {reset}"
 formatter = lambda prog: argparse.HelpFormatter(prog, max_help_position=64)
 parser = argparse.ArgumentParser(prog=f"{NAME}", formatter_class=formatter, usage=usage)
 
@@ -75,7 +75,8 @@ def str2bool(v):
 quick = parser.add_argument_group(f"{green}Protocols{reset}")
 
 quick.add_argument("--vmess", "-vm", action="store_true", help="Create VMess")
-quick.add_argument("--vless", "-vl", action="store_true", help="Create VLess")
+quick.add_argument("--vmesstls", "-vmtls", action="store_true", help="Create VMess + TLS")
+quick.add_argument("--vless", "-vl", action="store_true", help="Create VLess + TLS")
 
 
 quick.add_argument(
@@ -100,7 +101,7 @@ panel.add_argument(
     help="Setup Trojan Panel with the official installer script",
 )
 
-xray = parser.add_argument_group(f"{green}Xray{reset}")
+xray = parser.add_argument_group(f"{green}XRay{reset}")
 
 xray.add_argument(
     "--linkname",
@@ -118,7 +119,7 @@ xray.add_argument(
     action="store",
     type=str,
     metavar="",
-    help="custom Vmess outbound connection. default: [both]",
+    help="Custom Vmess outbound connection. default: [both]",
 )
 
 xray.add_argument(
@@ -200,7 +201,7 @@ xray.add_argument(
     action="store",
     type=argparse.FileType("r"),
     metavar="",
-    help="Optional JSON HTTPRequest Header",
+    help="Optional JSON HTTPRequest Header.",
 )
 
 xray.add_argument(
@@ -297,14 +298,14 @@ args = parser.parse_args()
 # Banner
 def banner(t=0.0005):
     data = f"""{green}
-__      _____  _____              _____            
-\ \    / /__ \|  __ \            / ____|
- \ \  / /   ) | |__) |__ _ _   _| |  __  ___ _ __  
-  \ \/ /   / /|  _  // _` | | | | | |_ |/ _ \ '_ \ 
-   \  /   / /_| | \ \ (_| | |_| | |__| |  __/ | | |
-    \/   |____|_|  \_\__,_|\__, |\_____|\___|_| |_|
-                            __/ |
-                           |___/
+ __   __ _____              _____            
+ \ \ / /|  __ \            / ____|           
+  \ V / | |__) |__ _ _   _| |  __  ___ _ __  
+   > <  |  _  // _` | | | | | |_ |/ _ \ '_ \ 
+  / . \ | | \ \ (_| | |_| | |__| |  __/ | | |
+ /_/ \_\|_|  \_\__,_|\__, |\_____|\___|_| |_|
+                     __/ |                  
+                    |___/                   
 {reset}"""
     for char in data:
         sys.stdout.write(char)
@@ -331,10 +332,7 @@ def IP():
             + f'failed to send request to {url.split("/json")[0]} please check your connection'
             + reset
         )
-
-
-# set server IP t
-ServerIP = IP()
+        sys.exit(1)
 
 
 def get_random_password(length=24):
@@ -376,6 +374,7 @@ def COUNTRY():
             + f'failed to send request to {countrycode.split("/json")[0]} please check your connection'
             + reset
         )
+        sys.exit(1)
 
 
 def _uuid():
@@ -501,6 +500,18 @@ def create_key():
 #         else:
 #             raise URLError(error.reason)
 
+# -------------------------------- Global Variables --------------------------------- #
+
+# Set server IP t
+ServerIP = IP()
+
+# Certificate location
+crtkey = f"/etc/xray/{SELFSIGEND_CERT}"
+hostkey = f"/etc/xray/{SELFSIGEND_KEY}"
+
+# Outband protocols
+protocol_list = ["freedom", "blackhole", "both"]
+
 # -------------------------------- VMess JSON --------------------------------- #
 
 
@@ -510,33 +521,20 @@ def vmess_make():
     https://www.v2ray.com/en/configuration/protocols/v2ray.html
     """
 
-    global protocol_list
-    protocol_list = ["freedom", "blackhole", "both"]
-
     # Config Protocol Method
-    if args.outband == "freedom":
-        with open(VMESS, "w") as txt:
-            txt.write(json.dumps(vmess_config(method=freedom()), indent=2))
-            txt.close
+    make_xray("vmess")
 
-    if args.outband == "blackhole":
-        with open(VMESS, "w") as txt:
-            txt.write(json.dumps(vmess_config(method=blackhole()), indent=2))
-            txt.close
+    if args.vmess:
+        name = "VMESS"
+    elif args.vmesstls:
+        name = "VMESS + TLS"
+    else:
+        None
 
-    if args.outband == "both":
-        with open(VMESS, "w") as txt:
-            txt.write(
-                json.dumps(
-                    vmess_config(method=freedom() + ",\n" + blackhole()), indent=2
-                )
-            )
-            txt.close
-
-    print(blue + "! VMess Config Generated." + reset)
+    print(blue + f"! {name} Config Generated." + reset)
 
 
-def vmess_config(method) -> str:
+def vmess_config(outband) -> str:
     """
     vmess JSON config file template
     """
@@ -568,14 +566,14 @@ def vmess_config(method) -> str:
         },
         "streamSettings": 
         %s,
-          "security": "none",
-          "tcpSettings": %s
+          %s,
+          "headersettings": %s
         }
       }
     ],
     "outbounds": [
     %s
-    ]%s
+    ]
     %s
 }
 """ % (
@@ -587,10 +585,10 @@ def vmess_config(method) -> str:
         args.id,
         args.insecure,
         websocket_config(args.wspath),
+        tlssettings() if args.vmesstls else notls(),
         args.header,
-        method,
-        "," if args.block else "",
-        routing() if args.block else "",
+        outband,
+        ",\n" + routing() if args.block else "",
     )
     return json.loads(data)
 
@@ -602,20 +600,16 @@ def vless_make():
     """
     create vless json configuration with self signed certificate
     """
-    with open(VLESS, "w") as txt:
-        txt.write(json.dumps(vless_config(), indent=2))
-        txt.close
+    # Config Protocol Method
+    make_xray("vless")
+    name = 'VLESS + TLS'
+    print(blue + f"! {name} Config Generated." + reset)
 
-    print(blue + "! Vless Config Generated." + reset)
 
-
-def vless_config() -> str:
+def vless_config(outband) -> str:
     """
     VLESS JSON config file template
     """
-    crtkey = f"/etc/xray/{SELFSIGEND_CERT}"
-    hostkey = f"/etc/xray/{SELFSIGEND_KEY}"
-
     data = """{
   %s
   "log": {
@@ -638,16 +632,7 @@ def vless_config() -> str:
       },
       "streamSettings": {
         "network": "ws",
-        "security": "tls",
-        "tlsSettings": {
-          "alpn": ["http/1.1"],
-          "certificates": [
-            {
-              "certificateFile": "%s",
-              "keyFile": "%s"
-            }
-          ]
-        },
+        %s,
         "wsSettings": {
           "path": "%s"
         }
@@ -655,7 +640,6 @@ def vless_config() -> str:
     }
   ],
   "outbounds": [
-    %s,
     %s
   ]%s
 }
@@ -665,14 +649,54 @@ def vless_config() -> str:
         sniffing() if args.block else "",
         PORT,
         UUID,
-        crtkey,
-        hostkey,
+        tlssettings(),
         args.wspath,
-        freedom(),
-        blackhole(),
-        ",\n"+ routing() if args.block else "",
+        outband,
+        ",\n" + routing() if args.block else "",
     )
     return json.loads(data)
+
+
+# -------------------------------- Xray Config --------------------------------- #
+
+
+def make_xray(protocol):
+    """
+    make xray config based on selected protocol
+    """
+
+    # Config Protocol Method
+    if args.outband == "freedom":
+        with open(VLESS, "w") as txt:
+            if protocol == "vless":
+                txt.write(json.dumps(vless_config(outband=freedom()), indent=2))
+            elif protocol == "vmess":
+                txt.write(json.dumps(vmess_config(outband=freedom()), indent=2))
+            txt.close
+
+    if args.outband == "blackhole":
+        with open(VLESS, "w") as txt:
+            if protocol == "vless":
+                txt.write(json.dumps(vless_config(outband=blackhole()), indent=2))
+            elif protocol == "vmess":
+                txt.write(json.dumps(vmess_config(outband=blackhole()), indent=2))
+            txt.close
+
+    if args.outband == "both":
+        with open(VLESS, "w") as txt:
+            if protocol == "vless":
+                txt.write(
+                    json.dumps(
+                        vless_config(outband=freedom() + ",\n" + blackhole()), indent=2
+                    )
+                )
+            elif protocol == "vmess":
+                txt.write(
+                    json.dumps(
+                        vmess_config(outband=freedom() + ",\n" + blackhole()), indent=2
+                    )
+                )
+            txt.close
 
 
 # -------------------------------- ShadowSocks JSON --------------------------------- #
@@ -743,6 +767,7 @@ def routing() -> str:
   }"""
     return data
 
+
 def sniffing() -> str:
     """
     sniffing must be turned on for routing option.
@@ -757,6 +782,38 @@ def sniffing() -> str:
       },
     """
     return data
+
+
+def tlssettings() -> str:
+    """
+    tls security settings for protocols with tls
+    """
+    tls = """
+    "security": "tls",    
+    "tlsSettings": {
+          "alpn": ["http/1.1"],
+          "certificates": [
+            {
+              "certificateFile": "%s",
+              "keyFile": "%s"
+            }
+          ]
+        }""" % (
+        crtkey,
+        hostkey,
+    )
+    return tls
+
+
+def notls() -> str:
+    """
+    no tls for protocols without tls
+    """
+    notls = """
+    "security": "none"
+    """
+    return notls
+
 
 def websocket_config(path) -> str:
     """
@@ -819,7 +876,7 @@ def blackhole() -> str:
     return blackhole
 
 
-def tcpsettings() -> str:
+def headersettings() -> str:
     """
     default tcp setting header for json configuration.
     for using custom configuration use ( --header file.json ) option to configure your own header
@@ -953,6 +1010,7 @@ def client_side_configuration(protocol):
             "streamSettings": {
                 "network": "ws",
                 "tlsSettings": {
+                    "allowInsecure": true,
                     "disableSystemRoot": false
                 },
                 "wsSettings": {
@@ -1091,14 +1149,20 @@ def vmess_create():
     """
 
     dnsselect()
+    create_key() if args.vmesstls else None
+    time.sleep(0.2)
     vmess_make()
     protocol_check()
-    xray_dockercompose("VMESS")
+    if args.vmess:
+        xray_dockercompose("VMESS")
+    elif args.vmesstls:
+        xray_dockercompose("VMESSTLS")
     run_docker()
+
     info_raw()
     print(vmess_link_generator(args.linkname))
     client_side_configuration("VMESS")
-    COUNTRY()
+    COUNTRY() if args.vmess else None
 
 
 def vless_create():
@@ -1178,12 +1242,17 @@ def xray_dockercompose(protocol):
     in this docker-compose xray-core is being used for running xray in the container.
     https://hub.docker.com/r/teddysun/xray
     """
+
+    # docker protocol type
     if protocol == "VMESS":
+        arg = VMESS
+    if protocol == "VMESSTLS":
         arg = VMESS
     elif protocol == "VLESS":
         arg = VLESS
-        crtkey = f"- ./{SELFSIGEND_CERT}:/etc/xray/{SELFSIGEND_CERT}:ro"
-        hostkey = f"- ./{SELFSIGEND_KEY}:/etc/xray/{SELFSIGEND_KEY}:ro"
+
+    docker_crtkey = f"- ./{SELFSIGEND_CERT}:/etc/xray/{SELFSIGEND_CERT}:ro"
+    docker_hostkey = f"- ./{SELFSIGEND_KEY}:/etc/xray/{SELFSIGEND_KEY}:ro"
 
     data = """version: '3'
 services:
@@ -1199,8 +1268,8 @@ services:
         %s
         %s""" % (
         arg,
-        crtkey if protocol == "VLESS" else "",
-        hostkey if protocol == "VLESS" else "",
+        docker_crtkey if protocol == "VLESS" or "VMESSTLS" else "",
+        docker_hostkey if protocol == "VLESS" or "VMESSTLS" else "",
     )
 
     print(yellow + "! Created xray-core docker-compose.yml configuration" + reset)
@@ -1357,9 +1426,15 @@ def vmess_link_generator(vmess_config_name) -> str:
     if not vmess_config_name:
         vmess_config_name = "xray"
 
+    # link security method
+    if args.vmess:
+        type = ""
+    elif args.vmesstls:
+        type = "tls"
+
     prelink = "vmess://"
     print("")
-    print(yellow + "! Use below link for your v2ray client" + reset)
+    print(yellow + "! Use below link for your xray or v2ray client" + reset)
     raw_link = bytes(
         "{"
         + f""""add":"{ServerIP}",\
@@ -1370,7 +1445,7 @@ def vmess_link_generator(vmess_config_name) -> str:
 "path":"{args.wspath}",\
 "port":"{PORT}",\
 "ps":"{vmess_config_name}",\
-"tls":"",\
+"tls":"{type}",\
 "type":"none",\
 "v":"2" """
         + "}",
@@ -1390,7 +1465,7 @@ def vmess_link_generator(vmess_config_name) -> str:
 def vless_link_generator(name) -> str:
     prelink = "vless://"
     print("")
-    print(yellow + "! Use below link for your v2ray client" + reset)
+    print(yellow + "! Use below link for your xray or v2ray client" + reset)
 
     raw_link = f"{UUID}@{ServerIP}:{PORT}?path={args.wspath}&security=tls&encryption=none&type=ws#{name}"
 
@@ -1563,7 +1638,7 @@ if __name__ == "__main__":
             stream = setting.read()
             args.header = stream
     else:
-        args.header = tcpsettings()
+        args.header = headersettings()
 
     # Insecure option
     if args.insecure == True:
@@ -1618,11 +1693,11 @@ if __name__ == "__main__":
         shadowsocks_make(args.ssmethod)
         COUNTRY()
 
+    if args.outband == None:
+        args.outband = "both"
+
     # Quick VMess Setup
-    if args.vmess:
-        # Set to freedom + blackhole if nothing entered
-        if args.outband == None:
-            args.outband = "both"
+    if args.vmess or args.vmesstls:
         vmess_create()
 
     # Quick Vless Setup

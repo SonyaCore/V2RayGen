@@ -19,6 +19,8 @@ V2RayGen is a fully automated script that helps you to set up your own v2ray ser
   [**Options**](#options)
   
   [**License**](#license)
+  
+  [**DonateMe ☕**](#donateme)
 
 ## **Prerequisites & Dependencies**
 For running this script, you must have **docker**, **docker-compose** and **python3** on your server **but** this script installs docker & docker-compose if your server doesn't have docker and runs v2ray-core automatically
@@ -34,7 +36,7 @@ For running this script, you must have **docker**, **docker-compose** and **pyth
 <br>
 
 
-## QuickSetup
+## **QuickSetup**
 
 ### **Quick `VMess` Setup with Default Setting** :
 
@@ -132,6 +134,11 @@ vmess://{"add":"ip / domain ","aid":"alterid","host":"","id":"random-uuid","net"
 ```json
 ss://shadowsocks-security-method:random-uuid@domain/ip :port
 ```
+## DonateMe
+#### ![tron-button] &nbsp; TPFUnjJ4HNbGC6fp7WixFaAMBJ3ZLiUUio
+#### ![bitcoin-button] &nbsp; 1CVUoBRjDy1Thnaga6JKrnc83MAJzd5i4P
+#### ![ethereum-button] &nbsp; 0x199338177C2f6789cAd900A1534c76DA6669f12B
+#### ![tether-button] &nbsp; 0x199338177C2f6789cAd900A1534c76DA6669f12B
 
 ## License
 Licensed under the [GPL-3][LICENSE] license.
@@ -139,6 +146,10 @@ Licensed under the [GPL-3][LICENSE] license.
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 
+[tron-button]: https://img.shields.io/badge/Tron-ff69b4
+[tether-button]: https://img.shields.io/badge/Tether-purple
+[bitcoin-button]: https://img.shields.io/badge/Bitcoin-orange
+[ethereum-button]: https://img.shields.io/badge/Ethereum-blue
 [contributors-shield]: https://img.shields.io/github/contributors/SonyaCore/V2RayGen?style=flat
 [contributors-url]: https://github.com/SonyaCore/V2RayGen/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/SonyaCore/V2RayGen?style=flat

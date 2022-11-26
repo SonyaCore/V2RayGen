@@ -20,6 +20,8 @@ import csv
 from urllib.parse import unquote
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
+from http.client import RemoteDisconnected
+from binascii import Error
 
 # -------------------------------- Constants --------------------------------- #
 
@@ -84,14 +86,7 @@ quick = parser.add_argument_group(f"{green}Protocols{reset}")
 quick.add_argument("--vmess", "-vm", action="store_true", help="Create VMess")
 quick.add_argument("--vmesstls", "-vmtls", action="store_true", help="Create VMess + TLS")
 quick.add_argument("--vless", "-vl", action="store_true", help="Create VLess + TLS")
-
-
-quick.add_argument(
-    "--shadowsocks",
-    "-ss",
-    action="store_true",
-    help="Create ShadowSocks",
-)
+quick.add_argument("--shadowsocks","-ss",action="store_true",help="Create ShadowSocks",)
 
 panel = parser.add_argument_group(f"{green}Panels{reset}")
 
@@ -116,7 +111,7 @@ xray.add_argument(
     action="store",
     type=str,
     metavar="",
-    help="Name for VMess Link. default: [xray]",
+    help="Name for Xray generated link. default: [xray]",
     default="xray",
 )
 
@@ -126,7 +121,7 @@ xray.add_argument(
     action="store",
     type=str,
     metavar="",
-    help="Custom Vmess outbound connection. default: [both]",
+    help="Custom Xray outbound connection. default: [both]",
 )
 
 xray.add_argument(
@@ -135,17 +130,8 @@ xray.add_argument(
     action="store",
     type=int,
     metavar="",
-    help="Optional PORT for xray Config. defualt: [80,443]",
+    help="Optional PORT for Xray Config. defualt: [80,443]",
 )
-
-# xray.add_argument(
-#     "--domain",
-#     "--domain-websocket",
-#     action="store",
-#     type=str,
-#     metavar="",
-#     help="Use Domain insted of IP for WebSocket. default: [ServerIP]",
-# )
 
 xray.add_argument(
     "--dns", action="store", type=str, metavar="", help="Optional DNS. default: [nodns]"
@@ -177,7 +163,7 @@ xray.add_argument(
     action="store",
     type=int,
     metavar="",
-    help="Optional alterid. default: [0]",
+    help="Optional alterId. default: [0]",
     default=0,
 )
 
@@ -187,7 +173,7 @@ xray.add_argument(
     action="store",
     type=str,
     metavar="",
-    help="loglevel for configuration . default: [warning]",
+    help="loglevel for Xray config. default: [warning]",
 )
 
 xray.add_argument(
@@ -226,7 +212,7 @@ client.add_argument(
     action="store",
     type=str,
     metavar="",
-    help="Security for Client-side JSON config. default: [aes-128-gcm]",
+    help="Security for Client-side JSON config. default: [auto]",
 )
 
 client.add_argument(
@@ -319,6 +305,15 @@ firewall.add_argument(
     help="Adding firewall rules after generating configuration",
 )
 
+# xray.add_argument(
+#     "--domain",
+#     "--domain-websocket",
+#     action="store",
+#     type=str,
+#     metavar="",
+#     help="Use Domain insted of IP for WebSocket. default: [ServerIP]",
+# )
+
 opt = parser.add_argument_group(f"{green}info{reset}")
 opt.add_argument("-v", "--version", action="version", version="%(prog)s " + VERSION)
 
@@ -391,7 +386,7 @@ def COUNTRY():
         with urlopen(httprequest) as response:
             data = json.loads(response.read().decode())
 
-        if data["countryCode"] != "IR" or "CN" or "VN":
+        if data["countryCode"] not in ("IR", "CN", "VN"):
             print(
                 yellow
                 + f"\n! You Are Using External Server [{data['countryCode']}]\n"
@@ -490,7 +485,7 @@ def get_distro() -> str:
 
 def create_key():
     """
-    create self signed key
+    create self signed key with openssl
     """
     print(green)
     subprocess.run(
@@ -520,9 +515,14 @@ def create_key():
 
 # -------------------------------- Global Variables --------------------------------- #
 
-# Collect Server IP t
-if not args.parse:
-    ServerIP = IP()
+# Collect Server IP
+try :
+    if not args.parse:
+        ServerIP = IP()
+except RemoteDisconnected as e :
+    sys.exit(error + "ERROR : " + reset + str(e))
+except URLError as e :
+    sys.exit(error + "ERROR : " + reset + str(e))
 
 # Certificate location
 crtkey = f"/etc/xray/{SELFSIGEND_CERT}"
@@ -947,7 +947,13 @@ def loglevel():
 
     # list of loglevels
     loglevel = ["debug", "info", "warning", "error", "none"]
-
+    loglevel_messages = [
+    'Information for developers. All "Info" included.',
+    'Running stats of XRay，no effect for the functions. All "Warning" included.',
+    'usually some external problem that does not affect V2Ray but possibly the user experience.',
+    'XRay encountered a problem that needs to be resolved immediately.',
+    'Nothing will be printed.'
+    ]
     cmd = args.loglevel.lower()
 
     # checking loglevel argument
@@ -966,7 +972,7 @@ def loglevel():
     if cmd not in loglevel:
         print("list of loglevels :")
         for levels in range(len(loglevel)):
-            print(green + loglevel[levels] + reset)
+            print(green +  loglevel[levels] + " : " + loglevel_messages[levels] + reset)
         sys.exit()
 
 
@@ -978,7 +984,7 @@ def client_security():
     global SECURITY
 
     # list of loglevels
-    security_methods = ["aes-128-gcm", "chacha20-poly1305", "none"]
+    security_methods = ["aes-128-gcm", "chacha20-poly1305", "auto", "none" , "zero"]
 
     cmd = args.security.lower()
 
@@ -987,8 +993,12 @@ def client_security():
         SECURITY = security_methods[0]
     if cmd == "chacha20-poly1305":
         SECURITY = security_methods[1]
-    if cmd == "none":
+    if cmd == "auto":
         SECURITY = security_methods[2]
+    if cmd == "none":
+        SECURITY = security_methods[3]
+    if cmd == "zero":
+        SECURITY = security_methods[4]
 
     # printing list of security methods if user input is not in security_methods var.
     if cmd not in security_methods:
@@ -1137,7 +1147,6 @@ def client_side_configuration(protocol):
     }
   ],
     """ % (
-        # vless_clinet if protocol == "VLESS" else vmess_client,
         setting,
         streamsettings_client,
         outbands_client,
@@ -1334,8 +1343,10 @@ def parse_VMess(vmesslink):
             return yellow + str(json.loads(vms)) + reset
         else:
             raise Exception("vmess link invalid")
-    except json.decoder.JSONDecodeError:
+    except json.decoder.JSONDecodeError :
         sys.exit(error + "Invalid VMess link" + reset)
+    except Error as err:
+        sys.exit(error + "Invalid Format : " + reset + str(err))
 
 
 # -------------------------------- Docker --------------------------------- #
@@ -1433,7 +1444,7 @@ def run_docker():
             except subprocess.CalledProcessError:
                 sys.exit(error + "Download Failed !" + reset)
 
-        # Check if Docker Service is Enabled
+        # Check if Docker Service are Enabled
         systemctl = subprocess.call(["systemctl", "is-active", "--quiet", "docker"])
         if systemctl == 0:
             pass
@@ -1443,7 +1454,6 @@ def run_docker():
         time.sleep(2)
 
         # Check if docker-compose exist
-
         if os.path.exists("/usr/bin/docker-compose") or os.path.exists(
             "/usr/local/bin/docker-compose"
         ):
@@ -1783,7 +1793,7 @@ def shadowsocks_check():
     # Other stream ciphers are implemented but do not provide integrity and authenticity.
 
     methodlist = ["chacha20-ietf-poly1305", "aes-256-gcm", "aes-128-gcm"]
-    if args.ssmethod not in methodlist not in methodlist:
+    if args.ssmethod not in methodlist:
         print("Select one method :")
         for methods in range(len(methodlist)):
             print(green + methodlist[methods] + reset)
@@ -1828,9 +1838,9 @@ if __name__ == "__main__":
         # call log func
         loglevel()
 
-    # set security to 'aes-128-gcm' by default
+    # set security to 'auto' by default
     if args.security == None:
-        SECURITY = "aes-128-gcm"
+        SECURITY = "auto"
     else:
         # call log func
         client_security()

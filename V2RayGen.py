@@ -65,7 +65,7 @@ reset = "\u001b[0m"
 
 # -------------------------------- Argument Parser --------------------------------- #
 
-usage = f"python3 {NAME.replace('X','V2')}.py {error} <protocol> {reset} {blue} <optional args> {reset}"
+usage = f"python3 {NAME} {error} <protocol> {reset} {blue} <optional args> {reset}"
 formatter = lambda prog: argparse.HelpFormatter(prog, max_help_position=64)
 parser = argparse.ArgumentParser(prog=f"{NAME}", formatter_class=formatter, usage=usage)
 
@@ -1172,8 +1172,9 @@ def client_side_configuration(protocol):
         wb.close
 
         print("")
+        filename = green + name + reset
         print(blue + "! Client-side VMess Config Generated.", reset)
-        print(blue + f"! Use {name} for using proxy with xray-core directly.", reset)
+        print(blue + f"! Use {filename}{blue} for using proxy with xray-core directly.", reset)
 
 
 # -------------------------------- Config Creation --------------------------------- #
@@ -1495,7 +1496,7 @@ def run_docker():
 def firewall_config():
     """
     add configuration port to firewall.
-    by default, it checks if the ufw exists and adds the rule to the firewall
+    by default, it checks if the ufw or firewalld exists and adds the rule to the firewall
     else iptables firewall rule will be added
     """
     try:

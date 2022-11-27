@@ -1457,15 +1457,6 @@ def run_docker():
         if os.path.exists("/usr/bin/docker-compose") or os.path.exists(
             "/usr/local/bin/docker-compose"
         ):
-            # restart docker-compose if yml file exists in current working directory
-            if os.path.exists(DOCKERCOMPOSE):
-                print(
-                    yellow
-                    + f"! {DOCKERCOMPOSE} configuration exists. restarting ..."
-                    + reset
-                )
-                subprocess.run(f"docker-compose restart", shell=True, check=True)
-
             subprocess.run(
                 f"docker-compose -f {DOCKERCOMPOSE} up -d", shell=True, check=True
             )

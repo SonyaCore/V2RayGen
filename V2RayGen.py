@@ -1461,6 +1461,9 @@ def run_docker():
             subprocess.run(
                 f"docker-compose -f {DOCKERCOMPOSE} up -d", shell=True, check=True
             )
+            subprocess.run(
+                f"docker-compose restart", shell=True, check=True
+        )
         else:
             print(
                 yellow
@@ -1623,7 +1626,7 @@ def read_serverside_configuration(config):
         print(blue + "Link : " + reset + str(link_serverside_configuration()))
 
     except KeyError as e:
-        sys.exit(error + "ERROR: " + e)
+        sys.exit(error + "ERROR: " + str(e))
 
 
 def link_serverside_configuration():

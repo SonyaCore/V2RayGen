@@ -30,7 +30,9 @@ For running this script, you must have **docker**, **docker-compose** and **pyth
 
 XRayGen uses docker to pull XRay image from the docker registry and after that, it generates a configuration file to start XRay container.
 
-it also creates a client side configuration file so you can use that with xray-core or v2ray-core
+it also creates a client side configuration file so you can use that with xray-core or v2ray-core.
+
+use **sudo** if your current user is not in the docker group or you don't have docker installed
 
 ## **Usage**
 

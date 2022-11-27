@@ -46,7 +46,7 @@ SELFSIGEND_KEY = "host.key"
 PORT = 80
 
 # Docker Compose Version
-DOCKERCOMPOSEVERSION = "2.12.2"
+DOCKERCOMPOSEVERSION = "2.13.0"
 # Docker Compose FILE
 DOCKERCOMPOSE = "docker-compose.yml"
 
@@ -1646,7 +1646,7 @@ def read_serverside_configuration(config):
         print(blue + "Link : " + reset + str(link_serverside_configuration()))
 
     except KeyError as e:
-        sys.exit(error + "ERROR: " + str(e))
+        sys.exit(error + "ERROR: " + str(e) + f' not found in {config}!')
 
 
 def link_serverside_configuration():

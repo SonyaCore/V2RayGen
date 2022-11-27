@@ -1181,26 +1181,32 @@ def client_side_configuration(protocol):
 
 def xray_create(protocol):
     dnsselect()
-    create_key() if protocol == args.vless or args.vmesstls else None
-    time.sleep(0.2)
     xray_make()
-    protocol_check()
+
+    outbounds_check()
     if protocol == "VMESS":
         xray_dockercompose("VMESS")
     elif protocol == "VMESSTLS":
+        create_key()
+        time.sleep(0.5)
         xray_dockercompose("VMESSTLS")
     elif protocol == "VLESS":
+        create_key()
+        time.sleep(0.5)
         xray_dockercompose("VLESS")
     
     run_docker()
-    info_raw()
+    serverside_info_raw()
     
     if protocol == "VMESS" or protocol == "VMESSTLS":
             print(
         vmess_link_generator(
-            args.id, UUID, "ws", args.wspath, PORT, args.linkname, tlstype
-        ))
-            client_side_configuration("VMESS")
+            args.id, UUID, "ws", args.wspath, PORT, args.linkname, tlstype))
+            if protocol == "VMESS":
+                client_side_configuration("VMESS")
+            elif protocol == "VMESSTLS":
+                client_side_configuration("VMESSTLS")
+
     elif protocol == "VLESS" :
         print(vless_link_generator(UUID, PORT, "ws", args.wspath, tlstype, args.linkname))
         client_side_configuration("VLESS")
@@ -1292,40 +1298,44 @@ def parse_ShadowSocks(sslink):
         "path": "",
         "tls": "",
     }
-    if sslink.startswith(shadowsocks_scheme):
-        info = sslink[len(shadowsocks_scheme) :]
+    try:
+        if sslink.startswith(shadowsocks_scheme):
+            info = sslink[len(shadowsocks_scheme) :]
 
-        if info.rfind("#") > 0:
-            info, ps = info.split("#", 2)
-            SHADOWSS["ps"] = unquote(ps)
+            if info.rfind("#") > 0:
+                info, ps = info.split("#", 2)
+                SHADOWSS["ps"] = unquote(ps)
 
-        if info.find("@") < 0:
-            blen = len(info)
-            if blen % 4 > 0:
-                info += "=" * (4 - blen % 4)
+            if info.find("@") < 0:
+                blen = len(info)
+                if blen % 4 > 0:
+                    info += "=" * (4 - blen % 4)
 
-            info = base64.b64decode(info).decode()
+                info = base64.b64decode(info).decode()
 
-            atidx = info.rfind("@")
-            method, password = info[:atidx].split(":", 2)
-            addr, port = info[atidx + 1 :].split(":", 2)
-        else:
-            atidx = info.rfind("@")
-            addr, port = info[atidx + 1 :].split(":", 2)
+                atidx = info.rfind("@")
+                method, password = info[:atidx].split(":", 2)
+                addr, port = info[atidx + 1 :].split(":", 2)
+            else:
+                atidx = info.rfind("@")
+                addr, port = info[atidx + 1 :].split(":", 2)
 
-            info = info[:atidx]
-            blen = len(info)
-            if blen % 4 > 0:
-                info += "=" * (4 - blen % 4)
+                info = info[:atidx]
+                blen = len(info)
+                if blen % 4 > 0:
+                    info += "=" * (4 - blen % 4)
 
-            info = base64.b64decode(info).decode()
-            method, password = info.split(":", 2)
+                info = base64.b64decode(info).decode()
+                method, password = info.split(":", 2)
 
-        SHADOWSS["add"] = addr
-        SHADOWSS["port"] = port
-        SHADOWSS["aid"] = method
-        SHADOWSS["id"] = password
-        return yellow + str(SHADOWSS) + reset
+            SHADOWSS["add"] = addr
+            SHADOWSS["port"] = port
+            SHADOWSS["aid"] = method
+            SHADOWSS["id"] = password
+            return yellow + str(SHADOWSS) + reset
+    except ValueError as err :
+        sys.exit(error + "Invalid ShadowSocks Link : " + reset + str(err))
+
 
 
 def parse_VMess(vmesslink):
@@ -1344,8 +1354,8 @@ def parse_VMess(vmesslink):
             return yellow + str(json.loads(vms)) + reset
         else:
             raise Exception("vmess link invalid")
-    except json.decoder.JSONDecodeError :
-        sys.exit(error + "Invalid VMess link" + reset)
+    except json.decoder.JSONDecodeError as err :
+        sys.exit(error + "Invalid VMess link : " + reset + str(err))
     except Error as err:
         sys.exit(error + "Invalid Format : " + reset + str(err))
 
@@ -1533,17 +1543,27 @@ def firewall_config():
 # ------------------------------ Configuration Info ------------------------------- #
 
 
-def info_raw() -> str:
+def serverside_info_raw() -> str:
     """
     show generated configuration info
     """
+    print("")
+    print("SERVER SIDE Information : ")
     print("IP: " + blue + str((ServerIP)) + reset)
     print("ID: " + blue + str(args.id) + reset)
+    print("LOGLEVEL: " + blue + str(LOG) + reset)
     print("UUID: " + blue + str(UUID) + reset)
     print("WSPATH: " + blue + str(args.wspath) + reset)
     print("PORT: " + blue + str(PORT) + reset)
+    print("SECURITY: " + blue + str(tlstype) + reset)
     print("LINKNAME: " + blue + str(args.linkname) + reset)
 
+    if args.socks or args.http:
+        print("")
+        print("CLIENT SIDE Information : ")
+        print('SECURITY : ' + blue + str(SECURITY) + reset)
+        print('HTTP PORT : ' + blue + str(HTTPPORT) + reset)
+        print('SOCKS PORT : ' + blue + str(SOCKSPORT) + reset)
 
 def read_serverside_configuration(config):
     """
@@ -1795,7 +1815,7 @@ def shadowsocks_check():
         sys.exit(2)
 
 
-def protocol_check():
+def outbounds_check():
     if args.outband not in protocol_list:  # list of outband protocols
         print(yellow + "! Use --outband to set method" + reset),
         print("List of outband methods :")
@@ -1830,14 +1850,12 @@ if __name__ == "__main__":
     if args.loglevel == None:
         LOG = "error"
     else:
-        # call log func
         loglevel()
 
     # set security to 'auto' by default
     if args.security == None:
         SECURITY = "auto"
     else:
-        # call log func
         client_security()
 
     # call DNS func
@@ -1929,13 +1947,11 @@ if __name__ == "__main__":
         xray_create('VMESS')
     elif args.vmesstls:
         xray_create('VMESSTLS')
-
     # Quick Vless Setup
-    if args.vless:
+    elif args.vless:
         xray_create('VLESS')
-
     # Quick ShadowSocks Setup
-    if args.shadowsocks:
+    elif args.shadowsocks:
         shadowsocks_create()
 
     # Install XUI

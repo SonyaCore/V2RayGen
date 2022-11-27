@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# V2Ray Config Generator
+# XRay Config Generator
 # ------------------------------------------
 #   Author    : SonyaCore
 # 	Github    : https://github.com/SonyaCore
@@ -17,30 +17,42 @@ import json
 import random
 import string
 import csv
+from urllib.parse import unquote
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
+from http.client import RemoteDisconnected
+from binascii import Error
 
 # -------------------------------- Constants --------------------------------- #
 
 # Name
-NAME = "V2RayGen"
+NAME = "XRayGen"
 
 # Version
-VERSION = "0.9.7"
+VERSION = "1.0.0"
 
 # UUID Generation
 UUID = uuid.uuid4()
 
 # Config Name
-VMESS = "config.json"
+VMESS, VLESS = "config.json", "config.json"
 SHADOWSOCKS = "shadowsocks.json"
 OBFS = "docker-compose.yml"
+
+SELFSIGEND_CERT = "host.cert"
+SELFSIGEND_KEY = "host.key"
 
 # PORT
 PORT = 80
 
 # Docker Compose Version
-DOCKERCOMPOSEVERSION = "2.12.2"
+DOCKERCOMPOSEVERSION = "2.13.0"
+# Docker Compose FILE
+DOCKERCOMPOSE = "docker-compose.yml"
+
+# Client Side PORT
+SOCKSPORT = 2080
+HTTPPORT = 2081
 
 # -------------------------------- Colors --------------------------------- #
 
@@ -53,7 +65,7 @@ reset = "\u001b[0m"
 
 # -------------------------------- Argument Parser --------------------------------- #
 
-usage = f"python3 {NAME}.py {error} <protocol> {reset} {blue} <optional args> {reset}"
+usage = f"python3 {NAME} {error} <protocol> {reset} {blue} <optional args> {reset}"
 formatter = lambda prog: argparse.HelpFormatter(prog, max_help_position=64)
 parser = argparse.ArgumentParser(prog=f"{NAME}", formatter_class=formatter, usage=usage)
 
@@ -69,25 +81,12 @@ def str2bool(v):
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
-quick = parser.add_argument_group(f"{green}Quick Setup{reset}")
+quick = parser.add_argument_group(f"{green}Protocols{reset}")
 
-quick.add_argument(
-    "--vmess", "-vm", action="store_true", help="Quick VMess & Start with docker"
-)
-
-quick.add_argument(
-    "--shadowsocks",
-    "-ss",
-    action="store_true",
-    help="Quick ShadowSocks & Start with docker",
-)
-
-quick.add_argument(
-    "--obfs",
-    "-ob",
-    action="store_true",
-    help="Quick ShadowSocks-OBFS & Start with docker",
-)
+quick.add_argument("--vmess", "-vm", action="store_true", help="Create VMess")
+quick.add_argument("--vmesstls", "-vmtls", action="store_true", help="Create VMess + TLS")
+quick.add_argument("--vless", "-vl", action="store_true", help="Create VLess + TLS")
+quick.add_argument("--shadowsocks","-ss",action="store_true",help="Create ShadowSocks",)
 
 panel = parser.add_argument_group(f"{green}Panels{reset}")
 
@@ -104,61 +103,41 @@ panel.add_argument(
     help="Setup Trojan Panel with the official installer script",
 )
 
-vmess = parser.add_argument_group(f"{green}VMess{reset}")
+xray = parser.add_argument_group(f"{green}XRay{reset}")
 
-vmess.add_argument(
-    "--generate", "--gen", action="store_true", help="Generate VMess JSON config"
-)
-
-vmess.add_argument(
-    "--link",
-    "--vmesslink",
-    action="store_true",
-    help="Generate vmess link for v2ray config",
-)
-
-vmess.add_argument(
+xray.add_argument(
     "--linkname",
-    "--vmessname",
+    "-ln",
     action="store",
     type=str,
     metavar="",
-    help="Name for VMess Link. default: [v2ray]",
-    default="v2ray",
+    help="Name for Xray generated link. default: [xray]",
+    default="xray",
 )
 
-vmess.add_argument(
+xray.add_argument(
     "--outband",
     "--outband-protocol",
     action="store",
     type=str,
     metavar="",
-    help="Protocol for outbound connection. default: [freedom]",
+    help="Custom Xray outbound connection. default: [both]",
 )
 
-vmess.add_argument(
+xray.add_argument(
     "--port",
     "-p",
     action="store",
     type=int,
     metavar="",
-    help="Optional PORT for v2ray Config. defualt: [80]",
+    help="Optional PORT for Xray Config. defualt: [80,443]",
 )
 
-# vmess.add_argument(
-#     "--domain",
-#     "--domain-websocket",
-#     action="store",
-#     type=str,
-#     metavar="",
-#     help="Use Domain insted of IP for WebSocket. default: [ServerIP]",
-# )
-
-vmess.add_argument(
+xray.add_argument(
     "--dns", action="store", type=str, metavar="", help="Optional DNS. default: [nodns]"
 )
 
-vmess.add_argument(
+xray.add_argument(
     "--wspath",
     "--websocket-path",
     action="store",
@@ -168,7 +147,7 @@ vmess.add_argument(
     default="/graphql",
 )
 
-vmess.add_argument(
+xray.add_argument(
     "--uuid",
     "--custom-uuid",
     action="store",
@@ -178,17 +157,26 @@ vmess.add_argument(
     default=f"{UUID}",
 )
 
-vmess.add_argument(
+xray.add_argument(
     "--id",
     "--alterid",
     action="store",
     type=int,
     metavar="",
-    help="Optional alterid. default: [0]",
+    help="Optional alterId. default: [0]",
     default=0,
 )
 
-vmess.add_argument(
+xray.add_argument(
+    "--loglevel",
+    "--vmess-loglevel",
+    action="store",
+    type=str,
+    metavar="",
+    help="loglevel for Xray config. default: [warning]",
+)
+
+xray.add_argument(
     "--insecure",
     "--insecure-encryption",
     action="store",
@@ -200,41 +188,51 @@ vmess.add_argument(
     default=True,
 )
 
-vmess.add_argument(
+xray.add_argument(
     "--header",
     "--http-header",
     action="store",
     type=argparse.FileType("r"),
     metavar="",
-    help="Optional JSON HTTPRequest Header",
+    help="Optional JSON HTTPRequest Header.",
 )
 
-vmess.add_argument(
-    "--loglevel",
-    "--vmess-loglevel",
-    action="store",
-    type=str,
-    metavar="",
-    help="loglevel for vmess config. default: [warning]",
+xray.add_argument(
+    "--block",
+    "--block-routing",
+    action="store_true",
+    help="Adding Blocking Bittorrent and Ads. [default: False]",
 )
 
-vmess.add_argument(
+client = parser.add_argument_group(f"{green}XRay Client Configuration{reset}")
+
+client.add_argument(
     "--security",
     "--client-security",
     action="store",
     type=str,
     metavar="",
-    help="Security for Client-side JSON config. default: [aes-128-gcm]",
+    help="Security for Client-side JSON config. default: [auto]",
+)
+
+client.add_argument(
+    "--socks",
+    "--clientsocks",
+    action="store",
+    type=int,
+    metavar="",
+    help=f"SOCKS port for Client-side JSON config. default: [{SOCKSPORT}]",
+)
+client.add_argument(
+    "--http",
+    "--clienthttp",
+    action="store",
+    type=int,
+    metavar="",
+    help=f"HTTP port for Client-side JSON config. default: [{HTTPPORT}]",
 )
 
 shadowsocks = parser.add_argument_group(f"{green}ShadowSocks{reset}")
-
-shadowsocks.add_argument(
-    "--ssmake",
-    "--shadowsocks-make",
-    action="store_true",
-    help="Generate Shadowsocks JSON config",
-)
 
 shadowsocks.add_argument(
     "--sspass",
@@ -254,52 +252,13 @@ shadowsocks.add_argument(
     help="Set Method for ShadowSocks. default: [chacha20-ietf-poly1305]",
 )
 
-shadowsocks.add_argument(
-    "--sslink",
-    "--shadowsockslink",
-    action="store_true",
-    help="Generate ShadowSocks link",
-)
-
-obfs = parser.add_argument_group(f"{green}OBFS{reset}")
-
-obfs.add_argument(
-    "--obfsmake",
-    "--obfs-make",
-    action="store_true",
-    help="Generate Shadowsocks-OBFS JSON config",
-)
-
-obfs.add_argument(
-    "--obfspass",
-    "--obfs-password",
-    action="store",
-    type=str,
-    metavar="",
-    help="Set Password for ShadowSocks-OBFS. default: [random]",
-)
-
-obfs.add_argument(
-    "--obfsmethod",
-    "--obfs-method",
-    action="store",
-    type=str,
-    metavar="",
-    help="Set Method for ShadowSocks-OBFS. default: [chacha20-ietf-poly1305]",
-)
-
-obfs.add_argument(
-    "--obfslink", action="store_true", help="Generate ShadowSocks-OBFS link"
-)
-
 docker = parser.add_argument_group(f"{green}Docker{reset}")
 
 docker.add_argument(
-    "--vmessdocker",
-    "--vmess-dockerfile",
+    "--dockerfile",
     action="store_true",
     required=False,
-    help="Generate VMess docker-compose file for v2ray-core",
+    help="Generate xray-core docker-compose file",
 )
 
 docker.add_argument(
@@ -317,6 +276,26 @@ docker.add_argument(
     help="Start docker-compose in system",
 )
 
+parseurl = parser.add_argument_group(f"{green}Link Parse{reset}")
+
+parseurl.add_argument(
+    "--parse",
+    "--parseurl",
+    action="store",
+    type=str,
+    metavar="",
+    help=f"Parse encoded link. supported formats: [vmess://,ss://]",
+)
+
+parseurl.add_argument(
+    "--parseconfig",
+    "--readconfig",
+    action="store",
+    type=argparse.FileType("r"),
+    metavar="",
+    help=f"Parse Configuration file",
+)
+
 firewall = parser.add_argument_group(f"{green}Firewall{reset}")
 
 firewall.add_argument(
@@ -325,6 +304,15 @@ firewall.add_argument(
     action="store_true",
     help="Adding firewall rules after generating configuration",
 )
+
+# xray.add_argument(
+#     "--domain",
+#     "--domain-websocket",
+#     action="store",
+#     type=str,
+#     metavar="",
+#     help="Use Domain insted of IP for WebSocket. default: [ServerIP]",
+# )
 
 opt = parser.add_argument_group(f"{green}info{reset}")
 opt.add_argument("-v", "--version", action="version", version="%(prog)s " + VERSION)
@@ -337,14 +325,14 @@ args = parser.parse_args()
 # Banner
 def banner(t=0.0005):
     data = f"""{green}
-__      _____  _____              _____            
-\ \    / /__ \|  __ \            / ____|
- \ \  / /   ) | |__) |__ _ _   _| |  __  ___ _ __  
-  \ \/ /   / /|  _  // _` | | | | | |_ |/ _ \ '_ \ 
-   \  /   / /_| | \ \ (_| | |_| | |__| |  __/ | | |
-    \/   |____|_|  \_\__,_|\__, |\_____|\___|_| |_|
-                            __/ |
-                           |___/
+ __   __ _____              _____            
+ \ \ / /|  __ \            / ____|           
+  \ V / | |__) |__ _ _   _| |  __  ___ _ __  
+   > <  |  _  // _` | | | | | |_ |/ _ \ '_ \ 
+  / . \ | | \ \ (_| | |_| | |__| |  __/ | | |
+ /_/ \_\|_|  \_\__,_|\__, |\_____|\___|_| |_|
+                     __/ |                  
+                    |___/                   
 {reset}"""
     for char in data:
         sys.stdout.write(char)
@@ -371,10 +359,7 @@ def IP():
             + f'failed to send request to {url.split("/json")[0]} please check your connection'
             + reset
         )
-
-
-# set server IP t
-ServerIP = IP()
+        sys.exit(1)
 
 
 def get_random_password(length=24):
@@ -401,7 +386,7 @@ def COUNTRY():
         with urlopen(httprequest) as response:
             data = json.loads(response.read().decode())
 
-        if data["countryCode"] != "IR" or "CN" or "VN":
+        if data["countryCode"] not in ("IR", "CN", "VN"):
             print(
                 yellow
                 + f"\n! You Are Using External Server [{data['countryCode']}]\n"
@@ -416,20 +401,7 @@ def COUNTRY():
             + f'failed to send request to {countrycode.split("/json")[0]} please check your connection'
             + reset
         )
-
-
-def _uuid():
-    """
-    return randomized UUID and port after making config
-    """
-    return "UUID: " + blue + str(UUID) + reset
-
-
-def _port():
-    """
-    return PORT after making config
-    """
-    return "PORT: " + blue + str(PORT) + reset
+        sys.exit(1)
 
 
 def dnsselect():
@@ -511,12 +483,18 @@ def get_distro() -> str:
     return "{}".format(RELEASE_INFO["NAME"])
 
 
-# def install_certbot():
-#     if get_distro() == "Ubuntu" or "Debian":
-#         subprocess.run("apt install -yqq certbot ", shell=True, check=True)
-
-# def create_key():
-#     subprocess.run("openssl req -new -newkey rsa:4096 -days 735 -nodes -x509 -subj '/C=UK/ST=Denial/L=String/O=Dis/CN=www.ray.uk' -keyout ssl.key -out ssl.cert", shell=True, check=True)
+def create_key():
+    """
+    create self signed key with openssl
+    """
+    print(green)
+    subprocess.run(
+        f"openssl req -new -newkey rsa:4096 -days 735 -nodes -x509 \
+    -subj '/C=UK/ST=Denial/L=String/O=Dis/CN=www.ray.uk' -keyout {SELFSIGEND_KEY} -out {SELFSIGEND_CERT}",
+        shell=True,
+        check=True,
+    )
+    print(reset)
 
 
 # def websocket_domaincheck(url = args.domain,t = 10) :
@@ -535,55 +513,210 @@ def get_distro() -> str:
 #         else:
 #             raise URLError(error.reason)
 
+# -------------------------------- Global Variables --------------------------------- #
+
+# Collect Server IP
+try :
+    if not args.parse:
+        ServerIP = IP()
+except RemoteDisconnected as e :
+    sys.exit(error + "ERROR : " + reset + str(e))
+except URLError as e :
+    sys.exit(error + "ERROR : " + reset + str(e))
+
+# Certificate location
+crtkey = f"/etc/xray/{SELFSIGEND_CERT}"
+hostkey = f"/etc/xray/{SELFSIGEND_KEY}"
+
+# Outband protocols
+protocol_list = ["freedom", "blackhole", "both"]
+
+# link schematic
+vmess_scheme = "vmess://"
+shadowsocks_scheme = "ss://"
+
+# Supported XRay Configuration Protocols
+supported_typo = ["vmess", 'vmesstls' , "vless"]
+
+
 # -------------------------------- VMess JSON --------------------------------- #
 
 
-def vmess_make():
+def xray_make():
     """
     Make JSON config which reads --outband for making v2ray vmess config with specific protocol
-    https://www.v2ray.com/en/configuration/protocols/vmess.html
+    https://www.v2ray.com/en/configuration/protocols/v2ray.html
+    """
+    # Config Protocol Method
+    if args.vmess:
+        name = "VMESS"
+        make_xray("vmess")
+    elif args.vmesstls:
+        name = "VMESS + TLS"
+        make_xray("vmess")
+    elif args.vless:
+        name = "VLESS"
+        make_xray("vless")
+    else:
+        None
+
+    print(blue + f"! {name} Config Generated." + reset)
+
+
+def xray_config(outband, protocol) -> str:
+    """
+    Xray JSON config file template
     """
 
-    global protocol_list
-    protocol_list = ["freedom", "blackhole", "both"]
+    data = """{
+    %s
+    %s,
+  "inbounds": [
+    {
+        %s
+        "port": %s,
+        %s,
+        "streamSettings":
+            %s,
+            %s,
+            "headersettings": %s
+    }
+        }
+  ],
+  "outbounds": [
+    %s
+  ]%s
+}""" % (
+        DNS,
+        log(),
+        sniffing() + "," if args.block else "",
+        PORT,
+        protocol,
+        websocket_config(args.wspath),
+        tlssettings() if args.vmesstls or args.vless else notls(),
+        args.header,
+        outband,
+        ",\n" + routing() if args.block else "",
+    )
+
+    return json.loads(data)
+
+# -------------------------------- Xray Config --------------------------------- #
+
+
+def make_xray(protocol):
+    """
+    make xray config based on selected protocol
+    """
 
     # Config Protocol Method
     if args.outband == "freedom":
-        with open(VMESS, "w") as txt:
-            txt.write(json.dumps(vmess_config(method=freedom()), indent=2))
+        with open(VLESS, "w") as txt:
+            if protocol == "vless":
+                txt.write(
+                    json.dumps(
+                        xray_config(outband=freedom(), protocol=vless_server_side()),
+                        indent=2,
+                    )
+                )
+            elif protocol == "vmess":
+                txt.write(
+                    json.dumps(
+                        xray_config(outband=freedom(), protocol=vmess_server_side()),
+                        indent=2,
+                    )
+                )
             txt.close
 
     if args.outband == "blackhole":
-        with open(VMESS, "w") as txt:
-            txt.write(json.dumps(vmess_config(method=blackhole()), indent=2))
+        with open(VLESS, "w") as txt:
+            if protocol == "vless":
+                txt.write(
+                    json.dumps(
+                        xray_config(outband=blackhole(), protocol=vless_server_side()),
+                        indent=2,
+                    )
+                )
+            elif protocol == "vmess":
+                txt.write(
+                    json.dumps(
+                        xray_config(outband=blackhole(), protocol=vmess_server_side()),
+                        indent=2,
+                    )
+                )
             txt.close
 
     if args.outband == "both":
-        with open(VMESS, "w") as txt:
-            txt.write(
-                json.dumps(
-                    vmess_config(method=freedom() + ",\n" + blackhole()), indent=2
+        with open(VLESS, "w") as txt:
+            if protocol == "vless":
+                txt.write(
+                    json.dumps(
+                        xray_config(
+                            outband=freedom() + ",\n" + blackhole(),
+                            protocol=vless_server_side(),
+                        ),
+                        indent=2,
+                    )
                 )
-            )
+            elif protocol == "vmess":
+                txt.write(
+                    json.dumps(
+                        xray_config(
+                            outband=freedom() + ",\n" + blackhole(),
+                            protocol=vmess_server_side(),
+                        ),
+                        indent=2,
+                    )
+                )
             txt.close
 
-    print(blue + "! VMess Config Generated." + reset)
+
+# -------------------------------- ShadowSocks JSON --------------------------------- #
 
 
-def vmess_config(method) -> str:
+def shadowsocks_make(method) -> str:
+
+    shadowsocks_check()
+
+    with open(SHADOWSOCKS, "w") as txt:
+        txt.write(
+            json.dumps(shadowsocks_config(method, password=args.sspass), indent=2)
+        )
+        txt.close
+
+    print(blue + "! ShadowSocks Config Generated." + reset)
+
+
+def shadowsocks_config(method, password) -> str:
+
+    timeout = 300
+
+    shadowsocks = """{
+    "server":"%s",
+    "server_port":%s,
+    "password":"%s",
+    "timeout":%s,
+    "method":"%s",
+    "fast_open": true
+}""" % (
+        ServerIP,
+        PORT,
+        password,
+        timeout,
+        method,
+    )
+    return json.loads(shadowsocks)
+
+
+# -------------------------------- JSON Configuration --------------------------------- #
+
+
+def vmess_server_side():
     """
-    vmess JSON config file template
+    vmess server side inbound configuration
+    https://www.v2fly.org/config/protocols/vmess.html
     """
-    data = """{
-    %s
-    "log": {
-      "loglevel": "%s",
-      "access": "/var/log/v2ray/access.log",
-      "error": "/var/log/v2ray/error.log"
-    },
-    "inbounds": [
-      {
-        "port": %s,
+    vmess = """
         "protocol": "vmess",
         "allocate": {
           "strategy": "always"
@@ -598,30 +731,111 @@ def vmess_config(method) -> str:
             }
           ],
           "disableInsecureEncryption": %s
-        },
-        "streamSettings": 
-        %s,
-          "security": "none",
-          "tcpSettings": %s
-        }
-      }
-    ],
-    "outbounds": [
-    %s
-    ]
-}
-""" % (
-        DNS,
-        LOG,
-        PORT,
+        }""" % (
         UUID,
         args.id,
         args.insecure,
-        websocket_config(args.wspath),
-        args.header,
-        method,
     )
-    return json.loads(data)
+    return vmess
+
+
+def vless_server_side():
+    """
+    vless server side inbound configuration
+    https://www.v2fly.org/config/protocols/vless.html
+    """
+    vless = """
+      "protocol": "vless",
+      "settings": {
+        "clients": [
+          {
+            "id": "%s",
+            "level": 0,
+            "email": "love@example.com"
+          }
+        ],
+        "decryption": "none"
+      }""" % (
+        UUID
+    )
+    return vless
+
+
+def routing() -> str:
+    """
+    routing configuration for block bittorrent and private ip addresses.
+    https://guide.v2fly.org/en_US/routing/bittorrent.html#server-side-configuration
+    """
+    data = """
+      "routing": {
+    "domainStrategy": "AsIs",
+    "rules": [
+      {
+        "type": "field",
+        "outboundTag": "block",
+        "protocol": ["bittorrent"]
+      },
+      {
+        "type": "field",
+        "ip": ["geoip:private"],
+        "outboundTag": "block"
+      },
+      {
+        "type": "field",
+        "outboundTag": "block",
+        "domain": ["geosite:category-ads-all"]
+      }
+    ]
+  }"""
+    return data
+
+
+def sniffing() -> str:
+    """
+    sniffing must be turned on for routing option.
+    """
+    data = """
+        "sniffing": {
+        "enabled": true,
+        "destOverride": [
+          "http",
+          "tls",
+          "quic"
+        ]
+      }
+    """
+    return data
+
+
+def tlssettings() -> str:
+    """
+    tls security settings for protocols with tls
+    """
+    tls = """
+    "security": "tls",    
+    "tlsSettings": {
+          "alpn": ["http/1.1"],
+          "certificates": [
+            {
+              "certificateFile": "%s",
+              "keyFile": "%s"
+            }
+          ]
+        }""" % (
+        crtkey,
+        hostkey,
+    )
+    return tls
+
+
+def notls() -> str:
+    """
+    no tls for protocols without tls
+    """
+    notls = """
+    "security": "none"
+    """
+    return notls
 
 
 def websocket_config(path) -> str:
@@ -685,7 +899,7 @@ def blackhole() -> str:
     return blackhole
 
 
-def tcpsettings() -> str:
+def headersettings() -> str:
     """
     default tcp setting header for json configuration.
     for using custom configuration use ( --header file.json ) option to configure your own header
@@ -714,6 +928,16 @@ def tcpsettings() -> str:
     return data
 
 
+def log():
+    log = """
+    "log": {
+    "loglevel": "%s"
+  }""" % (
+        LOG
+    )
+    return log
+
+
 def loglevel():
     """
     loglevel are for changing Server-side loglevel
@@ -723,7 +947,13 @@ def loglevel():
 
     # list of loglevels
     loglevel = ["debug", "info", "warning", "error", "none"]
-
+    loglevel_messages = [
+    'Information for developers. All "Info" included.',
+    'Running stats of XRay，no effect for the functions. All "Warning" included.',
+    'usually some external problem that does not affect V2Ray but possibly the user experience.',
+    'XRay encountered a problem that needs to be resolved immediately.',
+    'Nothing will be printed.'
+    ]
     cmd = args.loglevel.lower()
 
     # checking loglevel argument
@@ -742,19 +972,19 @@ def loglevel():
     if cmd not in loglevel:
         print("list of loglevels :")
         for levels in range(len(loglevel)):
-            print(green + loglevel[levels] + reset)
+            print(green +  loglevel[levels] + " : " + loglevel_messages[levels] + reset)
         sys.exit()
 
 
 def client_security():
     """
     client_security are for changing Client-side Security method
-    https://www.v2ray.com/en/configuration/protocols/vmess.html#userobject
+    https://www.v2ray.com/en/configuration/protocols/v2ray.html#userobject
     """
     global SECURITY
 
     # list of loglevels
-    security_methods = ["aes-128-gcm", "chacha20-poly1305", "none"]
+    security_methods = ["aes-128-gcm", "chacha20-poly1305", "auto", "none" , "zero"]
 
     cmd = args.security.lower()
 
@@ -763,8 +993,12 @@ def client_security():
         SECURITY = security_methods[0]
     if cmd == "chacha20-poly1305":
         SECURITY = security_methods[1]
-    if cmd == "none":
+    if cmd == "auto":
         SECURITY = security_methods[2]
+    if cmd == "none":
+        SECURITY = security_methods[3]
+    if cmd == "zero":
+        SECURITY = security_methods[4]
 
     # printing list of security methods if user input is not in security_methods var.
     if cmd not in security_methods:
@@ -774,207 +1008,217 @@ def client_security():
         sys.exit()
 
 
-def client_side_vmess_configuration():
+# -------------------------------- Client Side Configuration --------------------------------- #
+
+
+def client_side_configuration(protocol):
     """
     client side configuration for generating client side json configuration.
-    it can be used as configuration file for v2ray-core.
+    it can be used as configuration file for xray-core.
     """
-    data = """{
-    "inbounds": [
-      {
-        "port": 1080,
-        "protocol": "socks",
+    vmess_client = """
+        "protocol": "vmess",
         "settings": {
-          "auth": "noauth"
-        }
-      }
-    ],
-    "log": {
-    "loglevel": "%s"
-},
-    "outbounds": [
-        {
-            "mux": {
-            },
-            "protocol": "vmess",
-            "sendThrough": "0.0.0.0",
-            "settings": {
-                "vnext": [
-                    {
-                        "address": "%s",
-                        "port": %s,
-                        "users": [
-                            {
-                                "id": "%s",
-                                "security": "%s"
-                            }
-                        ]
-                    }
-                ]
-            },
-            "streamSettings": {
-                "network": "ws",
-                "tlsSettings": {
-                    "disableSystemRoot": false
-                },
-                "wsSettings": {
-                    "path": "%s"
-                },
-                "xtlsSettings": {
-                    "disableSystemRoot": false
+            "vnext": [
+            {
+                "address": "%s",
+                "port": %s,
+                "users": [
+                {
+                    "alterId": %s,
+                    "id": "%s",
+                    "security": "%s"
                 }
-            },
-            "tag": "%s"
+                ]
+            }
+            ]
+        }""" % (
+        ServerIP,
+        PORT,
+        args.id,
+        UUID,
+        SECURITY,
+    )
+
+    vless_clinet = """
+        "protocol": "vless",
+        "settings": {
+        "vnext": [
+        {
+            "address": "%s",
+            "port": %s,
+            "users": [
+            {
+                "encryption": "none",
+                "id": "%s"
+            }
+            ]
         }
-    ]
-  }""" % (
-        LOG,
+        ]
+    }""" % (
         ServerIP,
         PORT,
         UUID,
-        SECURITY,
-        args.wspath,
-        args.linkname,
     )
-    name = f"client-{args.linkname}.json"
+
+    # client protocol settings based on protocol argument
+    if protocol == "VMESS":
+        setting = vmess_client
+    elif protocol == "VMESSTLS":
+        setting = vmess_client
+    elif protocol == "VLESS":
+        setting = vless_clinet
+
+    inbounds = """
+        "inbounds": [
+        {
+        "listen": "127.0.0.1",
+        "port": %s,
+        "protocol": "socks",
+        "settings": {
+            "auth": "noauth",
+            "udp": true,
+            "userLevel": 8
+        },
+        %s
+        "tag": "socks-in"
+        },
+        {
+        "listen": "127.0.0.1",
+        "port": %s,
+        "protocol": "http",
+        "settings": {
+            "userLevel": 8
+        },
+        "tag": "http-in"
+        }
+    ]""" % (
+        SOCKSPORT,
+        sniffing() + "," if args.block else "",
+        HTTPPORT,
+    )
+
+    tls_client = """
+        "security": "tls",
+        "tlsSettings": { "allowInsecure": true }
+        """
+
+    streamsettings_client = """
+        "streamSettings": {
+        "network": "ws",
+        %s,
+        "wsSettings": { "path": "%s" }
+      },
+      "tag": "proxy"
+    """ % (
+        tls_client if protocol == "VMESSTLS" or "VLESS" else notls(),
+        args.wspath,
+    )
+
+    outbands_client = """
+    { "protocol": "freedom", "tag": "direct" },
+    { "protocol": "freedom", "tag": "bypass" },
+    { "protocol": "blackhole", "tag": "block" },
+    """
+    policy = """
+    "policy": {
+    "levels": { "1": { "connIdle": 30 } },
+    "system": { "statsOutboundDownlink": true, "statsOutboundUplink": true }
+  }"""
+
+    outbands = """
+    "outbounds": [
+    {
+      "domainStrategy": "AsIs",
+      %s,
+      %s
+    },
+    %s
+    {
+      "protocol": "dns",
+      "proxySettings": { "tag": "proxy", "transportLayer": true },
+      "settings": {
+        "address": "8.8.8.8",
+        "network": "tcp",
+        "port": 53,
+        "userLevel": 1
+      },
+      "tag": "dns-out"
+    }
+  ],
+    """ % (
+        setting,
+        streamsettings_client,
+        outbands_client,
+    )
+
+    client_configuration = """
+    {
+        %s,
+        "log": { "loglevel": "%s" },
+        %s
+        %s
+    }
+    """ % (
+        inbounds,
+        LOG,
+        outbands,
+        policy,
+    )
+
+    name = f"client-{protocol}-{args.linkname}.json"
     with open(name, "w") as wb:
-        wb.write(data)
+        wb.write(json.dumps(json.loads(client_configuration), indent=2))
         wb.close
 
         print("")
+        filename = green + name + reset
         print(blue + "! Client-side VMess Config Generated.", reset)
-        print(blue + f"! Use {name} for using proxy with v2ray-core directly.", reset)
+        print(blue + f"! Use {filename}{blue} for using proxy with xray-core directly.", reset)
 
 
-def vmess_simple():
-    """
-    Quick VMess Configuration.
-    """
+# -------------------------------- Config Creation --------------------------------- #
 
+def xray_create(protocol):
     dnsselect()
-    vmess_make()
-    vmess_dockercompose()
+    xray_make()
+
+    outbounds_check()
+    if protocol == "VMESS":
+        xray_dockercompose("VMESS")
+    elif protocol == "VMESSTLS":
+        create_key()
+        time.sleep(0.5)
+        xray_dockercompose("VMESSTLS")
+    elif protocol == "VLESS":
+        create_key()
+        time.sleep(0.5)
+        xray_dockercompose("VLESS")
+    
     run_docker()
-    vmess_raw()
-    print(vmess_link_generator(args.linkname))
-    client_side_vmess_configuration()
-    COUNTRY()
+    serverside_info_raw()
+    
+    if protocol == "VMESS" or protocol == "VMESSTLS":
+            print(
+        vmess_link_generator(
+            args.id, UUID, "ws", args.wspath, PORT, args.linkname, tlstype))
+            if protocol == "VMESS":
+                client_side_configuration("VMESS")
+            elif protocol == "VMESSTLS":
+                client_side_configuration("VMESSTLS")
 
+    elif protocol == "VLESS" :
+        print(vless_link_generator(UUID, PORT, "ws", args.wspath, tlstype, args.linkname))
+        client_side_configuration("VLESS")
+    COUNTRY() if protocol == "VMESS" else None
 
-# -------------------------------- ShadowSocks JSON --------------------------------- #
-
-
-def shadowsocks_make(method) -> str:
-
-    shadowsocks_check()
-
-    with open(SHADOWSOCKS, "w") as txt:
-        txt.write(
-            json.dumps(shadowsocks_config(method, password=args.sspass), indent=2)
-        )
-        txt.close
-
-    print(blue + "! ShadowSocks Config Generated." + reset)
-
-
-def shadowsocks_config(method, password) -> str:
-
-    timeout = 300
-
-    shadowsocks = """{
-    "server":"%s",
-    "server_port":%s,
-    "password":"%s",
-    "timeout":%s,
-    "method":"%s",
-    "fast_open": true
-}""" % (
-        ServerIP,
-        PORT,
-        password,
-        timeout,
-        method,
-    )
-    return json.loads(shadowsocks)
-
-
-def shadowsocks_simple():
+def shadowsocks_create():
     """
-    quick shadowsocks configuration
+    Quick shadowsocks configuration
     """
-
     shadowsocks_make(args.ssmethod)
     shadowsocks_dockercompose()
     run_docker()
-    print(shadowsocks_link_generator())
-    COUNTRY()
-
-
-# -------------------------------- ShadowSocks OBFS --------------------------------- #
-
-
-def obfs_make(method) -> str:
-    """
-    generating shadowsocks-obfs configuration from command
-    """
-
-    shadowsocks_check()
-
-    with open(OBFS, "w") as txt:
-        txt.write(obfs_config(method, password=args.obfspass))
-        txt.close
-
-    print(blue + "! ShadowSocks-OBFS Config Generated." + reset)
-
-
-def obfs_config(method, password) -> str:
-
-    obfs = """version: '3'
-services:
-    shadowsocks:
-        container_name: shadowsocks
-        image: shadowsocks/shadowsocks-libev
-        ports:
-            - "%s:8388/udp"
-        networks:
-            overlay:
-        environment:
-          - PASSWORD=%s
-          - METHOD=%s
-        restart: always
-    simple-obfs:
-      container_name: obfs
-      image: gists/simple-obfs
-      ports:
-          - "%s:8388/tcp"
-      environment:
-          - FORWARD=shadowsocks:8388
-      depends_on:
-          - shadowsocks
-      networks:
-          overlay:
-      restart: always
-
-networks:
-    overlay:
-        driver: bridge""" % (
-        PORT,
-        password,
-        method,
-        PORT,
-    )
-    return obfs
-
-
-def obfs_simple():
-    """
-    Quick ShadowSocks-OBFS Configuration.
-    """
-
-    obfs_make(args.obfsmethod)
-    run_docker()
-    print(_port())
-    print("PASSWORD: " + blue + str(args.obfspass) + reset)
     print(shadowsocks_link_generator())
     COUNTRY()
 
@@ -992,65 +1236,171 @@ def panels(type):
         appname = "X-UI"
     elif type == "Trojan-Panel":
         appname = "Trojan-Panel"
-    msg = f"{green + appname + reset} may install unnecessary binaries do yo want to install ? {error}[y/n]{reset} "
+    msg = f"{green + appname + reset} may install unnecessary binaries. press {error}Ctrl+C{reset} to cancel the installation."
 
     try:
         # installing x-ui using official installation script.
         if type == "XUI":
-            confirm = input(msg)
-            if str2bool(confirm) == True:
-                subprocess.run(
-                    "curl https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh | bash",
-                    shell=True,
-                    check=True,
-                    executable="/bin/bash",
-                )
-            else:
-                sys.exit(1)
+            print(msg)
+            time.sleep(5)
+            subprocess.run(
+                "curl https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh | bash",
+                shell=True,
+                check=True,
+                executable="/bin/bash",
+            )
 
         # installing trojan-panel using official installation script.
         elif type == "Trojan-Panel":
-            confirm = input(msg)
-            if str2bool(confirm) == True:
-                subprocess.run(
-                    "source <(curl -L https://github.com/trojanpanel/install-script/raw/main/install_script.sh)",
-                    shell=True,
-                    check=True,
-                    executable="/bin/bash",
-                )
-            else:
-                sys.exit(1)
+            print(msg)
+            time.sleep(5)
+            subprocess.run(
+                "source <(curl -L https://github.com/trojanpanel/install-script/raw/main/install_script.sh)",
+                shell=True,
+                check=True,
+                executable="/bin/bash",
+            )
 
     except subprocess.CalledProcessError as e:
         print(error + "Root privileges required!")
 
 
+# -------------------------------- Parse URL --------------------------------- #
+
+
+def parseLink(link):
+    if link.startswith(vmess_scheme):
+        print(parse_VMess(link))
+    elif link.startswith(shadowsocks_scheme):
+        print(parse_ShadowSocks(link))
+    else:
+        links = vmess_scheme, shadowsocks_scheme
+        print(
+            f"{error}ERROR:{reset} --parse arg supports only {green} {links} {reset} links"
+        )
+        sys.exit(1)
+
+
+def parse_ShadowSocks(sslink):
+    """
+    Parse Shadowsocks encoded link into a dictionary list.
+    """
+    SHADOWSS = {
+        "v": "2",
+        "ps": "",
+        "add": "",
+        "port": "",
+        "id": "",
+        "aid": "",
+        "net": "shadowsocks",
+        "type": "",
+        "host": "",
+        "path": "",
+        "tls": "",
+    }
+    try:
+        if sslink.startswith(shadowsocks_scheme):
+            info = sslink[len(shadowsocks_scheme) :]
+
+            if info.rfind("#") > 0:
+                info, ps = info.split("#", 2)
+                SHADOWSS["ps"] = unquote(ps)
+
+            if info.find("@") < 0:
+                blen = len(info)
+                if blen % 4 > 0:
+                    info += "=" * (4 - blen % 4)
+
+                info = base64.b64decode(info).decode()
+
+                atidx = info.rfind("@")
+                method, password = info[:atidx].split(":", 2)
+                addr, port = info[atidx + 1 :].split(":", 2)
+            else:
+                atidx = info.rfind("@")
+                addr, port = info[atidx + 1 :].split(":", 2)
+
+                info = info[:atidx]
+                blen = len(info)
+                if blen % 4 > 0:
+                    info += "=" * (4 - blen % 4)
+
+                info = base64.b64decode(info).decode()
+                method, password = info.split(":", 2)
+
+            SHADOWSS["add"] = addr
+            SHADOWSS["port"] = port
+            SHADOWSS["aid"] = method
+            SHADOWSS["id"] = password
+            return yellow + str(SHADOWSS) + reset
+    except ValueError as err :
+        sys.exit(error + "Invalid ShadowSocks Link : " + reset + str(err))
+
+
+
+def parse_VMess(vmesslink):
+    """
+    Parse VMess encoded link into a dictionary list.
+    """
+    try:
+        if vmesslink.startswith(vmess_scheme):
+            link = vmesslink[len(vmess_scheme) :]
+            bytelen = len(link)
+            if bytelen % 4 > 0:
+                link += "=" * (4 - bytelen % 4)
+
+            vms = base64.b64decode(link).decode()
+
+            return yellow + str(json.loads(vms)) + reset
+        else:
+            raise Exception("vmess link invalid")
+    except json.decoder.JSONDecodeError as err :
+        sys.exit(error + "Invalid VMess link : " + reset + str(err))
+    except Error as err:
+        sys.exit(error + "Invalid Format : " + reset + str(err))
+
+
 # -------------------------------- Docker --------------------------------- #
 
 
-def vmess_dockercompose():
+def xray_dockercompose(protocol):
     """
-    Create VMess docker-compose file for v2ray-core.
-    in this docker-compose v2fly-core is being used for running v2ray in the container.
-    https://hub.docker.com/r/v2fly/v2fly-core
+    Create docker-compose file for xray-core.
+    in this docker-compose xray-core is being used for running xray in the container.
+    https://hub.docker.com/r/teddysun/xray
     """
+
+    # docker protocol type
+    if protocol == "VMESS":
+        arg = VMESS
+    if protocol == "VMESSTLS":
+        arg = VMESS
+    elif protocol == "VLESS":
+        arg = VLESS
+
+    docker_crtkey = f"- ./{SELFSIGEND_CERT}:/etc/xray/{SELFSIGEND_CERT}:ro"
+    docker_hostkey = f"- ./{SELFSIGEND_KEY}:/etc/xray/{SELFSIGEND_KEY}:ro"
 
     data = """version: '3'
 services:
-  v2ray:
-    image: v2fly/v2fly-core
+  xray:
+    image: teddysun/xray
     restart: always
     network_mode: host
     environment:
       - V2RAY_VMESS_AEAD_FORCED=false
+    entrypoint: ["/usr/bin/xray", "-config", "/etc/xray/config.json"]
     volumes:
-        - ./%s:/etc/v2ray/config.json:ro
-    entrypoint: ["v2ray", "run", "-c", "/etc/v2ray/config.json"]""" % (
-        VMESS
+        - ./%s:/etc/xray/config.json:ro
+        %s
+        %s""" % (
+        arg,
+        docker_crtkey if args.vless or args.vmesstls else "",
+        docker_hostkey if args.vless or args.vmesstls else "",
     )
 
-    print(yellow + "! Created vmess-v2ray docker-compose.yml configuration" + reset)
-    with open("docker-compose.yml", "w") as txt:
+    print(yellow + f"! Created xray-core {DOCKERCOMPOSE} configuration" + reset)
+    with open(f"{DOCKERCOMPOSE}", "w") as txt:
         txt.write(data)
         txt.close()
 
@@ -1078,69 +1428,79 @@ services:
         args.sspass,
     )
 
-    print(yellow + "! Created ShadowSocks docker-compose.yml configuration" + reset)
-    with open("docker-compose.yml", "w") as txt:
+    print(yellow + f"! Created ShadowSocks {DOCKERCOMPOSE} configuration" + reset)
+    with open(f"{DOCKERCOMPOSE}", "w") as txt:
         txt.write(data)
         txt.close()
 
 
 def run_docker():
     """
-    Start v2ray docker-compose.
+    Start xray docker-compose.
     at first, it will check if docker exists and then check if docker-compose exists
     if docker is not in the path it will install docker with the official script.
-    then it checks the docker-compose path if the condition is True docker-compose.yml will be used for running v2ray.
+    then it checks the docker-compose path if the condition is True docker-compose.yml will be used for running xray.
     """
+    try:
+        # Check if docker exist
+        if os.path.exists("/usr/bin/docker") or os.path.exists("/usr/local/bin/docker"):
+            pass
+        else:
+            # Install docker if docker are not installed
+            try:
+                print(yellow + "Docker Not Found.\nInstalling Docker ...")
+                subprocess.run(
+                    "curl https://get.docker.com | sh", shell=True, check=True
+                )
+            except subprocess.CalledProcessError:
+                sys.exit(error + "Download Failed !" + reset)
 
-    # Check if docker exist
-    if os.path.exists("/usr/bin/docker") or os.path.exists("/usr/local/bin/docker"):
-        pass
-    else:
-        # Install docker if docker are not installed
-        try:
-            print(yellow + "Docker Not Found.\nInstalling Docker ...")
-            subprocess.run("curl https://get.docker.com | sh", shell=True, check=True)
-        except subprocess.CalledProcessError:
-            sys.exit(error + "Download Failed !" + reset)
+        # Check if Docker Service are Enabled
+        systemctl = subprocess.call(["systemctl", "is-active", "--quiet", "docker"])
+        if systemctl == 0:
+            pass
+        else:
+            subprocess.call(["systemctl", "enable", "--now", "--quiet", "docker"])
 
-    # Check if Docker Service is Enabled
-    systemctl = subprocess.call(["systemctl", "is-active", "--quiet", "docker"])
-    if systemctl == 0:
-        pass
-    else:
-        subprocess.call(["systemctl", "enable", "--now", "--quiet", "docker"])
+        time.sleep(2)
 
-    time.sleep(2)
-
-    # Check if docker-compose exist
-
-    if os.path.exists("/usr/bin/docker-compose") or os.path.exists(
-        "/usr/local/bin/docker-compose"
-    ):
-        subprocess.run(
-            "docker-compose -f docker-compose.yml up -d", shell=True, check=True
+        # Check if docker-compose exist
+        if os.path.exists("/usr/bin/docker-compose") or os.path.exists(
+            "/usr/local/bin/docker-compose"
+        ):
+            subprocess.run(
+                f"docker-compose -f {DOCKERCOMPOSE} up -d", shell=True, check=True
+            )
+            subprocess.run(
+                f"docker-compose restart", shell=True, check=True
         )
-    else:
-        print(
-            yellow
-            + f"docker-compose Not Found.\nInstalling docker-compose v{DOCKERCOMPOSEVERSION} ..."
-        )
-        subprocess.run(
-            f"curl -SL https://github.com/docker/compose/releases/download/v{DOCKERCOMPOSEVERSION}/docker-compose-linux-x86_64 \
-      -o /usr/local/bin/docker-compose",
-            shell=True,
-            check=True,
-        )
-        subprocess.run("chmod +x /usr/local/bin/docker-compose", shell=True, check=True)
-        subprocess.run(
-            "ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose",
-            shell=True,
-            check=True,
-        )
+        else:
+            print(
+                yellow
+                + f"docker-compose Not Found.\nInstalling docker-compose v{DOCKERCOMPOSEVERSION} ..."
+            )
+            subprocess.run(
+                f"curl -SL https://github.com/docker/compose/releases/download/v{DOCKERCOMPOSEVERSION}/docker-compose-linux-x86_64 \
+        -o /usr/local/bin/docker-compose",
+                shell=True,
+                check=True,
+            )
+            subprocess.run(
+                "chmod +x /usr/local/bin/docker-compose", shell=True, check=True
+            )
+            subprocess.run(
+                "ln -s /usr/local/bin/docker-compose /usr/bin/docker-compose",
+                shell=True,
+                check=True,
+            )
 
-        subprocess.run(
-            "docker-compose -f docker-compose.yml up -d", shell=True, check=True
-        )
+            subprocess.run(
+                f"docker-compose -f {DOCKERCOMPOSE} up -d", shell=True, check=True
+            )
+    except subprocess.CalledProcessError as e:
+        sys.exit(error + str(e) + reset)
+    except PermissionError:
+        sys.exit(error + "ًroot privileges required" + reset)
 
 
 # ------------------------------ Firewall ------------------------------- #
@@ -1149,47 +1509,162 @@ def run_docker():
 def firewall_config():
     """
     add configuration port to firewall.
-    by default, it checks if the ufw exists and adds the rule to the firewall
+    by default, it checks if the ufw or firewalld exists and adds the rule to the firewall
     else iptables firewall rule will be added
     """
-    if os.path.exists("/usr/sbin/ufw"):
-        service = "ufw"
-        subprocess.run(f"ufw allow {PORT}", check=True, shell=True)
-    elif os.path.exists("/usr/sbin/firewalld"):
-        service = "firewalld"
-        subprocess.run(
-            f"firewall-cmd --permanent --add-port={PORT}/tcp",
-            shell=True,
-            check=True,
+    try:
+        if os.path.exists("/usr/sbin/ufw"):
+            service = "ufw"
+            subprocess.run(f"ufw allow {PORT}", check=True, shell=True)
+        elif os.path.exists("/usr/sbin/firewalld"):
+            service = "firewalld"
+            subprocess.run(
+                f"firewall-cmd --permanent --add-port={PORT}/tcp",
+                shell=True,
+                check=True,
+            )
+        else:
+            service = "iptables"
+            subprocess.run(
+                f"iptables -t filter -A INPUT -p tcp --dport {PORT} -j ACCEPT",
+                shell=True,
+                check=True,
+            )
+            subprocess.run(
+                f"iptables -t filter -A OUTPUT -p tcp --dport {PORT} -j ACCEPT",
+                shell=True,
+                check=True,
+            )
+        print(green + "Added " + str(PORT) + " " + "to " + service + reset)
+    except subprocess.CalledProcessError as e:
+        sys.exit(error + str(e) + reset)
+
+
+# ------------------------------ Configuration Info ------------------------------- #
+
+
+def serverside_info_raw() -> str:
+    """
+    show generated configuration info
+    """
+    print("")
+    print("SERVER SIDE Information : ")
+    print("IP: " + blue + str((ServerIP)) + reset)
+    print("ID: " + blue + str(args.id) + reset)
+    print("LOGLEVEL: " + blue + str(LOG) + reset)
+    print("UUID: " + blue + str(UUID) + reset)
+    print("WSPATH: " + blue + str(args.wspath) + reset)
+    print("PORT: " + blue + str(PORT) + reset)
+    print("SECURITY: " + blue + str(tlstype) + reset)
+    print("LINKNAME: " + blue + str(args.linkname) + reset)
+
+    if args.socks or args.http:
+        print("")
+        print("CLIENT SIDE Information : ")
+        print('SECURITY : ' + blue + str(SECURITY) + reset)
+        print('HTTP PORT : ' + blue + str(HTTPPORT) + reset)
+        print('SOCKS PORT : ' + blue + str(SOCKSPORT) + reset)
+
+def read_serverside_configuration(config):
+    """
+    parse server-side configuration file
+    this function only support vmess & vless json file
+    https://www.v2ray.com/en/configuration/overview.html
+    """
+    global ID, AlterId, net, path, configport, securitymethod, protocol
+
+    with open(config, "r") as configfile:
+        data = json.loads(configfile.read())
+
+    try:
+        # essential info that must be in the json configuration file
+        ID = data["inbounds"][0]["settings"]["clients"][0]["id"]
+        protocol = data["inbounds"][0]["protocol"]
+        configport = data["inbounds"][0]["port"]
+        securitymethod = data["inbounds"][0]["streamSettings"]["security"]
+
+        print(yellow + "Inbounds Info:" + reset)
+        try:
+            configloglevel = data["log"]["loglevel"]
+            print(blue + "Loglevel : " + reset + str(configloglevel))
+        except KeyError:
+            pass
+
+        print(blue + "PROTOCOL : " + reset + str(protocol))
+        print(blue + "PORT : " + reset + str(configport))
+        print("")
+        print(yellow + "Client Info:" + reset)
+        print(blue + "ID : " + reset + str(ID))
+
+        try:
+            clientlevel = data["inbounds"][0]["settings"]["clients"][0]["level"]
+            print(blue + "Level : " + reset + str(clientlevel))
+        except KeyError:
+            pass
+
+        try:
+            AlterId = data["inbounds"][0]["settings"]["clients"][0]["alterId"]
+            if AlterId != None:
+                print(blue + "alterId : " + reset + str(AlterId))
+            else:
+                pass
+        except KeyError:
+            AlterId = 0
+            pass
+
+        print("")
+        print(yellow + "Stream Settings:" + reset)
+        try:
+            net = data["inbounds"][0]["streamSettings"]["network"]
+            print(blue + "Network : " + reset + str(net))
+        except KeyError:
+            net = ""
+            pass
+
+        try:
+            if data["inbounds"][0]["streamSettings"]["network"] == "ws":
+                try:
+                    path = data["inbounds"][0]["streamSettings"]["wsSettings"]["path"]
+                    print(blue + "WebSocket Path : " + reset + str(path))
+                except KeyError:
+                    path = ""
+                    pass
+        except KeyError:
+            pass
+
+        print(blue + "Security : " + reset + str(securitymethod))
+
+        try:
+            outbands = []
+            for each in data["outbounds"]:
+                outbands.append(each["protocol"])
+            print(blue + "OutBounds : " + reset + str(outbands))
+        except KeyError:
+            outbands = None
+            pass
+
+        print(blue + "Link : " + reset + str(link_serverside_configuration()))
+
+    except KeyError as e:
+        sys.exit(error + "ERROR: " + str(e) + f' not found in {config}!')
+
+
+def link_serverside_configuration():
+    """
+    generate link with server-side configuration file.
+    """
+    if protocol == "vmess":
+        return vmess_link_generator(
+            AlterId, ID, net, path, configport, "xray", securitymethod
         )
-    else:
-        service = "iptables"
-        subprocess.run(
-            f"iptables -t filter -A INPUT -p tcp --dport {PORT} -j ACCEPT",
-            shell=True,
-            check=True,
-        )
-        subprocess.run(
-            f"iptables -t filter -A OUTPUT -p tcp --dport {PORT} -j ACCEPT",
-            shell=True,
-            check=True,
-        )
-    print(green + "Added " + str(PORT) + " " + "to " + service + reset)
+    elif protocol == "vless":
+        return vless_link_generator(ID, configport, net, path, securitymethod, "xray")
 
 
 # ------------------------------ VMess Link Gen ------------------------------- #
 
 
-def vmess_raw() -> str:
-    print("IP: " + blue + str((ServerIP)) + reset)
-    print("ID: " + blue + str(args.id) + reset)
-    print("UUID: " + blue + str(UUID) + reset)
-    print("WSPATH: " + blue + str(args.wspath) + reset)
-    print("PORT: " + blue + str(PORT) + reset)
-    print("LINKNAME: " + blue + str(args.linkname) + reset)
-
-
-def vmess_link_generator(vmess_config_name) -> str:
+def vmess_link_generator(aid, id, net, path, port, ps, tls) -> str:
     """
     Generate vmess link.
 
@@ -1197,23 +1672,25 @@ def vmess_link_generator(vmess_config_name) -> str:
     vmess links are encoded with base64.
     """
 
-    if not vmess_config_name:
-        vmess_config_name = "v2ray"
+    if not ps:
+        ps = "xray"
+
+    if not args.parseconfig:
+        print("")
+        print(yellow + "! Use below link for your xray or v2ray client" + reset)
 
     prelink = "vmess://"
-    print("")
-    print(yellow + "! Use below link for your v2ray client" + reset)
     raw_link = bytes(
         "{"
         + f""""add":"{ServerIP}",\
-"aid":"{args.id}",\
+"aid":"{aid}",\
 "host":"",\
-"id":"{UUID}",\
-"net":"ws",\
-"path":"{args.wspath}",\
-"port":"{PORT}",\
-"ps":"{vmess_config_name}",\
-"tls":"",\
+"id":"{id}",\
+"net":"{net}",\
+"path":"{path}",\
+"port":"{port}",\
+"ps":"{ps}",\
+"tls":"{tls}",\
 "type":"none",\
 "v":"2" """
         + "}",
@@ -1225,6 +1702,26 @@ def vmess_link_generator(vmess_config_name) -> str:
     vmess_link = prelink + str(link.decode("utf-8"))  # concatenate prelink with rawlink
 
     return vmess_link
+
+
+# ------------------------------ VLess Link Gen ------------------------------- #
+
+
+def vless_link_generator(id, port, net, path, security, name) -> str:
+    """
+    generate vless link with below format:
+    vless://id@IP:PORT?path&security&encryption&type#linkname
+    """
+    if not args.parseconfig:
+        print("")
+        print(yellow + "! Use below link for your xray or v2ray client" + reset)
+
+    prelink = "vless://"
+    raw_link = f"{id}@{ServerIP}:{port}?path={path}&security={security}&encryption=none&type={net}#{name}"
+
+    vless_link = prelink + raw_link
+
+    return vless_link
 
 
 # ------------------------------ ShadowSocks Link Gen ------------------------------- #
@@ -1311,14 +1808,14 @@ def shadowsocks_check():
     # Other stream ciphers are implemented but do not provide integrity and authenticity.
 
     methodlist = ["chacha20-ietf-poly1305", "aes-256-gcm", "aes-128-gcm"]
-    if args.ssmethod not in methodlist or args.obfsmethod not in methodlist:
+    if args.ssmethod not in methodlist:
         print("Select one method :")
         for methods in range(len(methodlist)):
             print(green + methodlist[methods] + reset)
         sys.exit(2)
 
 
-def protocol_check():
+def outbounds_check():
     if args.outband not in protocol_list:  # list of outband protocols
         print(yellow + "! Use --outband to set method" + reset),
         print("List of outband methods :")
@@ -1346,18 +1843,19 @@ if __name__ == "__main__":
     else:
         banner()
 
+    if args.parse:
+        parseLink(args.parse)
+
     # set log to 'error' by default
     if args.loglevel == None:
         LOG = "error"
     else:
-        # call log func
         loglevel()
 
-    # set security to 'aes-128-gcm' by default
+    # set security to 'auto' by default
     if args.security == None:
-        SECURITY = "aes-128-gcm"
+        SECURITY = "auto"
     else:
-        # call log func
         client_security()
 
     # call DNS func
@@ -1385,13 +1883,18 @@ if __name__ == "__main__":
     if args.dns == "nodns":
         DNS = NODNS
 
+    if args.socks:
+        SOCKSPORT = args.socks
+    if args.http:
+        HTTPPORT = args.http
+
     # JSON custom template load
     if args.header:
         with open(f"{args.header.name}", "r") as setting:
             stream = setting.read()
             args.header = stream
     else:
-        args.header = tcpsettings()
+        args.header = headersettings()
 
     # Insecure option
     if args.insecure == True:
@@ -1399,7 +1902,10 @@ if __name__ == "__main__":
     if args.insecure == False:
         args.insecure = "false"
 
-    # VMess Port :
+    # Port Settings :
+    if args.port == None and args.vless == True or args.vmesstls == True:
+        PORT = 443
+
     if args.port == None:
         pass
     else:
@@ -1417,53 +1923,36 @@ if __name__ == "__main__":
     #     print(green + 'Domain ٰValid!' + reset)
     #     ServerIP = f"{args.domain}"
 
-    # Make VMess Config with Defined parameters
-    if args.generate:
-        vmess_make()
-        protocol_check()
-        vmess_raw()
-        client_side_vmess_configuration()
-        COUNTRY()
-        print(
-            green + "! You Can Use docker-compose up -d to run V2ray-core\n"
-            "! Also You Can use --dockerup argument to run v2ray docker when Creating config",
-            reset,
-        )
-
     # ShadowSocks Password
     if args.sspass == None:
         args.sspass = get_random_password()
-    if args.obfspass == None:
-        args.obfspass = get_random_password()
 
     # ShadowSocks Method
     if args.ssmethod == None:
         args.ssmethod = "chacha20-ietf-poly1305"
-    if args.obfsmethod == None:
-        args.obfsmethod = "chacha20-ietf-poly1305"
 
-    # Make ShadowSocks Config
-    if args.ssmake:
-        shadowsocks_make(args.ssmethod)
-        COUNTRY()
-    if args.obfsmake:
-        obfs_make(args.obfsmethod)
-        print(_port())
-        print("PASSWORD: " + blue + args.obfspass + reset)
-        COUNTRY()
+    if args.outband == None:
+        args.outband = "both"
+
+    # link security method
+    if args.vmess:
+        tlstype = ""
+    elif args.vmesstls:
+        tlstype = "tls"
+    elif args.vless:
+        tlstype = "tls"
 
     # Quick VMess Setup
     if args.vmess:
-        # Set to freedom + blackhole if nothing entered
-        if args.outband == None:
-            args.outband = "both"
-        vmess_simple()
-
-    # Quick ShadowSocks | Shadowsocks-OBFS Setup
-    if args.shadowsocks:
-        shadowsocks_simple()
-    if args.obfs:
-        obfs_simple()
+        xray_create('VMESS')
+    elif args.vmesstls:
+        xray_create('VMESSTLS')
+    # Quick Vless Setup
+    elif args.vless:
+        xray_create('VLESS')
+    # Quick ShadowSocks Setup
+    elif args.shadowsocks:
+        shadowsocks_create()
 
     # Install XUI
     if args.xui:
@@ -1472,23 +1961,9 @@ if __name__ == "__main__":
     if args.trojanpanel:
         panels("Trojan-Panel")
 
-    # Make ShadowSocks Link
-    if args.sslink:
-        if args.ssmake is None or args.shadowsocks is None:
-            parser.error("--ssmake or --shadowsocks are required")
-        else:
-            print(shadowsocks_link_generator())
-
-    # Make OBFS Link (Same as SS)
-    if args.obfslink:
-        if args.obfsmake is None or args.obfs is None:
-            parser.error("--obfsmake or --obfs are required")
-        else:
-            print(shadowsocks_link_generator())
-
     # Make docker-compose for VMess
-    if args.vmessdocker:
-        vmess_dockercompose()
+    if args.dockerfile:
+        xray_dockercompose("VMESS")
     # Make docker-compose for ShadowSocks
     if args.ssdocker:
         shadowsocks_dockercompose()
@@ -1497,12 +1972,13 @@ if __name__ == "__main__":
     if args.dockerup:
         run_docker()
 
-    # Make VMess Link
-    if args.link:
-        if args.generate is None or args.outband is None:
-            parser.error("--generate and --outband are required")
-        else:
-            print(vmess_link_generator(args.linkname))
     # add firewall rules
     if args.firewall:
         firewall_config()
+
+    # parse configuration file
+    try:
+        if args.parseconfig:
+            read_serverside_configuration(args.parseconfig.name)
+    except json.decoder.JSONDecodeError as e:
+        sys.exit(error + "ERROR: " + reset + str(e))

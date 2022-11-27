@@ -14,25 +14,15 @@
 
 [**Usage**](#usage)
 
-[**Quick Setup**](#quicksetup)
+[**QuickSetup**](#quicksetup)
 
-[**Options ⚙️**](#options)
+[**Options**](#options)
 
-[**License 🪪**](#license)
-
-[**Donate Me ☕**](#donateme)
+[**License**](#license)
 
 ## **Prerequisites & Dependencies**
 
-For running this script, you must have **docker**, **docker-compose** and **python3** on your server **but** this script installs `docker` & `docker-compose` if your server doesn't have docker and runs xray-core automatically
-
-use **sudo** if your current user is not in the docker group or you don't have docker installed
-
-## **How XRayGen Works ?**
-
-XRayGen uses docker to pull XRay image from the docker registry and after that, it generates a configuration file to start XRay container.
-
-it also creates a client side configuration file so you can use that with xray-core or v2ray-core.
+For running this script, you must have **docker**, **docker-compose** and **python3** installed on your server **or** you can use `--dockerup` switch which installs docker & docker-compose and runs v2ray-core automatically
 
 ## **Usage**
 
@@ -46,11 +36,7 @@ it also creates a client side configuration file so you can use that with xray-c
 
 You can use one of the following protocols for installation and change its settings according to your needs.
 
-| Protoctol   | Argument      |
-| ----------- | ------------- |
-| VMESS       | --vmess , -wm |
-| VMESS + TLS | --vless , -vl |
-| VLESS + TLS | --vless , -vl |
+## QuickSetup
 
 ### **Quick `Xray` Setup with Default Setting** :
 
@@ -113,7 +99,17 @@ you can use client-side configuration directly with xray-core or v2ray-core
 
 ## Parsing Configuration
 
-for parsing existed configuration or decoding vmess url use below options :
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --shadowsocks
+```
+
+OR
+
+### **Quick `ShadowSocks-OBFS` Setup with Default Setting** :
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --obfs
+```
 
 `parse` for parsing encoded link. supported formats are [vmess://,ss://]
 
@@ -204,6 +200,16 @@ ss://shadowsocks-security-method:random-uuid@domain/ip :port
 
 ## DonateMe
 
+#### ![tron-button] &nbsp; TPFUnjJ4HNbGC6fp7WixFaAMBJ3ZLiUUio
+
+#### ![bitcoin-button] &nbsp; 1CVUoBRjDy1Thnaga6JKrnc83MAJzd5i4P
+
+#### ![ethereum-button] &nbsp; 0x199338177C2f6789cAd900A1534c76DA6669f12B
+
+#### ![tether-button] &nbsp; 0x199338177C2f6789cAd900A1534c76DA6669f12B
+
+## DonateMe
+
 If this Project helped you, you can also help me by donation
 
 ### ![tron-button] &nbsp; TPFUnjJ4HNbGC6fp7WixFaAMBJ3ZLiUUio
@@ -221,10 +227,6 @@ Licensed under the [GPL-3][license] license.
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 
-[tron-button]: https://img.shields.io/badge/Tron-ff69b4
-[tether-button]: https://img.shields.io/badge/Tether-purple
-[bitcoin-button]: https://img.shields.io/badge/Bitcoin-orange
-[ethereum-button]: https://img.shields.io/badge/Ethereum-blue
 [contributors-shield]: https://img.shields.io/github/contributors/SonyaCore/V2RayGen?style=flat
 [contributors-url]: https://github.com/SonyaCore/V2RayGen/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/SonyaCore/V2RayGen?style=flat

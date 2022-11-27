@@ -1,4 +1,4 @@
-<h1 align="center"> V2RayGen
+<h1 align="center"> XRayGen
 
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
@@ -9,7 +9,7 @@
 </h1>
 
 <h3>
-<strong>V2RayGen</strong> is a fully automated script that helps you to set up your own Xray server in the fastest time.
+<strong>V2RayGen / XRayGen</strong> is a fully automated script that helps you to set up your own Xray server in the fastest time.
 </h3>
 
 [**Usage**](#usage)
@@ -25,6 +25,12 @@
 ## **Prerequisites & Dependencies**
 
 For running this script, you must have **docker**, **docker-compose** and **python3** on your server **but** this script installs `docker` & `docker-compose` if your server doesn't have docker and runs xray-core automatically
+
+## **How XRayGen Works ?**
+
+XRayGen uses docker to pull XRay image from the docker registry and after that, it generates a configuration file to start XRay container.
+
+it also creates a client side configuration file so you can use that with xray-core or v2ray-core
 
 ## **Usage**
 
@@ -60,6 +66,8 @@ sudo python3 V2RayGen.py --vmess
 ![Sample](contents/content3.png)
 
 after installation use the provided link to your client or use the client-side json configuration with xray-core or v2ray-core
+
+if your server is on the domain after importing the link to your v2ray client simply change the IP to your domain or subdomain
 
 # **Options**
 
@@ -193,6 +201,8 @@ ss://shadowsocks-security-method:random-uuid@domain/ip :port
 ```
 
 ## DonateMe
+
+If this Project helped you, you can also help me by donation
 
 ### ![tron-button] &nbsp; TPFUnjJ4HNbGC6fp7WixFaAMBJ3ZLiUUio
 

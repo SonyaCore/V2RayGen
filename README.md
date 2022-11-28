@@ -16,6 +16,8 @@
 
 [**Quick Setup**](#quicksetup)
 
+[**Examples**](#examples)
+
 [**Options ⚙️**](#options)
 
 [**License 🪪**](#license)
@@ -70,6 +72,56 @@ sudo python3 V2RayGen.py --vmess
 after installation use the provided link to your client or use the client-side json configuration with xray-core or v2ray-core
 
 if your server is on the domain after importing the link to your v2ray client simply change the IP to your domain or subdomain
+
+# **Examples**
+
+**Setup XRAY / ShadowSocks :**
+
+VLESS + TLS :
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vless
+```
+
+VMESS + TLS with blocking option :
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmesstls --block
+```
+
+VMESS + Changing client-side HTTP and SOCKS port :
+
+```
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --http 4020 --socks 8080
+```
+
+VLESS + Using Google DNS :
+
+```
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vless --dns google
+```
+
+ShadowSocks + adding shadowsocks port to server :
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --shadowsocks --firewall
+```
+
+**Parsing Configuration :**
+
+Parse & reading Configuration file :
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 - --parseconfig config.json
+```
+
+Parse URL and read information :
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 -  --parse vmess://eyJhZGQiOiIxMjcuMC4wLjEiLCJhaWQiOiIwIiwiaG9zdCI6IiIsImlkIjoiM2JlNjE2NzktOGQzOC00ZWJiLWJjOGItMTQ4ZjE0ZWY5ZTc3IiwibmV0Ijoid3MiLCJwYXRoIjoiL2dyYXBocWwiLCJwb3J0IjoiNDQzIiwicHMiOiJ4cmF5IiwidGxzIjoidGxzIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiIgfQ==
+```
+
+---
 
 # **Options**
 

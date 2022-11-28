@@ -48,11 +48,11 @@ it also creates a client side configuration file so you can use that with xray-c
 
 You can use one of the following protocols for installation and change its settings according to your needs.
 
-| Protoctol   | Argument      |
-| ----------- | ------------- |
-| VMESS       | --vmess , -wm |
+| Protoctol   | Argument            |
+| ----------- | ------------------- |
+| VMESS       | --vmess , -wm       |
 | VMESS + TLS | --vmesstls , -vmtls |
-| VLESS + TLS | --vless , -vl |
+| VLESS + TLS | --vless , -vl       |
 
 ### **Quick `Xray` Setup with Default Setting** :
 
@@ -91,13 +91,13 @@ curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sud
 
 VMESS + Changing client-side HTTP and SOCKS port :
 
-```
+```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --http 4020 --socks 8080
 ```
 
 VLESS + Using Google DNS :
 
-```
+```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vless --dns google
 ```
 

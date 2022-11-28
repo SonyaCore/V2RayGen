@@ -51,7 +51,7 @@ You can use one of the following protocols for installation and change its setti
 | Protoctol   | Argument      |
 | ----------- | ------------- |
 | VMESS       | --vmess , -wm |
-| VMESS + TLS | --vless , -vl |
+| VMESS + TLS | --vmesstls , -vmtls |
 | VLESS + TLS | --vless , -vl |
 
 ### **Quick `Xray` Setup with Default Setting** :

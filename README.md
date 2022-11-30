@@ -258,13 +258,13 @@ ss://shadowsocks-security-method:random-uuid@domain/ip :port
 
 If this Project helped you, you can also help me by donation
 
-### ![tron-button] &nbsp; TPFUnjJ4HNbGC6fp7WixFaAMBJ3ZLiUUio
+### ![tron-button] &nbsp; TTTo7aasobgqH5pKouCJfmPYn2KLed2RA3
 
-### ![bitcoin-button] &nbsp; 1CVUoBRjDy1Thnaga6JKrnc83MAJzd5i4P
+### ![bitcoin-button] &nbsp; bc1qgdav05s04qx99mdveuvdt76jauttcwdq687pc8
 
-### ![ethereum-button] &nbsp; 0x199338177C2f6789cAd900A1534c76DA6669f12B
+### ![ethereum-button] &nbsp; 0xD17dF52790f5D6Bf0b29151c7ABC4FFC4056f937
 
-### ![tether-button] &nbsp; 0x199338177C2f6789cAd900A1534c76DA6669f12B
+### ![tether-button] &nbsp; 0xD17dF52790f5D6Bf0b29151c7ABC4FFC4056f937
 
 ## License
 
@@ -273,10 +273,10 @@ Licensed under the [GPL-3][license] license.
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 
-[tron-button]: https://img.shields.io/badge/Tron-ff69b4
-[tether-button]: https://img.shields.io/badge/Tether-purple
-[bitcoin-button]: https://img.shields.io/badge/Bitcoin-orange
-[ethereum-button]: https://img.shields.io/badge/Ethereum-blue
+[tron-button]: https://img.shields.io/badge/TRX-Tron-ff69b4
+[tether-button]: https://img.shields.io/badge/ERC20-Tether-purple
+[bitcoin-button]: https://img.shields.io/badge/BTC-Bitcoin-orange
+[ethereum-button]: https://img.shields.io/badge/ETH-Ethereum-blue
 [contributors-shield]: https://img.shields.io/github/contributors/SonyaCore/V2RayGen?style=flat
 [contributors-url]: https://github.com/SonyaCore/V2RayGen/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/SonyaCore/V2RayGen?style=flat

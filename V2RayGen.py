@@ -1249,10 +1249,8 @@ def create_new_user():
         with open(args.config, "r") as configfile:
             data = json.loads(configfile.read())
             if data["inbounds"][0]["protocol"] == "vmess":
-                new_uuid = uuid.uuid4()
-                user = {"alterId": args.alterid, "level": 0, "id": "", "email": ""}
-                user["email"] = str(email)
-                user["id"] = str(UUID)
+                user = {"alterId": args.alterid, "level": 0, "id": str(UUID),
+                "email": str(email)}
                 data["inbounds"][0]["settings"]["clients"].append(user)
                 print(
                     "{0} uuid: {1}, alterId: {2}, email : {3}".format(
@@ -1261,10 +1259,8 @@ def create_new_user():
                 )
 
             elif data["inbounds"][0]["protocol"] == "vless":
-                new_uuid = uuid.uuid4()
-                user = {"id": str(new_uuid), "level": 0, "email": ""}
-                user["email"] = str(email)
-                user["id"] = str(UUID)
+                user = {"id": str(UUID), "level": 0,
+                "email": str(email)}
                 data["inbounds"][0]["settings"]["clients"].append(user)
                 print(
                     "{0} uuid: {1}, email : {2}".format(

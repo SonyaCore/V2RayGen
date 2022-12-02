@@ -1274,8 +1274,7 @@ def create_new_user():
 
         with open(args.config, "w") as file:
             json.dump(data, file, indent=2)
-
-    reset_docker_compose()
+            reset_docker_compose()
 
 
 def del_user(index):
@@ -1287,7 +1286,7 @@ def del_user(index):
             or index == 0
         ):
             print(error + "ERROR :" + reset + "Can't Delete first client")
-        elif index == -1:
+        elif index < 0:
             print(
                 error
                 + "ERROR : "
@@ -1302,7 +1301,7 @@ def del_user(index):
 
             with open(args.config, "w") as file:
                 json.dump(data, file, indent=2)
-    reset_docker_compose()
+                reset_docker_compose()
 
 
 def list_clients():

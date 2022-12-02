@@ -17,6 +17,7 @@ import json
 import random
 import string
 import csv
+import re
 from urllib.parse import unquote
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
@@ -29,7 +30,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -86,7 +87,8 @@ quick = parser.add_argument_group(f"{green}Protocols{reset}")
 quick.add_argument("--vmess", "-vm", action="store_true", help="Create VMess")
 quick.add_argument("--vmesstls", "-vmtls", action="store_true", help="Create VMess + TLS")
 quick.add_argument("--vless", "-vl", action="store_true", help="Create VLess + TLS")
-quick.add_argument("--shadowsocks","-ss",action="store_true",help="Create ShadowSocks",)
+quick.add_argument("--shadowsocks", "-ss", action="store_true", help="Create ShadowSocks",
+)
 
 panel = parser.add_argument_group(f"{green}Panels{reset}")
 
@@ -149,21 +151,21 @@ xray.add_argument(
 
 xray.add_argument(
     "--uuid",
-    "--custom-uuid",
+    "-u",
     action="store",
     type=str,
     metavar="",
-    help="Optional UUID. default: [random]",
+    help="Optional UUID / ID for configuration. default: [random]",
     default=f"{UUID}",
 )
 
 xray.add_argument(
-    "--id",
     "--alterid",
+    "-id",
     action="store",
     type=int,
     metavar="",
-    help="Optional alterId. default: [0]",
+    help="Optional alterId for configuration. default: [0]",
     default=0,
 )
 
@@ -173,7 +175,7 @@ xray.add_argument(
     action="store",
     type=str,
     metavar="",
-    help="loglevel for Xray config. default: [warning]",
+    help="Loglevel for Xray config. default: [warning]",
 )
 
 xray.add_argument(
@@ -231,6 +233,47 @@ client.add_argument(
     metavar="",
     help=f"HTTP port for Client-side JSON config. default: [{HTTPPORT}]",
 )
+
+user = parser.add_argument_group(f"{green}User Management{reset}")
+
+user.add_argument(
+    "--adduser",
+    "-add",
+    action="store_true",
+    help="Adding New User",
+)
+user.add_argument(
+    "--deluser",
+    "-del",
+    action="store",
+    type=int,
+    metavar="",
+    help="Delete Existing User. <IndexID>",
+)
+user.add_argument(
+    "--listusers",
+    "-list",
+    action="store_true",
+    help="List of Users in Configuration file",
+)
+user.add_argument(
+    "--email",
+    "-e",
+    action="store",
+    type=str,
+    metavar="",
+    help="Email for New User",
+)
+
+user.add_argument(
+    "--config",
+    "-c",
+    action="store",
+    type=argparse.FileType("r"),
+    metavar="",
+    help=f"Use another Configuration. default: [{VMESS}]",
+)
+
 
 shadowsocks = parser.add_argument_group(f"{green}ShadowSocks{reset}")
 
@@ -513,15 +556,29 @@ def create_key():
 #         else:
 #             raise URLError(error.reason)
 
+
+def validate_email(email):
+    regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+    if re.fullmatch(regex, email):
+        pass
+    else:
+        sys.exit(
+            error
+            + "ERROR : Invalid Email"
+            + reset
+            + " Please enter a valid email address"
+        )
+
+
 # -------------------------------- Global Variables --------------------------------- #
 
 # Collect Server IP
-try :
+try:
     if not args.parse:
         ServerIP = IP()
-except RemoteDisconnected as e :
+except RemoteDisconnected as e:
     sys.exit(error + "ERROR : " + reset + str(e))
-except URLError as e :
+except URLError as e:
     sys.exit(error + "ERROR : " + reset + str(e))
 
 # Certificate location
@@ -536,7 +593,7 @@ vmess_scheme = "vmess://"
 shadowsocks_scheme = "ss://"
 
 # Supported XRay Configuration Protocols
-supported_typo = ["vmess", 'vmesstls' , "vless"]
+supported_typo = ["vmess", "vmesstls", "vless"]
 
 
 # -------------------------------- VMess JSON --------------------------------- #
@@ -600,6 +657,7 @@ def xray_config(outband, protocol) -> str:
     )
 
     return json.loads(data)
+
 
 # -------------------------------- Xray Config --------------------------------- #
 
@@ -733,7 +791,7 @@ def vmess_server_side():
           "disableInsecureEncryption": %s
         }""" % (
         UUID,
-        args.id,
+        args.alterid,
         args.insecure,
     )
     return vmess
@@ -948,11 +1006,11 @@ def loglevel():
     # list of loglevels
     loglevel = ["debug", "info", "warning", "error", "none"]
     loglevel_messages = [
-    'Information for developers. All "Info" included.',
-    'Running stats of XRay，no effect for the functions. All "Warning" included.',
-    'usually some external problem that does not affect V2Ray but possibly the user experience.',
-    'XRay encountered a problem that needs to be resolved immediately.',
-    'Nothing will be printed.'
+        'Information for developers. All "Info" included.',
+        'Running stats of XRay，no effect for the functions. All "Warning" included.',
+        "usually some external problem that does not affect V2Ray but possibly the user experience.",
+        "XRay encountered a problem that needs to be resolved immediately.",
+        "Nothing will be printed.",
     ]
     cmd = args.loglevel.lower()
 
@@ -972,7 +1030,7 @@ def loglevel():
     if cmd not in loglevel:
         print("list of loglevels :")
         for levels in range(len(loglevel)):
-            print(green +  loglevel[levels] + " : " + loglevel_messages[levels] + reset)
+            print(green + loglevel[levels] + " : " + loglevel_messages[levels] + reset)
         sys.exit()
 
 
@@ -984,7 +1042,7 @@ def client_security():
     global SECURITY
 
     # list of loglevels
-    security_methods = ["aes-128-gcm", "chacha20-poly1305", "auto", "none" , "zero"]
+    security_methods = ["aes-128-gcm", "chacha20-poly1305", "auto", "none", "zero"]
 
     cmd = args.security.lower()
 
@@ -1035,7 +1093,7 @@ def client_side_configuration(protocol):
         }""" % (
         ServerIP,
         PORT,
-        args.id,
+        args.alterid,
         UUID,
         SECURITY,
     )
@@ -1174,10 +1232,94 @@ def client_side_configuration(protocol):
         print("")
         filename = green + name + reset
         print(blue + "! Client-side VMess Config Generated.", reset)
-        print(blue + f"! Use {filename}{blue} for using proxy with xray-core directly.", reset)
+        print(
+            blue + f"! Use {filename}{blue} for using proxy with xray-core directly.",
+            reset,
+        )
+
+
+# -------------------------------- User Client-Side Creation --------------------------------- #
+
+
+def create_new_user():
+    email = args.email
+    if args.email == None:
+        email = "example@example.com"
+    validate_email(email)
+    with open(args.config, "r") as configfile:
+        data = json.loads(configfile.read())
+        if data["inbounds"][0]["protocol"] == "vmess":
+            new_uuid = uuid.uuid4()
+            user = {"alterId": args.alterid, "level": 0, "id": "", "email": ""}
+            user["email"] = str(email)
+            user["id"] = str(UUID)
+            data["inbounds"][0]["settings"]["clients"].append(user)
+            print(
+                "{0} uuid: {1}, alterId: {2}, email : {3}".format(
+                    ("ADD user success!"), user["id"], user["alterId"], user["email"]
+                )
+            )
+
+        elif data["inbounds"][0]["protocol"] == "vless":
+            new_uuid = uuid.uuid4()
+            user = {"id": str(new_uuid), "level": 0, "email": ""}
+            user["email"] = str(email)
+            user["id"] = str(UUID)
+            data["inbounds"][0]["settings"]["clients"].append(user)
+            print(
+                "{0} uuid: {1}, email : {2}".format(
+                    ("DEL user success!"), user["id"], user["email"]
+                )
+            )
+
+        with open(args.config, "w") as file:
+            json.dump(data, file, indent=2)
+
+    reset_docker_compose()
+
+
+def del_user(index):
+    with open(args.config, "r") as configfile:
+        data = json.loads(configfile.read())
+        if (
+            data["inbounds"][0]["settings"]["clients"][index]
+            == data["inbounds"][0]["settings"]["clients"][0]
+            or index == 0
+        ):
+            print(error + "ERROR :" + reset + "Can't Delete first client")
+        elif index == -1:
+            print(
+                error
+                + "ERROR : "
+                + reset
+                + "Please Select Proper index !"
+                + "\nuse --listusers or -list to see index values"
+            )
+        else:
+            del data["inbounds"][0]["settings"]["clients"][index]
+
+            print((f"Index {green}{index}{reset} deleted!"))
+
+            with open(args.config, "w") as file:
+                json.dump(data, file, indent=2)
+    reset_docker_compose()
+
+
+def list_clients():
+    with open(args.config, "r") as configfile:
+        data = json.loads(configfile.read())
+        index = 0
+        border = f"{blue}{'-'*100}{reset}"
+        list = data["inbounds"][0]["settings"]["clients"]
+        print(border)
+        for lists in list:
+            print(f"index : {green}{index}{reset}", lists)
+            index += 1
+        print(border)
 
 
 # -------------------------------- Config Creation --------------------------------- #
+
 
 def xray_create(protocol):
     dnsselect()
@@ -1194,23 +1336,28 @@ def xray_create(protocol):
         create_key()
         time.sleep(0.5)
         xray_dockercompose("VLESS")
-    
+
     run_docker()
     serverside_info_raw()
-    
-    if protocol == "VMESS" or protocol == "VMESSTLS":
-            print(
-        vmess_link_generator(
-            args.id, UUID, "ws", args.wspath, PORT, args.linkname, tlstype))
-            if protocol == "VMESS":
-                client_side_configuration("VMESS")
-            elif protocol == "VMESSTLS":
-                client_side_configuration("VMESSTLS")
 
-    elif protocol == "VLESS" :
-        print(vless_link_generator(UUID, PORT, "ws", args.wspath, tlstype, args.linkname))
+    if protocol == "VMESS" or protocol == "VMESSTLS":
+        print(
+            vmess_link_generator(
+                args.alterid, UUID, "ws", args.wspath, PORT, args.linkname, tlstype
+            )
+        )
+        if protocol == "VMESS":
+            client_side_configuration("VMESS")
+        elif protocol == "VMESSTLS":
+            client_side_configuration("VMESSTLS")
+
+    elif protocol == "VLESS":
+        print(
+            vless_link_generator(UUID, PORT, "ws", args.wspath, tlstype, args.linkname)
+        )
         client_side_configuration("VLESS")
     COUNTRY() if protocol == "VMESS" else None
+
 
 def shadowsocks_create():
     """
@@ -1333,9 +1480,8 @@ def parse_ShadowSocks(sslink):
             SHADOWSS["aid"] = method
             SHADOWSS["id"] = password
             return yellow + str(SHADOWSS) + reset
-    except ValueError as err :
+    except ValueError as err:
         sys.exit(error + "Invalid ShadowSocks Link : " + reset + str(err))
-
 
 
 def parse_VMess(vmesslink):
@@ -1354,7 +1500,7 @@ def parse_VMess(vmesslink):
             return yellow + str(json.loads(vms)) + reset
         else:
             raise Exception("vmess link invalid")
-    except json.decoder.JSONDecodeError as err :
+    except json.decoder.JSONDecodeError as err:
         sys.exit(error + "Invalid VMess link : " + reset + str(err))
     except Error as err:
         sys.exit(error + "Invalid Format : " + reset + str(err))
@@ -1471,9 +1617,7 @@ def run_docker():
             subprocess.run(
                 f"docker-compose -f {DOCKERCOMPOSE} up -d", shell=True, check=True
             )
-            subprocess.run(
-                f"docker-compose restart", shell=True, check=True
-        )
+            reset_docker_compose()
         else:
             print(
                 yellow
@@ -1501,6 +1645,10 @@ def run_docker():
         sys.exit(error + str(e) + reset)
     except PermissionError:
         sys.exit(error + "ًroot privileges required" + reset)
+
+
+def reset_docker_compose():
+    subprocess.run(f"docker-compose restart", shell=True, check=True)
 
 
 # ------------------------------ Firewall ------------------------------- #
@@ -1550,7 +1698,7 @@ def serverside_info_raw() -> str:
     print("")
     print("SERVER SIDE Information : ")
     print("IP: " + blue + str((ServerIP)) + reset)
-    print("ID: " + blue + str(args.id) + reset)
+    print("ID: " + blue + str(args.alterid) + reset)
     print("LOGLEVEL: " + blue + str(LOG) + reset)
     print("UUID: " + blue + str(UUID) + reset)
     print("WSPATH: " + blue + str(args.wspath) + reset)
@@ -1561,9 +1709,10 @@ def serverside_info_raw() -> str:
     if args.socks or args.http:
         print("")
         print("CLIENT SIDE Information : ")
-        print('SECURITY : ' + blue + str(SECURITY) + reset)
-        print('HTTP PORT : ' + blue + str(HTTPPORT) + reset)
-        print('SOCKS PORT : ' + blue + str(SOCKSPORT) + reset)
+        print("SECURITY : " + blue + str(SECURITY) + reset)
+        print("HTTP PORT : " + blue + str(HTTPPORT) + reset)
+        print("SOCKS PORT : " + blue + str(SOCKSPORT) + reset)
+
 
 def read_serverside_configuration(config):
     """
@@ -1646,7 +1795,7 @@ def read_serverside_configuration(config):
         print(blue + "Link : " + reset + str(link_serverside_configuration()))
 
     except KeyError as e:
-        sys.exit(error + "ERROR: " + str(e) + f' not found in {config}!')
+        sys.exit(error + "ERROR: " + str(e) + f" not found in {config}!")
 
 
 def link_serverside_configuration():
@@ -1846,6 +1995,9 @@ if __name__ == "__main__":
     if args.parse:
         parseLink(args.parse)
 
+    if args.alterid > 64:
+        sys.exit(error + "ERROR : " + reset + "alterid can't be more than 64")
+
     # set log to 'error' by default
     if args.loglevel == None:
         LOG = "error"
@@ -1944,12 +2096,12 @@ if __name__ == "__main__":
 
     # Quick VMess Setup
     if args.vmess:
-        xray_create('VMESS')
+        xray_create("VMESS")
     elif args.vmesstls:
-        xray_create('VMESSTLS')
+        xray_create("VMESSTLS")
     # Quick Vless Setup
     elif args.vless:
-        xray_create('VLESS')
+        xray_create("VLESS")
     # Quick ShadowSocks Setup
     elif args.shadowsocks:
         shadowsocks_create()
@@ -1975,6 +2127,29 @@ if __name__ == "__main__":
     # add firewall rules
     if args.firewall:
         firewall_config()
+
+    if args.config == None:
+        args.config = "config.json"
+    else:
+        args.config = args.config.name
+
+    if args.adduser:
+        create_new_user()
+
+    try:
+        if args.deluser:
+            del_user(args.deluser)
+    except IndexError:
+        sys.exit(
+            error
+            + str("ERROR : ")
+            + reset
+            + "index : "
+            + green + str(args.deluser) + reset
+            + " does not exist use --listusers to see index value."
+        )
+    if args.listusers:
+        list_clients()
 
     # parse configuration file
     try:

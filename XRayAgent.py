@@ -27,11 +27,16 @@ UUID = uuid.uuid4()
 # Name
 NAME = "XRayAgent"
 
+MIN_PORT = 0
+MAX_PORT = 65535
+
 # -------------------------------- Helper Function --------------------------------- #
 
+
 def signal_handler(sig, frame):
-    print(error + '\nKeyboardInterrupt!')
+    print(error + "\nKeyboardInterrupt!")
     sys.exit(0)
+
 
 signal.signal(signal.SIGINT, signal_handler)
 
@@ -53,9 +58,11 @@ __   _______                                      _
         time.sleep(t)
     sys.stdout.write("\n")
 
+
 def help():
     exec_name = sys.argv[0]
-    print("""
+    print(
+        """
 {0} [options]
     add , adduser           add user
     del , deluser           delete existing user
@@ -64,12 +71,18 @@ def help():
     h , help                get help
     v , version             get version
     q , quit                exit program
-        """.format(exec_name[exec_name.rfind("/") + 1:],))
+        """.format(
+            exec_name[exec_name.rfind("/") + 1 :],
+        )
+    )
+
 
 # -------------------------------- Functions --------------------------------- #
 
+
 def base_error(err):
     return print(error + "ERROR : " + reset + str(err))
+
 
 def reset_docker_compose():
     subprocess.run(f"docker-compose restart", shell=True, check=True)
@@ -77,21 +90,22 @@ def reset_docker_compose():
 
 def load_config():
     global config
-    try :
+    try:
         config = sys.argv[1]
-    except IndexError :
-        config = 'config.json'
-    try :
-        with open(config, 'r') as configfile:
+    except IndexError:
+        config = "config.json"
+    try:
+        with open(config, "r") as configfile:
             configfile.read()
-    except FileNotFoundError :
-        sys.exit(error + 'Could not load config file: ' + reset + config)
-    
-    print(green + "Loaded config file: " + reset +  config)
+    except FileNotFoundError:
+        sys.exit(error + "Could not load config file: " + reset + config)
+
+    print(green + "Loaded config file: " + reset + config)
 
 
 def show_version():
     print(blue + NAME + " " + VERSION)
+
 
 # -------------------------------- Colors --------------------------------- #
 
@@ -109,40 +123,39 @@ def validate_email(email):
     if re.fullmatch(regex, email):
         pass
     else:
-        base_error(
-        " Please enter a valid email address"
-        ) 
+        base_error(" Please enter a valid email address")
         raise TypeError
 
-def random_email():
-    domains = ['yandex', 'protonmail', 'gmail', 'outlook','yahoo', 'icloud']
-    email = "@{}.com".format(random.choice(domains))
-    return ''.join(random.sample(string.ascii_letters + string.digits, 8)) + email
 
-def create_new_user(email , id):
+def random_email():
+    domains = ["yandex", "protonmail", "gmail", "outlook", "yahoo", "icloud"]
+    email = "@{}.com".format(random.choice(domains))
+    return "".join(random.sample(string.ascii_letters + string.digits, 8)) + email
+
+
+def create_new_user(email, id):
     with open(config, "r") as configfile:
         data = json.loads(configfile.read())
         if data["inbounds"][0]["protocol"] == "vmess":
 
-            try :
+            try:
                 alterID = input("AlterID 0 to 64 : ")
                 if alterID == "" or None:
                     alterID = 0
                 alterID = int(alterID)
-                if alterID > 64 :
+                if alterID > 64:
                     base_error("alterID cannot be larger than 64")
                     return cmd
-            except ValueError :
+            except ValueError:
                 print(base_error("alterID must be a integer value"))
                 return cmd
 
             try:
                 validate_email(email)
-            except TypeError :
+            except TypeError:
                 return cmd
 
-
-            user = {"alterId": alterID , "level": 0, "id": str(id),"email": str(email)}
+            user = {"alterId": alterID, "level": 0, "id": str(id), "email": str(email)}
             data["inbounds"][0]["settings"]["clients"].append(user)
 
             print(
@@ -152,8 +165,7 @@ def create_new_user(email , id):
             )
 
         elif data["inbounds"][0]["protocol"] == "vless":
-            user = {"id": str(id), "level": 0,
-            "email": str(email)}
+            user = {"id": str(id), "level": 0, "email": str(email)}
             data["inbounds"][0]["settings"]["clients"].append(user)
             print(
                 "{0} uuid: {1}, email : {2}".format(
@@ -164,7 +176,8 @@ def create_new_user(email , id):
         with open(config, "w") as file:
             json.dump(data, file, indent=2)
             # reset_docker_compose()
-                
+
+
 def del_user(index):
     with open(config, "r") as configfile:
         data = json.loads(configfile.read())
@@ -176,13 +189,15 @@ def del_user(index):
             base_error("Can't Delete first client")
         elif index < 0:
             base_error(
-                + "Please Select Proper index !"
+                +"Please Select Proper index !"
                 + "\nuse users or listusers to see index values"
             )
         else:
             useremail = data["inbounds"][0]["settings"]["clients"][index]["email"]
-            confirm = input(f"DELETE index {green}{index}{reset} with email : {green}{useremail}{reset} ? [y/n] ")
-            if confirm.lower() in ["y","yes"]:
+            confirm = input(
+                f"DELETE index {green}{index}{reset} with email : {green}{useremail}{reset} ? [y/n] "
+            )
+            if confirm.lower() in ["y", "yes"]:
                 del data["inbounds"][0]["settings"]["clients"][index]
 
                 print((f"Index {green}{index}{reset} deleted!"))
@@ -190,8 +205,9 @@ def del_user(index):
                 with open(config, "w") as file:
                     json.dump(data, file, indent=2)
                     # reset_docker_compose()
-            else :
+            else:
                 pass
+
 
 def list_clients():
     with open(config, "r") as configfile:
@@ -205,20 +221,37 @@ def list_clients():
             index += 1
         print(border)
 
+
 def change_server_port(port):
+    try:
+        validate_port(port)
+    except TypeError:
+        return cmd
+
     with open(config, "r") as configfile:
         data = json.loads(configfile.read())
         configport = data["inbounds"][0]["port"]
         data["inbounds"][0]["port"] = port
-        
-        confirm = input(f"Change PORT {green}{configport}{reset} to {green}{port}{reset} ? [y/n] ")
-        if confirm.lower() in ["y","yes"]:
+
+        confirm = input(
+            f"Change PORT {green}{configport}{reset} to {green}{port}{reset} ? [y/n] "
+        )
+        if confirm.lower() in ["y", "yes"]:
             with open(config, "w") as file:
                 json.dump(data, file, indent=2)
                 # reset_docker_compose()
                 print(f"Server Side PORT changed to {port}")
-        else :
+        else:
             pass
+
+
+def validate_port(port):
+    if port < MIN_PORT or port > MAX_PORT:
+        base_error("Port number must be between %d and %d." % (MIN_PORT, MAX_PORT))
+        raise TypeError
+    else:
+        pass
+
 
 # -------------------------------- Shell Parser --------------------------------- #
 
@@ -234,7 +267,7 @@ help()
 ## SHELL PS
 shell = green + "cmd > : " + reset
 
-### COMMAND MAPPER 
+### COMMAND MAPPER
 commands = {
     "h": help,
     "help": help,
@@ -249,7 +282,7 @@ commands = {
     "deluser": del_user,
     "del": del_user,
     "p": change_server_port,
-    "port": change_server_port
+    "port": change_server_port,
 }
 
 while True:
@@ -257,26 +290,26 @@ while True:
     cmd = input(shell).lower()
     options = cmd.split()
 
-    # SHELL ARGS 
+    # SHELL ARGS
     ##############################################################
-    try :
+    try:
         # check if the command is "h" or "help"
-        if cmd in ["h","help"]:
+        if cmd in ["h", "help"]:
             # call the "help" command
             commands["help"]()
 
         # check if the command is "v" or "version"
-        elif cmd in ["v" ,"version"]:
+        elif cmd in ["v", "version"]:
             # call the "version" command
             commands["version"]()
 
         # check if the command is "q" or "quit"
-        elif cmd in ["q" ,"quit"]:
+        elif cmd in ["q", "quit"]:
             # call the "q" command
             commands["q"]()
 
         # check if the command is "listusers" or "users"
-        elif cmd in["listusers", "users"]:
+        elif cmd in ["listusers", "users"]:
             # call the "listusers" command
             commands["listusers"]()
 
@@ -284,32 +317,32 @@ while True:
         elif cmd in ["adduser", "add"]:
             # print a message to inform the user that a user is being added
             print(green + "! adding user" + reset)
-            print(green + '! leave empty for random' + reset)
+            print(green + "! leave empty for random" + reset)
 
             # prompt the user for an email address
             email = input("Email : ")
 
             # if the email address is empty, generate a random email address
-            if email == "" :
+            if email == "":
                 email = random_email()
 
             # prompt the user for an ID
             id = input("ID : ")
 
             # if the ID is empty, generate a random ID
-            if id == "" :
+            if id == "":
                 id = UUID
 
             # call the "adduser" command with the email address and ID
-            commands["adduser"](email , id)
+            commands["adduser"](email, id)
 
         ## Value based ARGS
 
         # check if the command is "deluser" or "del"
         if "deluser" or "del" in cmd:
-            try :
+            try:
                 # check if the first option is "del" or "deluser"
-                if options[0] in ["del","deluser"]  :
+                if options[0] in ["del", "deluser"]:
                     # Initialize a counter variable
                     i = 1
                     # iterate over the options list
@@ -321,18 +354,21 @@ while True:
                         i += 1
             except ValueError:
                 # if the user ID is not an integer, show an error message
-                base_error('del require integer value')
+                base_error("del" + "require integer value")
 
+        # check if the command contains "port" or "p"
         if "port" or "p" in cmd:
-            try :
-                if options[0] in ["port","p"]  :
+            try:
+                # check if the first option is "port" or "p"
+                if options[0] in ["port", "p"]:
+                    # get the port number from the options
                     port = options[1]
+                    # call the "port" command with the port number
                     commands["port"](int(port))
             except ValueError:
-                # if the user ID is not an integer, show an error message
-                base_error('del require integer value')
-
-    except IndexError :
+                # if the PORT is not an integer, show an error message
+                base_error("port " + "require integer value")
+    except IndexError:
         cmd
 
     ###############################################################

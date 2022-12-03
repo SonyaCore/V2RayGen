@@ -1,21 +1,13 @@
 # !/usr/bin/env python3
-import os
 import sys
 import subprocess
 import time
 import uuid
-import argparse
-import base64
 import json
 import random
 import string
 import re
 import signal
-from urllib.parse import unquote
-from urllib.request import urlopen, Request
-from urllib.error import HTTPError, URLError
-from http.client import RemoteDisconnected
-from binascii import Error
 
 # -------------------------------- Constants --------------------------------- #
 
@@ -65,6 +57,7 @@ def help():
         """
 {0} [options]
     add , adduser           add user
+    update , updateuser     update existing user
     del , deluser           delete existing user
     users , listusers       list of users
     p , port                change server side port
@@ -115,8 +108,7 @@ blue = "\u001b[34m"
 error = "\u001b[31m"
 reset = "\u001b[0m"
 
-# -------------------------------- main --------------------------------- #
-
+# -------------------------------- Functions --------------------------------- #
 
 def validate_email(email):
     regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
@@ -132,6 +124,15 @@ def random_email():
     email = "@{}.com".format(random.choice(domains))
     return "".join(random.sample(string.ascii_letters + string.digits, 8)) + email
 
+
+def validate_port(port):
+    if port < MIN_PORT or port > MAX_PORT:
+        base_error("Port number must be between %d and %d." % (MIN_PORT, MAX_PORT))
+        raise TypeError
+    else:
+        pass
+
+# -------------------------------- Main --------------------------------- #
 
 def create_new_user(email, id):
     with open(config, "r") as configfile:
@@ -181,6 +182,9 @@ def create_new_user(email, id):
 def del_user(index):
     with open(config, "r") as configfile:
         data = json.loads(configfile.read())
+        if index >= len(data["inbounds"][0]["settings"]["clients"]):
+            base_error(f"del index out of range. use {green}users{reset} to see clients")
+            return cmd
         if (
             data["inbounds"][0]["settings"]["clients"][index]
             == data["inbounds"][0]["settings"]["clients"][0]
@@ -222,6 +226,63 @@ def list_clients():
         print(border)
 
 
+def update_client(index):
+    with open(config, "r") as configfile:
+        try :
+            data = json.loads(configfile.read())
+             # Check if the index is not greater than the expected size:
+            if index >= len(data["inbounds"][0]["settings"]["clients"]):
+                base_error(f"update index out of range. use {green}users{reset} to see clients")
+                return cmd
+            print("Index " + green + str(index) + reset + " Selected")
+            print("Leave the section empty if you don't want to modify that section")
+            new_email = input("New Email : ")
+            new_email = str(new_email)
+
+            if new_email is None or new_email == "" :
+                new_email =  data["inbounds"][0]["settings"]["clients"][index]["email"]
+            else :
+                try:
+                    validate_email(new_email)
+                except TypeError:
+                    return cmd
+
+            new_id = input("New Id : ")
+            new_id = str(new_id)
+
+            if new_id is None or new_id == "" :
+                new_id = data["inbounds"][0]["settings"]["clients"][index]["id"]
+
+            if data["inbounds"][0]["protocol"] == "vmess":
+                try :
+                    new_alterId = input("AlterID 0 to 64 : ")
+                    if new_alterId == "" or None:
+                        new_alterId =  data["inbounds"][0]["settings"]["clients"][index]["alterId"]
+                    new_alterId = int(new_alterId)
+                    if new_alterId > 64:
+                        base_error("alterID cannot be larger than 64")
+                        return cmd
+                    else :
+                        data["inbounds"][0]["settings"]["clients"][index]["alterId"] = new_alterId
+                except ValueError:
+                    base_error("alterID must be a integer value")
+                    return cmd
+
+
+            data["inbounds"][0]["settings"]["clients"][index]["email"] = new_email
+            data["inbounds"][0]["settings"]["clients"][index]["id"] = new_id
+
+            with open(config, "w") as file:
+                    json.dump(data, file, indent=2)
+                    # reset_docker_compose()
+                    print("index : " + green + str(index) + reset + " Updated")
+
+        except ValueError as e :
+        # if the user ID is not an integer, show an error message
+            base_error("updateuser" + "require integer value")
+            return cmd
+
+
 def change_server_port(port):
     try:
         validate_port(port)
@@ -243,15 +304,6 @@ def change_server_port(port):
                 print(f"Server Side PORT changed to {port}")
         else:
             pass
-
-
-def validate_port(port):
-    if port < MIN_PORT or port > MAX_PORT:
-        base_error("Port number must be between %d and %d." % (MIN_PORT, MAX_PORT))
-        raise TypeError
-    else:
-        pass
-
 
 # -------------------------------- Shell Parser --------------------------------- #
 
@@ -279,6 +331,8 @@ commands = {
     "users": list_clients,
     "adduser": create_new_user,
     "add": create_new_user,
+    "updateuser": update_client,
+    "update": update_client,
     "deluser": del_user,
     "del": del_user,
     "p": change_server_port,
@@ -338,10 +392,26 @@ while True:
 
         ## Value based ARGS
 
+        # check if the command is "update" or "updateuser"
+        if "updateuser" or "update" :
+            try :
+                if options[0] in ["update", "updateuser"]:
+                    # Initialize a counter variable
+                    i = 1
+                    # iterate over the options list
+                    while i < len(options):
+                        # get the ID of the user to delete
+                        id = options[i]
+                        # call the "updateuser" command with the user ID
+                        commands["updateuser"](int(id))
+                        i += 1
+            except ValueError:
+                    # if the user ID is not an integer, show an error message
+                    base_error("del" + "require integer value")
+
         # check if the command is "deluser" or "del"
         if "deluser" or "del" in cmd:
             try:
-                # check if the first option is "del" or "deluser"
                 if options[0] in ["del", "deluser"]:
                     # Initialize a counter variable
                     i = 1

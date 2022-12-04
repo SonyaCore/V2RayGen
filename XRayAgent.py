@@ -8,6 +8,7 @@ import random
 import string
 import re
 import signal
+import socket
 
 # -------------------------------- Constants --------------------------------- #
 
@@ -22,7 +23,9 @@ NAME = "XRayAgent"
 MIN_PORT = 0
 MAX_PORT = 65535
 
-# -------------------------------- Helper Function --------------------------------- #
+DOCKER_COMPOSE = False
+
+# -------------------------------- Help --------------------------------- #
 
 
 def signal_handler(sig, frame):
@@ -70,7 +73,7 @@ def help():
     )
 
 
-# -------------------------------- Functions --------------------------------- #
+# -------------------------------- Helper Functions --------------------------------- #
 
 
 def base_error(err):
@@ -96,6 +99,19 @@ def load_config():
     print(green + "Loaded config file: " + reset + config)
 
 
+def read_config(config):
+    with open(config, "r") as configfile:
+        return json.loads(configfile.read())
+
+
+def save_config(config, data):
+    with open(config, "w") as file:
+        json.dump(data, file, indent=2)
+
+        if DOCKER_COMPOSE == True:
+            reset_docker_compose()
+
+
 def show_version():
     print(blue + NAME + " " + VERSION)
 
@@ -109,6 +125,7 @@ error = "\u001b[31m"
 reset = "\u001b[0m"
 
 # -------------------------------- Functions --------------------------------- #
+
 
 def validate_email(email):
     regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
@@ -132,155 +149,168 @@ def validate_port(port):
     else:
         pass
 
+
+def port_is_use(port):
+    """
+    check if port is used for a given port
+    """
+    state = False
+    stream = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    stream.settimeout(2)
+    try:
+        if stream.connect_ex(("127.0.0.1", int(port))) == 0:
+            state = True
+        else:
+            state = False
+    finally:
+        stream.close()
+    return state
+
+
 # -------------------------------- Main --------------------------------- #
 
-def create_new_user(email, id):
-    with open(config, "r") as configfile:
-        data = json.loads(configfile.read())
-        if data["inbounds"][0]["protocol"] == "vmess":
 
-            try:
-                alterID = input("AlterID 0 to 64 : ")
-                if alterID == "" or None:
-                    alterID = 0
-                alterID = int(alterID)
-                if alterID > 64:
-                    base_error("alterID cannot be larger than 64")
-                    return cmd
-            except ValueError:
-                print(base_error("alterID must be a integer value"))
+def create_user(email, id):
+    data = read_config(config)
+    if data["inbounds"][0]["protocol"] == "vmess":
+
+        try:
+            alterID = input("AlterID 0 to 64 : ")
+            if alterID == "" or None:
+                alterID = 0
+            alterID = int(alterID)
+            if alterID > 64:
+                base_error("alterID cannot be larger than 64")
                 return cmd
+        except ValueError:
+            print(base_error("alterID must be a integer value"))
+            return cmd
 
-            try:
-                validate_email(email)
-            except TypeError:
-                return cmd
+        try:
+            validate_email(email)
+        except TypeError:
+            return cmd
 
-            user = {"alterId": alterID, "level": 0, "id": str(id), "email": str(email)}
-            data["inbounds"][0]["settings"]["clients"].append(user)
+        user = {"alterId": alterID, "level": 0, "id": str(id), "email": str(email)}
+        data["inbounds"][0]["settings"]["clients"].append(user)
 
-            print(
-                "{0} uuid: {1}, alterId: {2}, email : {3}".format(
-                    ("ADD user success!"), user["id"], user["alterId"], user["email"]
-                )
+        print(
+            "{0} uuid: {1}, alterId: {2}, email : {3}".format(
+                ("ADD user success!"), user["id"], user["alterId"], user["email"]
             )
+        )
 
-        elif data["inbounds"][0]["protocol"] == "vless":
-            user = {"id": str(id), "level": 0, "email": str(email)}
-            data["inbounds"][0]["settings"]["clients"].append(user)
-            print(
-                "{0} uuid: {1}, email : {2}".format(
-                    ("DEL user success!"), user["id"], user["email"]
-                )
+    elif data["inbounds"][0]["protocol"] == "vless":
+        user = {"id": str(id), "level": 0, "email": str(email)}
+        data["inbounds"][0]["settings"]["clients"].append(user)
+        print(
+            "{0} uuid: {1}, email : {2}".format(
+                ("DEL user success!"), user["id"], user["email"]
             )
+        )
 
-        with open(config, "w") as file:
-            json.dump(data, file, indent=2)
-            # reset_docker_compose()
+    save_config(config, data)
 
 
 def del_user(index):
-    with open(config, "r") as configfile:
-        data = json.loads(configfile.read())
-        if index >= len(data["inbounds"][0]["settings"]["clients"]):
-            base_error(f"del index out of range. use {green}users{reset} to see clients")
-            return cmd
-        if (
-            data["inbounds"][0]["settings"]["clients"][index]
-            == data["inbounds"][0]["settings"]["clients"][0]
-            or index == 0
-        ):
-            base_error("Can't Delete first client")
-        elif index < 0:
-            base_error(
-                +"Please Select Proper index !"
-                + "\nuse users or listusers to see index values"
-            )
+    data = read_config(config)
+    if index >= len(data["inbounds"][0]["settings"]["clients"]):
+        base_error(f"del index out of range. use {green}users{reset} to see clients")
+        return cmd
+    if (
+        data["inbounds"][0]["settings"]["clients"][index]
+        == data["inbounds"][0]["settings"]["clients"][0]
+        or index == 0
+    ):
+        base_error("Can't Delete first client")
+    elif index < 0:
+        base_error(
+            +"Please Select Proper index !"
+            + "\nuse users or listusers to see index values"
+        )
+    else:
+        useremail = data["inbounds"][0]["settings"]["clients"][index]["email"]
+        confirm = input(
+            f"DELETE index {green}{index}{reset} with email : {green}{useremail}{reset} ? [y/n] "
+        )
+        if confirm.lower() in ["y", "yes"]:
+            del data["inbounds"][0]["settings"]["clients"][index]
+
+            print((f"Index {green}{index}{reset} deleted!"))
+
+            save_config(config, data)
         else:
-            useremail = data["inbounds"][0]["settings"]["clients"][index]["email"]
-            confirm = input(
-                f"DELETE index {green}{index}{reset} with email : {green}{useremail}{reset} ? [y/n] "
+            pass
+
+
+def update_user(index):
+    try:
+        data = read_config(config)
+        if index >= len(data["inbounds"][0]["settings"]["clients"]):
+            base_error(
+                f"del index out of range. use {green}users{reset} to see clients"
             )
-            if confirm.lower() in ["y", "yes"]:
-                del data["inbounds"][0]["settings"]["clients"][index]
-
-                print((f"Index {green}{index}{reset} deleted!"))
-
-                with open(config, "w") as file:
-                    json.dump(data, file, indent=2)
-                    # reset_docker_compose()
-            else:
-                pass
-
-
-def list_clients():
-    with open(config, "r") as configfile:
-        data = json.loads(configfile.read())
-        index = 0
-        border = f"{blue}{'-'*100}{reset}"
-        list = data["inbounds"][0]["settings"]["clients"]
-        print(border)
-        for lists in list:
-            print(f"index : {green}{index}{reset}", lists)
-            index += 1
-        print(border)
-
-
-def update_client(index):
-    with open(config, "r") as configfile:
-        try :
-            data = json.loads(configfile.read())
-             # Check if the index is not greater than the expected size:
-            if index >= len(data["inbounds"][0]["settings"]["clients"]):
-                base_error(f"update index out of range. use {green}users{reset} to see clients")
-                return cmd
-            print("Index " + green + str(index) + reset + " Selected")
-            print("Leave the section empty if you don't want to modify that section")
-            new_email = input("New Email : ")
-            new_email = str(new_email)
-
-            if new_email is None or new_email == "" :
-                new_email =  data["inbounds"][0]["settings"]["clients"][index]["email"]
-            else :
-                try:
-                    validate_email(new_email)
-                except TypeError:
-                    return cmd
-
-            new_id = input("New Id : ")
-            new_id = str(new_id)
-
-            if new_id is None or new_id == "" :
-                new_id = data["inbounds"][0]["settings"]["clients"][index]["id"]
-
-            if data["inbounds"][0]["protocol"] == "vmess":
-                try :
-                    new_alterId = input("AlterID 0 to 64 : ")
-                    if new_alterId == "" or None:
-                        new_alterId =  data["inbounds"][0]["settings"]["clients"][index]["alterId"]
-                    new_alterId = int(new_alterId)
-                    if new_alterId > 64:
-                        base_error("alterID cannot be larger than 64")
-                        return cmd
-                    else :
-                        data["inbounds"][0]["settings"]["clients"][index]["alterId"] = new_alterId
-                except ValueError:
-                    base_error("alterID must be a integer value")
-                    return cmd
-
-
-            data["inbounds"][0]["settings"]["clients"][index]["email"] = new_email
-            data["inbounds"][0]["settings"]["clients"][index]["id"] = new_id
-
-            with open(config, "w") as file:
-                    json.dump(data, file, indent=2)
-                    # reset_docker_compose()
-                    print("index : " + green + str(index) + reset + " Updated")
-
-        except ValueError as e :
-        # if the user ID is not an integer, show an error message
-            base_error("updateuser" + "require integer value")
             return cmd
+        print("Index " + green + str(index) + reset + " Selected")
+        print("Leave the section empty if you don't want to modify that section")
+        new_email = input("New Email : ")
+        new_email = str(new_email)
+
+        if new_email is None or new_email == "":
+            new_email = data["inbounds"][0]["settings"]["clients"][index]["email"]
+        else:
+            try:
+                validate_email(new_email)
+            except TypeError:
+                return cmd
+
+        new_id = input("New Id : ")
+        new_id = str(new_id)
+
+        if new_id is None or new_id == "":
+            new_id = data["inbounds"][0]["settings"]["clients"][index]["id"]
+
+        if data["inbounds"][0]["protocol"] == "vmess":
+            try:
+                new_alterId = input("AlterID 0 to 64 : ")
+                if new_alterId == "" or None:
+                    new_alterId = data["inbounds"][0]["settings"]["clients"][index][
+                        "alterId"
+                    ]
+                new_alterId = int(new_alterId)
+                if new_alterId > 64:
+                    base_error("alterID cannot be larger than 64")
+                    return cmd
+                else:
+                    data["inbounds"][0]["settings"]["clients"][index][
+                        "alterId"
+                    ] = new_alterId
+            except ValueError:
+                base_error("alterID must be a integer value")
+                return cmd
+
+        data["inbounds"][0]["settings"]["clients"][index]["email"] = new_email
+        data["inbounds"][0]["settings"]["clients"][index]["id"] = new_id
+
+        save_config(config, data)
+        print("index : " + green + str(index) + reset + " Updated")
+
+    except ValueError as e:
+        # if the user ID is not an integer, show an error message
+        base_error("updateuser" + "require integer value")
+        return cmd
+
+
+def list_users():
+    data = read_config(config)
+    index = 0
+    border = f"{blue}{'-'*100}{reset}"
+    list = data["inbounds"][0]["settings"]["clients"]
+    print(border)
+    for lists in list:
+        print(f"index : {green}{index}{reset}", lists)
+        index += 1
+    print(border)
 
 
 def change_server_port(port):
@@ -289,21 +319,23 @@ def change_server_port(port):
     except TypeError:
         return cmd
 
-    with open(config, "r") as configfile:
-        data = json.loads(configfile.read())
-        configport = data["inbounds"][0]["port"]
-        data["inbounds"][0]["port"] = port
+    data = read_config(config)
+    configport = data["inbounds"][0]["port"]
+    data["inbounds"][0]["port"] = port
 
+    if port_is_use(port):
+        print("PORT {} is being used. try another".format(green + str(port) + reset))
+        return cmd
+    else:
         confirm = input(
             f"Change PORT {green}{configport}{reset} to {green}{port}{reset} ? [y/n] "
         )
         if confirm.lower() in ["y", "yes"]:
-            with open(config, "w") as file:
-                json.dump(data, file, indent=2)
-                # reset_docker_compose()
-                print(f"Server Side PORT changed to {port}")
+            save_config(config, data)
+            print(f"Server Side PORT changed to {port}")
         else:
             pass
+
 
 # -------------------------------- Shell Parser --------------------------------- #
 
@@ -327,12 +359,12 @@ commands = {
     "version": show_version,
     "q": quit,
     "quit": quit,
-    "listusers": list_clients,
-    "users": list_clients,
-    "adduser": create_new_user,
-    "add": create_new_user,
-    "updateuser": update_client,
-    "update": update_client,
+    "listusers": list_users,
+    "users": list_users,
+    "adduser": create_user,
+    "add": create_user,
+    "updateuser": update_user,
+    "update": update_user,
     "deluser": del_user,
     "del": del_user,
     "p": change_server_port,
@@ -393,8 +425,8 @@ while True:
         ## Value based ARGS
 
         # check if the command is "update" or "updateuser"
-        if "updateuser" or "update" :
-            try :
+        if "updateuser" or "update":
+            try:
                 if options[0] in ["update", "updateuser"]:
                     # Initialize a counter variable
                     i = 1
@@ -406,8 +438,8 @@ while True:
                         commands["updateuser"](int(id))
                         i += 1
             except ValueError:
-                    # if the user ID is not an integer, show an error message
-                    base_error("del" + "require integer value")
+                # if the user ID is not an integer, show an error message
+                base_error("del" + "require integer value")
 
         # check if the command is "deluser" or "del"
         if "deluser" or "del" in cmd:

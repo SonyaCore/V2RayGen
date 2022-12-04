@@ -1,4 +1,12 @@
 # !/usr/bin/env python3
+
+# XRay Agent
+# ------------------------------------------
+#   Author    : SonyaCore
+# 	Github    : https://github.com/SonyaCore
+#   Licence   : https://www.gnu.org/licenses/gpl-3.0.en.html
+
+import os
 import sys
 import subprocess
 import time
@@ -8,7 +16,12 @@ import random
 import string
 import re
 import signal
+import base64
 import socket
+from urllib.request import urlopen, Request
+from urllib.error import HTTPError, URLError
+from http.client import RemoteDisconnected
+from binascii import Error
 
 # -------------------------------- Constants --------------------------------- #
 
@@ -23,10 +36,7 @@ NAME = "XRayAgent"
 MIN_PORT = 0
 MAX_PORT = 65535
 
-DOCKER_COMPOSE = False
-
 # -------------------------------- Help --------------------------------- #
-
 
 def signal_handler(sig, frame):
     print(error + "\nKeyboardInterrupt!")
@@ -53,25 +63,30 @@ __   _______                                      _
         time.sleep(t)
     sys.stdout.write("\n")
 
-
 def help():
     exec_name = sys.argv[0]
-    print(
-        """
-{0} [options]
-    add , adduser           add user
-    update , updateuser     update existing user
-    del , deluser           delete existing user
-    users , listusers       list of users
-    p , port                change server side port
-    h , help                get help
-    v , version             get version
-    q , quit                exit program
-        """.format(
-            exec_name[exec_name.rfind("/") + 1 :],
-        )
+    help_message = (
+        "{0} [options]\n"
+        "    {add:<20} add user\n"
+        "    {update:<20} update existing user\n"
+        "    {delete:<20} delete existing user\n"
+        "    {users:<20} list of users\n"
+        "    {p:<20} change server side port\n"
+        "    {h:<20} get help\n"
+        "    {v:<20} get version\n"
+        "    {q:<20} exit program\n"
+    ).format(
+        exec_name[exec_name.rfind("/") + 1 :],
+        add="add, adduser",
+        update="update, updateuser",
+        delete="del, deluser",
+        users="users, listusers",
+        p="p, port",
+        h="h, help",
+        v="v, version",
+        q="q, quit",
     )
-
+    print(help_message)
 
 # -------------------------------- Helper Functions --------------------------------- #
 
@@ -80,8 +95,25 @@ def base_error(err):
     return print(error + "ERROR : " + reset + str(err))
 
 
+def docker_compose_state():
+    global DOCKER_COMPOSE , DOCKER_COMPOSE_IS_UP
+    if os.path.exists("/usr/bin/docker-compose") or os.path.exists(
+    "/usr/local/bin/docker-compose"):
+        DOCKER_COMPOSE = True
+        DOCKER_COMPOSE_IS_UP = green + "ON"
+    else :
+        DOCKER_COMPOSE = False
+        DOCKER_COMPOSE_IS_UP = error + "OFF"
+        
+    print(green + f"Docker Compose : {DOCKER_COMPOSE_IS_UP}" + reset)
+
+
 def reset_docker_compose():
-    subprocess.run(f"docker-compose restart", shell=True, check=True)
+    subprocess.run(f"docker-compose restart",
+    shell=True,
+    check=True,
+    stdout=subprocess.DEVNULL,
+    stderr=subprocess.DEVNULL)
 
 
 def load_config():
@@ -96,7 +128,7 @@ def load_config():
     except FileNotFoundError:
         sys.exit(error + "Could not load config file: " + reset + config)
 
-    print(green + "Loaded config file: " + reset + config)
+    print(green + "Loaded Config : " + reset + config)
 
 
 def read_config(config):
@@ -112,9 +144,41 @@ def save_config(config, data):
             reset_docker_compose()
 
 
+def read_protocol(config):
+    data = read_config(config)
+    protocol = data["inbounds"][0]["protocol"]
+    print(green + "Protocol : " + reset + protocol)
+
 def show_version():
     print(blue + NAME + " " + VERSION)
 
+
+def clear_screen():
+    if os.name == "posix":
+        os.system("clear")
+    elif os.name == "nt":
+        os.system("cls")
+
+# Return IP
+def IP():
+    """
+    return actual IP of the server.
+    if there are multiple interfaces with private IP the public IP will be used for the config
+    """
+    try:
+        url = "http://ip-api.com/json/?fields=query"
+        httprequest = Request(url, headers={"Accept": "application/json"})
+
+        with urlopen(httprequest) as response:
+            data = json.loads(response.read().decode())
+            return data["query"]
+    except HTTPError:
+        print(
+            error
+            + f'failed to send request to {url.split("/json")[0]} please check your connection'
+            + reset
+        )
+        sys.exit(1)
 
 # -------------------------------- Colors --------------------------------- #
 
@@ -125,7 +189,6 @@ error = "\u001b[31m"
 reset = "\u001b[0m"
 
 # -------------------------------- Functions --------------------------------- #
-
 
 def validate_email(email):
     regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
@@ -166,12 +229,89 @@ def port_is_use(port):
         stream.close()
     return state
 
+# -------------------------------- LINK GENERATOR --------------------------------- #
+
+def link_generator( data , index ) -> str:
+    """
+    Generate a link with the specified prelink and data.
+    """
+    read_config(config)
+    id = data["inbounds"][0]["settings"]["clients"][index]["id"]
+    
+    try:
+        net = data["inbounds"][0]["streamSettings"]["network"]
+    except KeyError:
+        net = ""
+        pass
+
+    try:
+        if data["inbounds"][0]["streamSettings"]["network"] == "ws":
+            try:
+                path = data["inbounds"][0]["streamSettings"]["wsSettings"]["path"]
+            except KeyError:
+                path = ""
+                pass
+    except KeyError:
+        pass
+
+    port = data["inbounds"][0]["port"]
+
+    ps = "xray"
+
+    security = data["inbounds"][0]["streamSettings"]["security"]
+
+    if data["inbounds"][0]["protocol"] == "vmess":
+        aid = data["inbounds"][0]["settings"]["clients"][index]["alterId"]
+        print(vmess_link_generator(aid , id , net , path , port , ps ,security ))
+    elif data["inbounds"][0]["protocol"] == "vless":
+        print(vless_link_generator(id , port , net , path , security , ps ))
+    else :
+        base_error("UNSUPPORTED PROTOCOL")
+
+
+def vmess_link_generator(aid, id, net, path, port, ps, tls) -> str:
+    PRELINK = "vmess://"
+
+    raw_link = bytes(
+        "{"
+        + f""""add":"{ServerIP}",\
+"aid":"{aid}",\
+"host":"",\
+"id":"{id}",\
+"net":"{net}",\
+"path":"{path}",\
+"port":"{port}",\
+"ps":"{ps}",\
+"tls":"{tls}",\
+"type":"none",\
+"v":"2" """
+        + "}",
+        encoding="ascii",
+    )
+
+    link = base64.b64encode(raw_link)  # encode raw link
+
+    vmess_link = PRELINK + str(link.decode("utf-8"))  # concatenate prelink with rawlink
+
+    return vmess_link
+
+def vless_link_generator(id, port, net, path, security, name) -> str:
+    PRELINK = "vless://"
+
+    raw_link = f"{id}@{ServerIP}:{port}?path={path}&security={security}&encryption=none&type={net}#{name}"
+
+    vless_link = PRELINK + raw_link
+
+    return vless_link
+
 
 # -------------------------------- Main --------------------------------- #
 
 
 def create_user(email, id):
     data = read_config(config)
+    
+    user = {}
     if data["inbounds"][0]["protocol"] == "vmess":
 
         try:
@@ -199,15 +339,17 @@ def create_user(email, id):
                 ("ADD user success!"), user["id"], user["alterId"], user["email"]
             )
         )
+        link_generator(data , -1)
 
     elif data["inbounds"][0]["protocol"] == "vless":
         user = {"id": str(id), "level": 0, "email": str(email)}
         data["inbounds"][0]["settings"]["clients"].append(user)
         print(
             "{0} uuid: {1}, email : {2}".format(
-                ("DEL user success!"), user["id"], user["email"]
+                ("ADD user success!"), user["id"], user["email"]
             )
         )
+        link_generator(data , -1)
 
     save_config(config, data)
 
@@ -294,6 +436,7 @@ def update_user(index):
 
         save_config(config, data)
         print("index : " + green + str(index) + reset + " Updated")
+        link_generator(data , index)
 
     except ValueError as e:
         # if the user ID is not an integer, show an error message
@@ -303,13 +446,11 @@ def update_user(index):
 
 def list_users():
     data = read_config(config)
-    index = 0
     border = f"{blue}{'-'*100}{reset}"
     list = data["inbounds"][0]["settings"]["clients"]
     print(border)
-    for lists in list:
-        print(f"index : {green}{index}{reset}", lists)
-        index += 1
+    for index, user in enumerate(list):
+        print(f"index : {green}{index}{reset}", user)
     print(border)
 
 
@@ -345,6 +486,23 @@ banner()
 ## LOAD CONFIGURATION
 load_config()
 
+## CHECK DOCKER_COMPOSE
+docker_compose_state()
+
+## SHOW SERVER IP
+try:
+    ServerIP = IP()
+    print(green + "IP : " + reset + ServerIP)
+except RemoteDisconnected as e:
+    base_error(str(e))
+except URLError as e:
+    base_error(str(e))
+
+## SHOW CONFIGURATION PROTOCOL
+read_protocol(config)
+
+print()
+
 ## HELPER FUNCTION
 help()
 
@@ -369,6 +527,8 @@ commands = {
     "del": del_user,
     "p": change_server_port,
     "port": change_server_port,
+    "clear": clear_screen,
+    "c": clear_screen
 }
 
 while True:
@@ -388,6 +548,11 @@ while True:
         elif cmd in ["v", "version"]:
             # call the "version" command
             commands["version"]()
+    
+        # check if the command is "c" or "clear"
+        elif cmd in ["c", "clear"]:
+            # call the "version" command
+            commands["clear"]()
 
         # check if the command is "q" or "quit"
         elif cmd in ["q", "quit"]:

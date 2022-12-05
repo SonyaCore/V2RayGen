@@ -32,9 +32,11 @@ use **sudo** if your current user is not in the docker group or you don't have d
 
 ## **How XRayGen Works ?**
 
-XRayGen uses docker to pull XRay image from the docker registry and after that, it generates a configuration file to start XRay container.
+`XRayGen` uses docker to pull XRay image from the docker registry and after that, it generates a configuration file to start XRay container.
 
 it also creates a client side configuration file so you can use that with xray-core or v2ray-core.
+
+There is also `XRayAgent` for User Management on XRay Configuration which can be used for CRUD operations.
 
 ## **Usage**
 
@@ -120,6 +122,65 @@ Parse URL and read information :
 ```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 -  --parse vmess://eyJhZGQiOiIxMjcuMC4wLjEiLCJhaWQiOiIwIiwiaG9zdCI6IiIsImlkIjoiM2JlNjE2NzktOGQzOC00ZWJiLWJjOGItMTQ4ZjE0ZWY5ZTc3IiwibmV0Ijoid3MiLCJwYXRoIjoiL2dyYXBocWwiLCJwb3J0IjoiNDQzIiwicHMiOiJ4cmF5IiwidGxzIjoidGxzIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiIgfQ==
 ```
+
+---
+
+# **XRayAgent**
+
+XRayAgent is a Simple User Management for XRay Configuration
+
+> XRayAgent takes user input so you have to download that to your server and then running it
+
+### Download Script & Run With Python3:
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/XRayAgent.py --output XRayAgent.py
+python3 XRayAgent.py
+```
+
+> By default it loads `config.json` for loading configuration
+
+> For loading other configuration simply enter the name of the configuration after XRayAgent.py :
+
+```bash
+python3 XRayAgent.py config.json
+```
+
+## XRayAgent Commands :
+
+```python3
+  add, adduser         adding user
+  update, updateuser   update existing user with their index ID
+  del, deluser         delete existing user with ther index ID
+  users, listusers     list of users
+  p, port              change server side port
+  h, help              get help
+  v, version           get version of program
+  q, quit              exit program
+```
+
+after adding an user a index will be created for that user for example :
+
+```bash
+Index : 0 {'id': '25ad6df8-9a54-4f6e-8c44-d5685359a7ce', 'level': 0, 'email': 'example@example.com'}
+Index : 1 {'id': '62bf2d5d-766b-4281-963a-544449a26b4f', 'level': 0, 'email': 'cLkx4WC0@protonmail.com'}
+```
+
+and now you can update that user with ther index ID :
+
+```python3
+cmd > : update 1
+Index 1 Selected
+Leave the section empty if you don't want to modify that section
+New Email : test@gmail.com
+New ID : 62bf2d5d-766b-4281-963a-544449a26b4f
+Index 1 Updated
+vless://62bf2d5d-766b-4281-963a-544449a26b4f@127.0.0.1:443?path=/graphql&security=tls&encryption=none&type=ws#xray
+```
+
+> Use Index ID for `update` , `del`
+
+> For Showing list of Users and their Indexs use `users` or `listusers` command
 
 ---
 

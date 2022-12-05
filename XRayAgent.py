@@ -38,6 +38,7 @@ MAX_PORT = 65535
 
 # -------------------------------- Help --------------------------------- #
 
+
 def signal_handler(sig, frame):
     print(error + "\nKeyboardInterrupt!")
     sys.exit(0)
@@ -62,6 +63,7 @@ __   _______                                      _
         sys.stdout.write(char)
         time.sleep(t)
     sys.stdout.write("\n")
+
 
 def help():
     exec_name = sys.argv[0]
@@ -88,6 +90,7 @@ def help():
     )
     print(help_message)
 
+
 # -------------------------------- Helper Functions --------------------------------- #
 
 
@@ -95,25 +98,36 @@ def base_error(err):
     return print(error + "ERROR : " + reset + str(err))
 
 
+def warn(msg):
+    return yellow + str(msg) + reset
+
+
+def info(msg):
+    return green + str(msg) + reset
+
+
 def docker_compose_state():
-    global DOCKER_COMPOSE , DOCKER_COMPOSE_IS_UP
+    global DOCKER_COMPOSE, DOCKER_COMPOSE_IS_UP
     if os.path.exists("/usr/bin/docker-compose") or os.path.exists(
-    "/usr/local/bin/docker-compose"):
+        "/usr/local/bin/docker-compose"
+    ):
         DOCKER_COMPOSE = True
         DOCKER_COMPOSE_IS_UP = green + "ON"
-    else :
+    else:
         DOCKER_COMPOSE = False
         DOCKER_COMPOSE_IS_UP = error + "OFF"
-        
+
     print(green + f"Docker Compose : {DOCKER_COMPOSE_IS_UP}" + reset)
 
 
 def reset_docker_compose():
-    subprocess.run(f"docker-compose restart",
-    shell=True,
-    check=True,
-    stdout=subprocess.DEVNULL,
-    stderr=subprocess.DEVNULL)
+    subprocess.run(
+        f"docker-compose restart",
+        shell=True,
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 
 
 def load_config():
@@ -129,6 +143,15 @@ def load_config():
         sys.exit(error + "Could not load config file: " + reset + config)
 
     print(green + "Loaded Config : " + reset + config)
+
+
+def check_permissions(path: str) -> bool:
+    # Check for read and write permissions
+    read_write = os.access(path, os.R_OK | os.W_OK)
+    if read_write == True:
+        pass
+    else:
+        sys.exit(base_error(f"Permission denied: '{path}'"))
 
 
 def read_config(config):
@@ -149,6 +172,7 @@ def read_protocol(config):
     protocol = data["inbounds"][0]["protocol"]
     print(green + "Protocol : " + reset + protocol)
 
+
 def show_version():
     print(blue + NAME + " " + VERSION)
 
@@ -158,6 +182,7 @@ def clear_screen():
         os.system("clear")
     elif os.name == "nt":
         os.system("cls")
+
 
 # Return IP
 def IP():
@@ -180,6 +205,7 @@ def IP():
         )
         sys.exit(1)
 
+
 # -------------------------------- Colors --------------------------------- #
 
 green = "\u001b[32m"
@@ -189,6 +215,7 @@ error = "\u001b[31m"
 reset = "\u001b[0m"
 
 # -------------------------------- Functions --------------------------------- #
+
 
 def validate_email(email):
     regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
@@ -229,15 +256,17 @@ def port_is_use(port):
         stream.close()
     return state
 
+
 # -------------------------------- LINK GENERATOR --------------------------------- #
 
-def link_generator( data , index ) -> str:
+
+def link_generator(data, index) -> str:
     """
     Generate a link with the specified prelink and data.
     """
     read_config(config)
     id = data["inbounds"][0]["settings"]["clients"][index]["id"]
-    
+
     try:
         net = data["inbounds"][0]["streamSettings"]["network"]
     except KeyError:
@@ -262,10 +291,10 @@ def link_generator( data , index ) -> str:
 
     if data["inbounds"][0]["protocol"] == "vmess":
         aid = data["inbounds"][0]["settings"]["clients"][index]["alterId"]
-        print(vmess_link_generator(aid , id , net , path , port , ps ,security ))
+        print(vmess_link_generator(aid, id, net, path, port, ps, security))
     elif data["inbounds"][0]["protocol"] == "vless":
-        print(vless_link_generator(id , port , net , path , security , ps ))
-    else :
+        print(vless_link_generator(id, port, net, path, security, ps))
+    else:
         base_error("UNSUPPORTED PROTOCOL")
 
 
@@ -295,6 +324,7 @@ def vmess_link_generator(aid, id, net, path, port, ps, tls) -> str:
 
     return vmess_link
 
+
 def vless_link_generator(id, port, net, path, security, name) -> str:
     PRELINK = "vless://"
 
@@ -308,14 +338,31 @@ def vless_link_generator(id, port, net, path, security, name) -> str:
 # -------------------------------- Main --------------------------------- #
 
 
-def create_user(email, id):
+def create_user():
     data = read_config(config)
-    
+    # print a message to inform the user that a user is being added
+    print(info("! ADDING User"))
+    print(info("! Leave Sections Empty for Random Value"))
+
+    # prompt the user for an email address
+    email = input(warn("Email :"))
+
+    # if the email address is empty, generate a random email address
+    if email == "":
+        email = random_email()
+
+    # prompt the user for an ID
+    id = input(warn("ID / UUID : "))
+
+    # if the ID is empty, generate a random ID
+    if id == "":
+        id = UUID
+
     user = {}
     if data["inbounds"][0]["protocol"] == "vmess":
 
         try:
-            alterID = input("AlterID 0 to 64 : ")
+            alterID = input(warn("AlterID 0 to 64 : "))
             if alterID == "" or None:
                 alterID = 0
             alterID = int(alterID)
@@ -339,17 +386,17 @@ def create_user(email, id):
                 ("ADD user success!"), user["id"], user["alterId"], user["email"]
             )
         )
-        link_generator(data , -1)
+        link_generator(data, -1)
 
     elif data["inbounds"][0]["protocol"] == "vless":
         user = {"id": str(id), "level": 0, "email": str(email)}
         data["inbounds"][0]["settings"]["clients"].append(user)
         print(
             "{0} uuid: {1}, email : {2}".format(
-                ("ADD user success!"), user["id"], user["email"]
+                ("ADD user success!"), info(user["id"]), info(user["email"])
             )
         )
-        link_generator(data , -1)
+        link_generator(data, -1)
 
     save_config(config, data)
 
@@ -373,12 +420,12 @@ def del_user(index):
     else:
         useremail = data["inbounds"][0]["settings"]["clients"][index]["email"]
         confirm = input(
-            f"DELETE index {green}{index}{reset} with email : {green}{useremail}{reset} ? [y/n] "
+            f"DELETE index {info(index)} with email : {info(useremail)} ? [y/n] "
         )
         if confirm.lower() in ["y", "yes"]:
             del data["inbounds"][0]["settings"]["clients"][index]
 
-            print((f"Index {green}{index}{reset} deleted!"))
+            print((f"Index {info(index)} deleted!"))
 
             save_config(config, data)
         else:
@@ -395,7 +442,7 @@ def update_user(index):
             return cmd
         print("Index " + green + str(index) + reset + " Selected")
         print("Leave the section empty if you don't want to modify that section")
-        new_email = input("New Email : ")
+        new_email = input(warn("New Email : "))
         new_email = str(new_email)
 
         if new_email is None or new_email == "":
@@ -406,7 +453,7 @@ def update_user(index):
             except TypeError:
                 return cmd
 
-        new_id = input("New Id : ")
+        new_id = input(warn("New ID : "))
         new_id = str(new_id)
 
         if new_id is None or new_id == "":
@@ -414,7 +461,7 @@ def update_user(index):
 
         if data["inbounds"][0]["protocol"] == "vmess":
             try:
-                new_alterId = input("AlterID 0 to 64 : ")
+                new_alterId = input(warn("AlterID 0 to 64 : "))
                 if new_alterId == "" or None:
                     new_alterId = data["inbounds"][0]["settings"]["clients"][index][
                         "alterId"
@@ -435,8 +482,8 @@ def update_user(index):
         data["inbounds"][0]["settings"]["clients"][index]["id"] = new_id
 
         save_config(config, data)
-        print("index : " + green + str(index) + reset + " Updated")
-        link_generator(data , index)
+        print("Index " + info(index) + " Updated")
+        link_generator(data, index)
 
     except ValueError as e:
         # if the user ID is not an integer, show an error message
@@ -450,7 +497,7 @@ def list_users():
     list = data["inbounds"][0]["settings"]["clients"]
     print(border)
     for index, user in enumerate(list):
-        print(f"index : {green}{index}{reset}", user)
+        print(f"Index : {info(index)}", user)
     print(border)
 
 
@@ -468,12 +515,10 @@ def change_server_port(port):
         print("PORT {} is being used. try another".format(green + str(port) + reset))
         return cmd
     else:
-        confirm = input(
-            f"Change PORT {green}{configport}{reset} to {green}{port}{reset} ? [y/n] "
-        )
+        confirm = input(f"Change PORT {warn(configport)} to {info(port)} ? [y/n] ")
         if confirm.lower() in ["y", "yes"]:
             save_config(config, data)
-            print(f"Server Side PORT changed to {port}")
+            print(f"Server Side PORT changed to {info(port)}")
         else:
             pass
 
@@ -485,6 +530,9 @@ banner()
 
 ## LOAD CONFIGURATION
 load_config()
+
+## CHECK CONFIGURATION PERMISSIONS
+check_permissions(config)
 
 ## CHECK DOCKER_COMPOSE
 docker_compose_state()
@@ -528,7 +576,7 @@ commands = {
     "p": change_server_port,
     "port": change_server_port,
     "clear": clear_screen,
-    "c": clear_screen
+    "c": clear_screen,
 }
 
 while True:
@@ -537,7 +585,7 @@ while True:
     options = cmd.split()
 
     # SHELL ARGS
-    ##############################################################
+    ###########################################################################
     try:
         # check if the command is "h" or "help"
         if cmd in ["h", "help"]:
@@ -548,7 +596,7 @@ while True:
         elif cmd in ["v", "version"]:
             # call the "version" command
             commands["version"]()
-    
+
         # check if the command is "c" or "clear"
         elif cmd in ["c", "clear"]:
             # call the "version" command
@@ -566,26 +614,8 @@ while True:
 
         # check if the command is "adduser" or "add"
         elif cmd in ["adduser", "add"]:
-            # print a message to inform the user that a user is being added
-            print(green + "! adding user" + reset)
-            print(green + "! leave empty for random" + reset)
-
-            # prompt the user for an email address
-            email = input("Email : ")
-
-            # if the email address is empty, generate a random email address
-            if email == "":
-                email = random_email()
-
-            # prompt the user for an ID
-            id = input("ID : ")
-
-            # if the ID is empty, generate a random ID
-            if id == "":
-                id = UUID
-
             # call the "adduser" command with the email address and ID
-            commands["adduser"](email, id)
+            commands["adduser"]()
 
         ## Value based ARGS
 
@@ -604,7 +634,7 @@ while True:
                         i += 1
             except ValueError:
                 # if the user ID is not an integer, show an error message
-                base_error("del" + "require integer value")
+                base_error("update " + "require integer value")
 
         # check if the command is "deluser" or "del"
         if "deluser" or "del" in cmd:
@@ -621,7 +651,7 @@ while True:
                         i += 1
             except ValueError:
                 # if the user ID is not an integer, show an error message
-                base_error("del" + "require integer value")
+                base_error("del " + "require integer value")
 
         # check if the command contains "port" or "p"
         if "port" or "p" in cmd:
@@ -637,5 +667,4 @@ while True:
                 base_error("port " + "require integer value")
     except IndexError:
         cmd
-
-    ###############################################################
+    ###########################################################################

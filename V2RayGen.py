@@ -234,47 +234,6 @@ client.add_argument(
     help=f"HTTP port for Client-side JSON config. default: [{HTTPPORT}]",
 )
 
-user = parser.add_argument_group(f"{green}User Management{reset}")
-
-user.add_argument(
-    "--adduser",
-    "-add",
-    action="store_true",
-    help="Adding New User",
-)
-user.add_argument(
-    "--deluser",
-    "-del",
-    action="store",
-    type=int,
-    metavar="",
-    help="Delete Existing User. <IndexID>",
-)
-user.add_argument(
-    "--listusers",
-    "-list",
-    action="store_true",
-    help="List of Users in Configuration file",
-)
-user.add_argument(
-    "--email",
-    "-e",
-    action="store",
-    type=str,
-    metavar="",
-    help="Email for New User",
-)
-
-user.add_argument(
-    "--config",
-    "-c",
-    action="store",
-    type=argparse.FileType("r"),
-    metavar="",
-    help=f"Use another Configuration. default: [{VMESS}]",
-)
-
-
 shadowsocks = parser.add_argument_group(f"{green}ShadowSocks{reset}")
 
 shadowsocks.add_argument(
@@ -1237,92 +1196,6 @@ def client_side_configuration(protocol):
             reset,
         )
 
-
-# -------------------------------- User Client-Side Creation --------------------------------- #
-
-def create_new_user():
-    try : 
-        email = args.email
-        if args.email == None:
-            email = "example@example.com"
-        validate_email(email)
-        with open(args.config, "r") as configfile:
-            data = json.loads(configfile.read())
-            if data["inbounds"][0]["protocol"] == "vmess":
-                user = {"alterId": args.alterid, "level": 0, "id": str(UUID),
-                "email": str(email)}
-                data["inbounds"][0]["settings"]["clients"].append(user)
-                print(
-                    "{0} uuid: {1}, alterId: {2}, email : {3}".format(
-                        ("ADD user success!"), user["id"], user["alterId"], user["email"]
-                    )
-                )
-
-            elif data["inbounds"][0]["protocol"] == "vless":
-                user = {"id": str(UUID), "level": 0,
-                "email": str(email)}
-                data["inbounds"][0]["settings"]["clients"].append(user)
-                print(
-                    "{0} uuid: {1}, email : {2}".format(
-                        ("DEL user success!"), user["id"], user["email"]
-                    )
-                )
-
-            with open(args.config, "w") as file:
-                json.dump(data, file, indent=2)
-                reset_docker_compose()
-        
-    except FileNotFoundError as err : 
-        base_error(err)
-                
-
-
-def del_user(index):
-    try :
-        with open(args.config, "r") as configfile:
-            data = json.loads(configfile.read())
-            if (
-                data["inbounds"][0]["settings"]["clients"][index]
-                == data["inbounds"][0]["settings"]["clients"][0]
-                or index == 0
-            ):
-                print(error + "ERROR :" + reset + "Can't Delete first client")
-            elif index < 0:
-                print(
-                    error
-                    + "ERROR : "
-                    + reset
-                    + "Please Select Proper index !"
-                    + "\nuse --listusers or -list to see index values"
-                )
-            else:
-                del data["inbounds"][0]["settings"]["clients"][index]
-
-                print((f"Index {green}{index}{reset} deleted!"))
-
-                with open(args.config, "w") as file:
-                    json.dump(data, file, indent=2)
-                    reset_docker_compose()
-    except FileNotFoundError as err:
-        base_error(err)
-
-
-def list_clients():
-    try :
-        with open(args.config, "r") as configfile:
-            data = json.loads(configfile.read())
-            index = 0
-            border = f"{blue}{'-'*100}{reset}"
-            list = data["inbounds"][0]["settings"]["clients"]
-            print(border)
-            for lists in list:
-                print(f"index : {green}{index}{reset}", lists)
-                index += 1
-            print(border)
-
-    except FileNotFoundError as err : 
-        base_error(err)
-
 # -------------------------------- Config Creation --------------------------------- #
 
 
@@ -2137,29 +2010,6 @@ if __name__ == "__main__":
     # add firewall rules
     if args.firewall:
         firewall_config()
-
-    if args.config == None:
-        args.config = "config.json"
-    else:
-        args.config = args.config.name
-
-    if args.adduser:
-        create_new_user()
-
-    try:
-        if args.deluser:
-            del_user(args.deluser)
-    except IndexError:
-        sys.exit(
-            error
-            + str("ERROR : ")
-            + reset
-            + "index : "
-            + green + str(args.deluser) + reset
-            + " does not exist use --listusers to see index value."
-        )
-    if args.listusers:
-        list_clients()
 
     # parse configuration file
     try:

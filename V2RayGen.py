@@ -30,7 +30,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.0.2"
+VERSION = "1.0.3"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -255,6 +255,14 @@ shadowsocks.add_argument(
 )
 
 docker = parser.add_argument_group(f"{green}Docker{reset}")
+
+docker.add_argument(
+    "--v2ray",
+    "-v2",
+    action="store_true",
+    required=False,
+    help="Use V2Ray insted of XRay",
+)
 
 docker.add_argument(
     "--dockerfile",
@@ -540,9 +548,14 @@ except RemoteDisconnected as e:
 except URLError as e:
     sys.exit(error + "ERROR : " + reset + str(e))
 
+if args.v2ray:
+    PROTOCOL = "v2ray"
+else :
+    PROTOCOL = "xray"
+
 # Certificate location
-crtkey = f"/etc/xray/{SELFSIGEND_CERT}"
-hostkey = f"/etc/xray/{SELFSIGEND_KEY}"
+crtkey = f"/etc/{PROTOCOL}/{SELFSIGEND_CERT}"
+hostkey = f"/etc/{PROTOCOL}/{SELFSIGEND_KEY}"
 
 # Outband protocols
 protocol_list = ["freedom", "blackhole", "both"]
@@ -1402,10 +1415,34 @@ def xray_dockercompose(protocol):
     elif protocol == "VLESS":
         arg = VLESS
 
-    docker_crtkey = f"- ./{SELFSIGEND_CERT}:/etc/xray/{SELFSIGEND_CERT}:ro"
-    docker_hostkey = f"- ./{SELFSIGEND_KEY}:/etc/xray/{SELFSIGEND_KEY}:ro"
+    if args.v2ray:
+        type = "v2ray"
+    else :
+        type = "xray"
 
-    data = """version: '3'
+    docker_crtkey = f"- ./{SELFSIGEND_CERT}:/etc/{type}/{SELFSIGEND_CERT}:ro"
+    docker_hostkey = f"- ./{SELFSIGEND_KEY}:/etc/{type}/{SELFSIGEND_KEY}:ro"
+
+    if args.v2ray :
+            data = """version: '3'
+services:
+  v2ray:
+    image: v2fly/v2fly-core
+    restart: always
+    network_mode: host
+    environment:
+      - V2RAY_VMESS_AEAD_FORCED=false
+    entrypoint: ["v2ray", "-config", "/etc/v2ray/config.json"]
+    volumes:
+        - ./%s:/etc/v2ray/config.json:ro
+        %s
+        %s""" % (
+        arg,
+        docker_crtkey if args.vless or args.vmesstls else "",
+        docker_hostkey if args.vless or args.vmesstls else "",
+    )
+    else :
+        data = """version: '3'
 services:
   xray:
     image: teddysun/xray

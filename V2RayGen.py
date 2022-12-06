@@ -29,6 +29,11 @@ import EnvHandler as env
 
 # -------------------------------- Constants --------------------------------- #
 
+# github account name most be set if you are going to
+# develope this code 
+
+GITHUB_ACCOUNT_NAME = "SonyaCore"
+
 # Name
 NAME = "XRayGen"
 
@@ -1925,7 +1930,7 @@ def base_error(err):
 # ----------------------------- argparse Actions ----------------------------- #
 
 if __name__ == "__main__":
-    link = "https://raw.githubusercontent.com/mar-coding/V2RayGen/main/EnvHandler.py"
+    link = "https://raw.githubusercontent.com/"+ GITHUB_ACCOUNT_NAME +"/V2RayGen/main/EnvHandler.py"
     urllib.request.urlretrieve(link, "EnvHandler.py")
     if len(sys.argv) <= 1:
         parser.print_help()

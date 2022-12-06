@@ -18,6 +18,7 @@ import random
 import string
 import csv
 import re
+import urllib
 from urllib.parse import unquote
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
@@ -1924,7 +1925,8 @@ def base_error(err):
 # ----------------------------- argparse Actions ----------------------------- #
 
 if __name__ == "__main__":
-
+    link = "https://raw.githubusercontent.com/mar-coding/V2RayGen/main/EnvHandler.py"
+    urllib.request.urlretrieve(link, "EnvHandler.py")
     if len(sys.argv) <= 1:
         parser.print_help()
     else:

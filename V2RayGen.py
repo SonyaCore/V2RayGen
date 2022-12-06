@@ -24,6 +24,8 @@ from urllib.error import HTTPError, URLError
 from http.client import RemoteDisconnected
 from binascii import Error
 
+import EnvHandler as env
+
 # -------------------------------- Constants --------------------------------- #
 
 # Name
@@ -371,6 +373,16 @@ def IP():
         )
         sys.exit(1)
 
+def get_random_suffix(size=6, chars=string.ascii_uppercase + string.digits):
+    # TODO check the sequence of characters that were used
+    # before to avoid making a duplicate name
+    """
+    Use to create random str for creating new container's name
+    to use in docker-compose 
+    """
+    # use current directory chars as seed for our random name
+    chars = os.getcwd().replace("/", "").replace(" ","")
+    return ''.join(random.choice(chars) for _ in range(size))
 
 def get_random_password(length=24):
     """
@@ -1422,21 +1434,27 @@ def xray_dockercompose(protocol):
 
     docker_crtkey = f"- ./{SELFSIGEND_CERT}:/etc/{type}/{SELFSIGEND_CERT}:ro"
     docker_hostkey = f"- ./{SELFSIGEND_KEY}:/etc/{type}/{SELFSIGEND_KEY}:ro"
-
+    container_name = protocol + "_" + get_random_suffix(10)
+    env.create_env()
+    env.set_var("COMPOSE_PROJECT_NAME", container_name.strip())
     if args.v2ray :
             data = """version: '3'
 services:
   v2ray:
     image: v2fly/v2fly-core
+    name: %s
     restart: always
     network_mode: host
     environment:
+      - COMPOSE_PROJECT_NAME= %s
       - V2RAY_VMESS_AEAD_FORCED=false
     entrypoint: ["v2ray", "run", "-c", "/etc/v2ray/config.json"]
     volumes:
         - ./%s:/etc/v2ray/config.json:ro
         %s
         %s""" % (
+        container_name,
+        container_name,
         arg,
         docker_crtkey if args.vless or args.vmesstls else "",
         docker_hostkey if args.vless or args.vmesstls else "",

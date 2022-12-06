@@ -1432,7 +1432,7 @@ services:
     network_mode: host
     environment:
       - V2RAY_VMESS_AEAD_FORCED=false
-    entrypoint: ["v2ray", "-config", "/etc/v2ray/config.json"]
+    entrypoint: ["v2ray", "run", "-c", "/etc/v2ray/config.json"
     volumes:
         - ./%s:/etc/v2ray/config.json:ro
         %s

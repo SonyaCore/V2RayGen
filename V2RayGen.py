@@ -30,7 +30,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.0.3"
+VERSION = "1.0.4"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -106,6 +106,14 @@ panel.add_argument(
 )
 
 xray = parser.add_argument_group(f"{green}XRay{reset}")
+
+xray.add_argument(
+    "--config",
+    "-c",
+    action="store_true",
+    help="Creating only the Configuration file",
+    default="xray",
+)
 
 xray.add_argument(
     "--linkname",
@@ -547,7 +555,10 @@ except RemoteDisconnected as e:
     sys.exit(error + "ERROR : " + reset + str(e))
 except URLError as e:
     sys.exit(error + "ERROR : " + reset + str(e))
+except ConnectionResetError as e:
+    sys.exit(error + "ERROR : " + reset + str(e))
 
+# Protocol Name
 if args.v2ray:
     PROTOCOL = "v2ray"
 else :
@@ -589,7 +600,7 @@ def xray_make():
     else:
         None
 
-    print(blue + f"! {name} Config Generated." + reset)
+    print(green + f"! {name} Config Generated." + reset)
 
 
 def xray_config(outband, protocol) -> str:
@@ -1214,8 +1225,12 @@ def client_side_configuration(protocol):
 
 def xray_create(protocol):
     dnsselect()
+    if args.config:
+        serverside_info_raw()
+        xray_make()
+        sys.exit(1)
+        
     xray_make()
-
     outbounds_check()
     if protocol == "VMESS":
         xray_dockercompose("VMESS")

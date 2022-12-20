@@ -18,6 +18,7 @@ import re
 import signal
 import base64
 import socket
+import platform
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
 from http.client import RemoteDisconnected
@@ -25,7 +26,7 @@ from binascii import Error
 
 # -------------------------------- Constants --------------------------------- #
 
-VERSION = "1.0.2"
+VERSION = "1.0.4"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -36,8 +37,9 @@ NAME = "XRayAgent"
 MIN_PORT = 0
 MAX_PORT = 65535
 
-# -------------------------------- Help --------------------------------- #
+IPTABLE = "/sbin/iptables"
 
+# -------------------------------- Help --------------------------------- #
 
 def signal_handler(sig, frame):
     print(error + "\nKeyboardInterrupt!")
@@ -69,30 +71,39 @@ def help():
     exec_name = sys.argv[0]
     help_message = (
         "{0} [options]\n"
-        "    {add:<20} add user\n"
-        "    {update:<20} update existing user\n"
-        "    {delete:<20} delete existing user\n"
-        "    {users:<20} list of users\n"
-        "    {p:<20} change server side port\n"
-        "    {h:<20} get help\n"
-        "    {v:<20} get version\n"
-        "    {q:<20} exit program\n"
+        "    {color}USER Management :\n{res}"
+        "    {add:<40} Add user\n"
+        "    {update:<40} Update existing user\n"
+        "    {delete:<40} Delete existing user\n"
+        "    {users:<40} List of users\n"
+        "\n"
+        "    {color}IPTables :\n{res}"
+        "    {deltable:<40} Delete rules on server-side port\n"
+        "    {cil:<40} Add IP limitations on server-side port\n"
+        "\n"
+        "    {p:<40} Change server side port\n"
+        "    {h:<40} Get help\n"
+        "    {v:<40} Get version\n"
+        "    {q:<40} Exit program\n"
     ).format(
         exec_name[exec_name.rfind("/") + 1 :],
         add="add, adduser",
         update="update, updateuser",
         delete="del, deluser",
         users="users, listusers",
+        deltable="deliptables, deleteiptables",
+        cil="climit , conlimit",
         p="p, port",
         h="h, help",
         v="v, version",
         q="q, quit",
+        color= blue,
+        res = reset,
     )
     print(help_message)
 
 
 # -------------------------------- Helper Functions --------------------------------- #
-
 
 def base_error(err):
     return print(error + "ERROR : " + reset + str(err))
@@ -146,7 +157,6 @@ def load_config():
 
 
 def check_permissions(path: str) -> bool:
-    # Check for read and write permissions
     read_write = os.access(path, os.R_OK | os.W_OK)
     if read_write == True:
         pass
@@ -158,6 +168,10 @@ def read_config(config):
     with open(config, "r") as configfile:
         return json.loads(configfile.read())
 
+def read_port(config):
+    data = read_config(config)
+    port = data["inbounds"][0]["port"]
+    return port
 
 def save_config(config, data):
     with open(config, "w") as file:
@@ -170,7 +184,9 @@ def save_config(config, data):
 def read_protocol(config):
     data = read_config(config)
     protocol = data["inbounds"][0]["protocol"]
+    port = data["inbounds"][0]["port"]
     print(green + "Protocol : " + reset + protocol)
+    print(green + "PORT : " + reset + str(port))
 
 
 def show_version():
@@ -216,7 +232,6 @@ reset = "\u001b[0m"
 
 # -------------------------------- Functions --------------------------------- #
 
-
 def validate_email(email):
     regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
     if re.fullmatch(regex, email):
@@ -256,9 +271,120 @@ def port_is_use(port):
         stream.close()
     return state
 
+def permission_check():
+    global ROOT
+    if os.geteuid() != 0:
+        print("You need to have root privileges to run this command.")
+        ROOT = False
+    else :
+        ROOT = True
+        pass
+    return ROOT
+
+def byte_conv(bytes, precision=1):
+
+    if bytes < 0:
+        raise ValueError(base_error("bytes can't be smaller than 0"))
+ 
+    byte_unit = 1024.
+ 
+    bytes = float(bytes)
+    unit = 'bytes'
+ 
+    if (bytes / byte_unit) >= 1:
+        bytes /= byte_unit
+        unit = 'KB'
+ 
+    if (bytes / byte_unit) >= 1:
+        bytes /= byte_unit
+        unit = 'MB'
+ 
+    if (bytes / byte_unit) >= 1:
+        bytes /= byte_unit
+        unit = 'GB'
+ 
+    if (bytes / byte_unit) >= 1:
+        bytes /= byte_unit
+        unit = 'TB'
+
+    bytes = round(bytes, precision)
+
+
+# -------------------------------- IPTables --------------------------------- #
+
+def conlimit(num):
+    port = read_port(config)
+    LOWESET_CONNECTION = 3
+
+    exec = "{} -A INPUT -p tcp --syn --dport {} -m connlimit --connlimit-above {} -j REJECT --reject-with tcp-reset".format(IPTABLE,port,num)
+    if num < LOWESET_CONNECTION :
+        base_error("Total Connections can't be lower than {}".format(LOWESET_CONNECTION))
+        return cmd
+    permission_check()
+    if ROOT == True:
+        confirm = input("ADD Connection LIMIT to PORT {} with {} Connections ? [y/n] ".format(port,num))
+        if confirm.lower() in ["y", "yes"]:
+            subprocess.run(exec,shell=True , check=True)
+            print(info("Total CONNECTIONS of PORT {} set to {}").format(port,num))
+        else:
+            pass
+
+def clean_iptables():
+    port = read_port(config)
+    exec = "{} -D {} {}"
+    check_cmd = (
+        "%s -nvL %s --line-number 2>/dev/null|grep -w \"%s\"|awk '{print $1}'|sort -r"
+    )
+    firewall_clean_cmd = "firewall-cmd --zone=public --remove-port={}/tcp --remove-port={}/udp --permanent >/dev/null 2>&1"
+
+    permission_check()
+    if ROOT == True:
+        confirm = input("DELETE INPUT & OUTPUT Chain on PORT {} ? [y/n] ".format(port))
+        if confirm.lower() in ["y", "yes"]:
+            if "centos-8" in platform.platform():
+                subprocess.run(
+                    "{}-save -c > /etc/sysconfig/iptables 2>/dev/null".format(IPTABLE),
+                    shell=True,
+                    check=True,
+                )
+                subprocess.run(
+                    firewall_clean_cmd.format(str(port), str(port)),
+                    shell=True,
+                    check=True,
+                )
+                subprocess.run(
+                    "firewall-cmd --reload >/dev/null 2>&1", shell=True, check=True
+                )
+                subprocess.run(
+                    "{}-restore -c < /etc/sysconfig/iptables".format(IPTABLE),
+                    shell=True,
+                    check=True,
+                )
+            input_chain = os.popen(
+                check_cmd % (IPTABLE, "INPUT", str(port))
+            ).readlines()
+            for line in input_chain:
+                subprocess.run(
+                    exec.format(IPTABLE, "INPUT", str(line)),
+                    shell=True,
+                    check=True,
+                )
+
+            output_chain = os.popen(
+                check_cmd % (IPTABLE, "OUTPUT", str(port))
+            ).readlines()
+            for line in output_chain:
+                subprocess.run(
+                    exec.format(IPTABLE, "OUTPUT", str(line)),
+                    shell=True,
+                    check=True,
+                )
+            print(info("DELETED {} RULES").format(len(output_chain + input_chain)))
+    else:
+        pass
+
 
 # -------------------------------- LINK GENERATOR --------------------------------- #
-
 
 def link_generator(data, index) -> str:
     """
@@ -577,12 +703,20 @@ commands = {
     "port": change_server_port,
     "clear": clear_screen,
     "c": clear_screen,
+    "deleteiptables": clean_iptables,
+    "deliptables": clean_iptables,
+    "conlimit": conlimit,
+    "climit": conlimit,
 }
 
 while True:
     ## shell input
-    cmd = input(shell).lower()
-    options = cmd.split()
+    try:
+        cmd = input(shell).lower()
+        options = cmd.split()
+    except EOFError:
+        print(error + "\nKeyboardInterrupt!")
+        exit(1)
 
     # SHELL ARGS
     ###########################################################################
@@ -617,54 +751,54 @@ while True:
             # call the "adduser" command with the email address and ID
             commands["adduser"]()
 
+        # check if the command is "deleteiptable" or "diptable"
+        elif cmd in ["deleteiptables", "deliptables"]:
+            # call the "adduser" command with the email address and ID
+            commands["deleteiptables"]()
+
         ## Value based ARGS
 
         # check if the command is "update" or "updateuser"
         if "updateuser" or "update":
             try:
                 if options[0] in ["update", "updateuser"]:
-                    # Initialize a counter variable
                     i = 1
-                    # iterate over the options list
                     while i < len(options):
-                        # get the ID of the user to delete
                         id = options[i]
-                        # call the "updateuser" command with the user ID
                         commands["updateuser"](int(id))
                         i += 1
             except ValueError:
-                # if the user ID is not an integer, show an error message
                 base_error("update " + "require integer value")
 
         # check if the command is "deluser" or "del"
         if "deluser" or "del" in cmd:
             try:
                 if options[0] in ["del", "deluser"]:
-                    # Initialize a counter variable
                     i = 1
-                    # iterate over the options list
                     while i < len(options):
-                        # get the ID of the user to delete
                         id = options[i]
-                        # call the "deluser" command with the user ID
                         commands["deluser"](int(id))
                         i += 1
             except ValueError:
-                # if the user ID is not an integer, show an error message
                 base_error("del " + "require integer value")
 
         # check if the command contains "port" or "p"
         if "port" or "p" in cmd:
             try:
-                # check if the first option is "port" or "p"
                 if options[0] in ["port", "p"]:
-                    # get the port number from the options
                     port = options[1]
-                    # call the "port" command with the port number
                     commands["port"](int(port))
             except ValueError:
-                # if the PORT is not an integer, show an error message
                 base_error("port " + "require integer value")
+
+         # check if the command contains "conlimit" or "climit"
+        if "conlimit" or "climit" in cmd:
+            try:
+                if options[0] in ["conlimit", "climit"]:
+                    num = options[1]
+                    commands["conlimit"](int(num))
+            except ValueError:
+                base_error("conlimit " + "require integer value")       
     except IndexError:
         cmd
     ###########################################################################

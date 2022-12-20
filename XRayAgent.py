@@ -762,60 +762,42 @@ while True:
         if "updateuser" or "update":
             try:
                 if options[0] in ["update", "updateuser"]:
-                    # Initialize a counter variable
                     i = 1
-                    # iterate over the options list
                     while i < len(options):
-                        # get the ID of the user to delete
                         id = options[i]
-                        # call the "updateuser" command with the user ID
                         commands["updateuser"](int(id))
                         i += 1
             except ValueError:
-                # if the user ID is not an integer, show an error message
                 base_error("update " + "require integer value")
 
         # check if the command is "deluser" or "del"
         if "deluser" or "del" in cmd:
             try:
                 if options[0] in ["del", "deluser"]:
-                    # Initialize a counter variable
                     i = 1
-                    # iterate over the options list
                     while i < len(options):
-                        # get the ID of the user to delete
                         id = options[i]
-                        # call the "deluser" command with the user ID
                         commands["deluser"](int(id))
                         i += 1
             except ValueError:
-                # if the user ID is not an integer, show an error message
                 base_error("del " + "require integer value")
 
         # check if the command contains "port" or "p"
         if "port" or "p" in cmd:
             try:
-                # check if the first option is "port" or "p"
                 if options[0] in ["port", "p"]:
-                    # get the port number from the options
                     port = options[1]
-                    # call the "port" command with the port number
                     commands["port"](int(port))
             except ValueError:
-                # if the PORT is not an integer, show an error message
                 base_error("port " + "require integer value")
 
          # check if the command contains "conlimit" or "climit"
         if "conlimit" or "climit" in cmd:
             try:
-                # check if the first option is "port" or "p"
                 if options[0] in ["conlimit", "climit"]:
-                    # get the max connection number from the options
                     num = options[1]
-                    # call the "port" command with the port number
                     commands["conlimit"](int(num))
             except ValueError:
-                # if the num is not an integer, show an error message
                 base_error("conlimit " + "require integer value")       
     except IndexError:
         cmd

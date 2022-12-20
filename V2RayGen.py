@@ -108,6 +108,14 @@ panel.add_argument(
 xray = parser.add_argument_group(f"{green}XRay{reset}")
 
 xray.add_argument(
+    "--config",
+    "-c",
+    action="store_true",
+    help="Creating only the Configuration file",
+    default=False,
+)
+
+xray.add_argument(
     "--linkname",
     "-ln",
     action="store",
@@ -147,6 +155,13 @@ xray.add_argument(
     metavar="",
     help="Optional WebSocket path. default: [/graphql]",
     default="/graphql",
+)
+
+xray.add_argument(
+    "--http",
+    "--no-websocket",
+    action="store_true",
+    help="Using Http insted of WebSocket. default: [WebSocket]",
 )
 
 xray.add_argument(
@@ -218,7 +233,7 @@ client.add_argument(
 )
 
 client.add_argument(
-    "--socks",
+    "--csocks",
     "--clientsocks",
     action="store",
     type=int,
@@ -226,7 +241,7 @@ client.add_argument(
     help=f"SOCKS port for Client-Side JSON config. default: [{SOCKSPORT}]",
 )
 client.add_argument(
-    "--http",
+    "--chttp",
     "--clienthttp",
     action="store",
     type=int,
@@ -599,33 +614,42 @@ def xray_config(outband, protocol) -> str:
 
     data = """{
     %s
+
     %s,
+
+    %s
+
   "inbounds": [
     {
         %s
+
         "port": %s,
+
         %s,
+
         "streamSettings":
             %s,
+
             %s,
-            "headersettings": %s
+
+        "headersettings": %s
     }
-        }
   ],
   "outbounds": [
     %s
-  ]%s
+  ]
+
 }""" % (
         DNS,
         log(),
+        routing() + ',' if args.block else "",
         sniffing() + "," if args.block else "",
         PORT,
         protocol,
-        websocket_config(args.wspath),
+        http() if args.http else websocket_config(args.wspath),
         tlssettings() if args.vmesstls or args.vless else notls(),
         args.header,
         outband,
-        ",\n" + routing() if args.block else "",
     )
 
     return json.loads(data)
@@ -883,10 +907,20 @@ def websocket_config(path) -> str:
           "wsSettings": {
             "connectionReuse": true,
             "path": "%s"
-          }""" % (
+          } 
+    }""" % (
         path
     )
     return websocket
+
+def http() -> str:
+    """
+    Http Network setting template for JSON.
+    """
+    http = """{
+          "network": "http"
+        } """ 
+    return http
 
 
 def freedom() -> str:
@@ -1215,7 +1249,7 @@ def client_side_configuration(protocol):
 def xray_create(protocol):
     dnsselect()
     xray_make()
-
+    sys.exit(1) if args.config else ""
     outbounds_check()
     if protocol == "VMESS":
         xray_dockercompose("VMESS")
@@ -1234,7 +1268,7 @@ def xray_create(protocol):
     if protocol == "VMESS" or protocol == "VMESSTLS":
         print(
             vmess_link_generator(
-                args.alterid, UUID, "ws", args.wspath, PORT, args.linkname, tlstype
+                args.alterid, UUID, net , path , PORT, args.linkname, tlstype
             )
         )
         if protocol == "VMESS":
@@ -1244,7 +1278,7 @@ def xray_create(protocol):
 
     elif protocol == "VLESS":
         print(
-            vless_link_generator(UUID, PORT, "ws", args.wspath, tlstype, args.linkname)
+            vless_link_generator(UUID, PORT, net , path , tlstype, args.linkname)
         )
         client_side_configuration("VLESS")
     COUNTRY() if protocol == "VMESS" else None
@@ -1621,7 +1655,7 @@ def serverside_info_raw() -> str:
     print("SECURITY: " + blue + str(tlstype) + reset)
     print("LINKNAME: " + blue + str(args.linkname) + reset)
 
-    if args.socks or args.http:
+    if args.csocks or args.chttp:
         print("")
         print("CLIENT SIDE Information : ")
         print("SECURITY : " + blue + str(SECURITY) + reset)
@@ -1955,10 +1989,10 @@ if __name__ == "__main__":
     if args.dns == "nodns":
         DNS = NODNS
 
-    if args.socks:
-        SOCKSPORT = args.socks
-    if args.http:
-        HTTPPORT = args.http
+    if args.csocks:
+        SOCKSPORT = args.csocks
+    if args.chttp:
+        HTTPPORT = args.chttp
 
     # JSON custom template load
     if args.header:
@@ -2013,6 +2047,13 @@ if __name__ == "__main__":
         tlstype = "tls"
     elif args.vless:
         tlstype = "tls"
+    
+    if args.http:
+        net = 'http'
+        path = ''
+    else :
+        net = 'ws'
+        path = args.wspath
 
     # Quick VMess Setup
     if args.vmess:

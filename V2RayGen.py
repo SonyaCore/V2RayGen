@@ -30,7 +30,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.0.3"
+VERSION = "1.0.4"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -223,7 +223,7 @@ client.add_argument(
     action="store",
     type=int,
     metavar="",
-    help=f"SOCKS port for Client-side JSON config. default: [{SOCKSPORT}]",
+    help=f"SOCKS port for Client-Side JSON config. default: [{SOCKSPORT}]",
 )
 client.add_argument(
     "--http",
@@ -231,7 +231,7 @@ client.add_argument(
     action="store",
     type=int,
     metavar="",
-    help=f"HTTP port for Client-side JSON config. default: [{HTTPPORT}]",
+    help=f"HTTP port for Client-Side JSON config. default: [{HTTPPORT}]",
 )
 
 shadowsocks = parser.add_argument_group(f"{green}ShadowSocks{reset}")

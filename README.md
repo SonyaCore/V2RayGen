@@ -94,7 +94,13 @@ curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sud
 VMESS + Changing client-side HTTP and SOCKS port :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --http 4020 --socks 8080
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --chttp 4020 --csocks 8080
+```
+
+VMESS + HTTP :
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --http
 ```
 
 VLESS + Using Google DNS :
@@ -149,14 +155,18 @@ python3 XRayAgent.py config.json
 ## XRayAgent Commands :
 
 ```python3
-  add, adduser         adding user
-  update, updateuser   update existing user with their index ID
-  del, deluser         delete existing user with ther index ID
-  users, listusers     list of users
-  p, port              change server side port
-  h, help              get help
-  v, version           get version of program
-  q, quit              exit program
+  add, adduser                      Adding user
+  update, updateuser                Update existing user with their index ID
+  del, deluser                      Delete existing user with ther index ID
+  users, listusers                  List of users
+
+  deliptables, deleteiptables       Delete rules on server-side port
+  climit , conlimit                 Add IP limitations on server-side port
+
+  p, port                           Change server side port
+  h, help                           Get help
+  v, version                        Get version of program
+  q, quit                           Exit program
 ```
 
 after adding an user a index will be created for that user for example :
@@ -182,6 +192,14 @@ vless://62bf2d5d-766b-4281-963a-544449a26b4f@127.0.0.1:443?path=/graphql&securit
 
 > For Showing list of Users and their Indexs use `users` or `listusers` command
 
+<br>
+
+### IPTABLES Section :
+
+using `climit` or `conlimit` limits the total connection ips on server side port
+
+for deleting the all rules on server side port use `deliptables` or `deleteiptables`
+
 ---
 
 # **Options**
@@ -189,6 +207,8 @@ vless://62bf2d5d-766b-4281-963a-544449a26b4f@127.0.0.1:443?path=/graphql&securit
 ## Server Side
 
 you can change server-side configuration with below options :
+
+`http` Using Http insted of Websocket
 
 `linkname` for changing linkname after generating configuration.
 
@@ -218,9 +238,9 @@ you can use client-side configuration directly with xray-core or v2ray-core
 
 `security` security method for client-side configuration.
 
-`socks` client-side SOCKS port . default: [2080]
+`csocks` client-side SOCKS port . default: [2080]
 
-`http` client-side HTTP port . default: [2081]
+`chttp` client-side HTTP port . default: [2081]
 
 ---
 

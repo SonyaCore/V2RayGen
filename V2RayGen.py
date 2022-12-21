@@ -121,8 +121,7 @@ xray.add_argument(
     action="store",
     type=str,
     metavar="",
-    help="Name for Xray generated link. default: [xray]",
-    default="xray",
+    help="Name for Xray generated link. default: [xray]"
 )
 
 xray.add_argument(
@@ -159,9 +158,16 @@ xray.add_argument(
 
 xray.add_argument(
     "--http",
-    "--no-websocket",
+    "--http-stream",
     action="store_true",
-    help="Using Http insted of WebSocket. default: [WebSocket]",
+    help="Using Http network stream. default: [WebSocket]",
+)
+
+xray.add_argument(
+    "--tcp",
+    "--tcp-tcp",
+    action="store_true",
+    help="Using TCP network stream. default: [WebSocket]",
 )
 
 xray.add_argument(
@@ -611,6 +617,17 @@ def xray_config(outband, protocol) -> str:
     """
     Xray JSON config file template
     """
+    global NETSTREAM
+
+    if args.http :
+        networkstream = http()
+        NETSTREAM = 'HTTP'
+    elif args.tcp :
+        networkstream = tcp()
+        NETSTREAM = 'TCP'
+    else :
+        networkstream = websocket_config(args.wspath)
+        NETSTREAM = 'WebSocket'
 
     data = """{
     %s
@@ -646,7 +663,7 @@ def xray_config(outband, protocol) -> str:
         sniffing() + "," if args.block else "",
         PORT,
         protocol,
-        http() if args.http else websocket_config(args.wspath),
+        networkstream,
         tlssettings() if args.vmesstls or args.vless else notls(),
         args.header,
         outband,
@@ -922,6 +939,15 @@ def http() -> str:
         } """ 
     return http
 
+
+def tcp() -> str:
+    """
+    Http Network setting template for JSON.
+    """
+    tcp = """{
+          "network": "tcp"
+        } """ 
+    return tcp
 
 def freedom() -> str:
     """
@@ -1650,7 +1676,8 @@ def serverside_info_raw() -> str:
     print("ID: " + blue + str(args.alterid) + reset)
     print("LOGLEVEL: " + blue + str(LOG) + reset)
     print("UUID: " + blue + str(UUID) + reset)
-    print("WSPATH: " + blue + str(args.wspath) + reset)
+    print("STREAM : " + blue + str(NETSTREAM) + reset)
+    print("WSPATH: " + blue + str(args.wspath) + reset) if NETSTREAM == 'Websocket' else None
     print("PORT: " + blue + str(PORT) + reset)
     print("SECURITY: " + blue + str(tlstype) + reset)
     print("LINKNAME: " + blue + str(args.linkname) + reset)
@@ -1751,12 +1778,13 @@ def link_serverside_configuration():
     """
     generate link with server-side configuration file.
     """
+
     if protocol == "vmess":
         return vmess_link_generator(
-            AlterId, ID, net, path, configport, "xray", securitymethod
+            AlterId, ID, net, path, configport, linkname, securitymethod
         )
     elif protocol == "vless":
-        return vless_link_generator(ID, configport, net, path, securitymethod, "xray")
+        return vless_link_generator(ID, configport, net, path, securitymethod, linkname)
 
 
 # ------------------------------ VMess Link Gen ------------------------------- #
@@ -1769,9 +1797,6 @@ def vmess_link_generator(aid, id, net, path, port, ps, tls) -> str:
     vmess link is being used for importing v2ray config in clients.
     vmess links are encoded with base64.
     """
-
-    if not ps:
-        ps = "xray"
 
     if not args.parseconfig:
         print("")
@@ -2051,9 +2076,20 @@ if __name__ == "__main__":
     if args.http:
         net = 'http'
         path = ''
+    elif args.tcp :
+        net = 'tcp'
+        path = ''
     else :
         net = 'ws'
         path = args.wspath
+
+    if args.v2ray :
+        linkname = 'v2ray'
+    else :
+        linkname =  'xray'
+
+    if args.linkname == None :
+        args.linkname = linkname
 
     # Quick VMess Setup
     if args.vmess:

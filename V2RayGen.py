@@ -30,7 +30,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.0.4"
+VERSION = "1.0.5"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -47,7 +47,7 @@ SELFSIGEND_KEY = "host.key"
 PORT = 80
 
 # Docker Compose Version
-DOCKERCOMPOSEVERSION = "2.13.0"
+DOCKERCOMPOSEVERSION = "2.14.2"
 # Docker Compose FILE
 DOCKERCOMPOSE = "docker-compose.yml"
 
@@ -87,8 +87,7 @@ quick = parser.add_argument_group(f"{green}Protocols{reset}")
 quick.add_argument("--vmess", "-vm", action="store_true", help="Create VMess")
 quick.add_argument("--vmesstls", "-vmtls", action="store_true", help="Create VMess + TLS")
 quick.add_argument("--vless", "-vl", action="store_true", help="Create VLess + TLS")
-quick.add_argument("--shadowsocks", "-ss", action="store_true", help="Create ShadowSocks",
-)
+quick.add_argument("--shadowsocks","-ss",action="store_true", help="Create ShadowSocks")
 
 panel = parser.add_argument_group(f"{green}Panels{reset}")
 
@@ -121,7 +120,7 @@ xray.add_argument(
     action="store",
     type=str,
     metavar="",
-    help="Name for Xray generated link. default: [xray]"
+    help="Name for Xray generated link. default: [xray]",
 )
 
 xray.add_argument(
@@ -571,7 +570,7 @@ except URLError as e:
 
 if args.v2ray:
     PROTOCOL = "v2ray"
-else :
+else:
     PROTOCOL = "xray"
 
 # Certificate location
@@ -619,15 +618,43 @@ def xray_config(outband, protocol) -> str:
     """
     global NETSTREAM
 
-    if args.http :
+    if args.http:
         networkstream = http()
-        NETSTREAM = 'HTTP'
-    elif args.tcp :
+        NETSTREAM = "HTTP"
+    elif args.tcp:
         networkstream = tcp()
-        NETSTREAM = 'TCP'
-    else :
+        NETSTREAM = "TCP"
+    else:
         networkstream = websocket_config(args.wspath)
-        NETSTREAM = 'WebSocket'
+        NETSTREAM = "WebSocket"
+
+    if not args.tcp:
+        # Normal stream settings
+        streamsettings = """
+        "streamSettings": 
+        %s,
+            
+        %s,
+        "headersettings": %s 
+        """ % (
+            networkstream,
+            tlssettings() if args.vmesstls or args.vless else notls(),
+            args.header,
+        )
+
+    else:
+        # TCP stream settings
+        streamsettings = """
+        "streamSettings": {
+        %s,
+        %s,
+        %s
+        }
+        """ % (
+            networkstream,
+            tlssettings() if args.vmesstls or args.vless else notls(),
+            args.header,
+        )
 
     data = """{
     %s
@@ -644,12 +671,7 @@ def xray_config(outband, protocol) -> str:
 
         %s,
 
-        "streamSettings":
-            %s,
-
-            %s,
-
-        "headersettings": %s
+        %s
     }
   ],
   "outbounds": [
@@ -659,13 +681,11 @@ def xray_config(outband, protocol) -> str:
 }""" % (
         DNS,
         log(),
-        routing() + ',' if args.block else "",
+        routing() + "," if args.block else "",
         sniffing() + "," if args.block else "",
         PORT,
         protocol,
-        networkstream,
-        tlssettings() if args.vmesstls or args.vless else notls(),
-        args.header,
+        streamsettings,
         outband,
     )
 
@@ -838,7 +858,7 @@ def routing() -> str:
     https://guide.v2fly.org/en_US/routing/bittorrent.html#server-side-configuration
     """
     data = """
-      "routing": {
+    "routing": {
     "domainStrategy": "AsIs",
     "rules": [
       {
@@ -930,13 +950,14 @@ def websocket_config(path) -> str:
     )
     return websocket
 
+
 def http() -> str:
     """
     Http Network setting template for JSON.
     """
     http = """{
-          "network": "http"
-        } """ 
+        "network": "http"
+        } """
     return http
 
 
@@ -944,10 +965,11 @@ def tcp() -> str:
     """
     Http Network setting template for JSON.
     """
-    tcp = """{
-          "network": "tcp"
-        } """ 
+    tcp = """
+        "network": "tcp"
+         """
     return tcp
+
 
 def freedom() -> str:
     """
@@ -994,7 +1016,7 @@ def headersettings() -> str:
     default tcp setting header for json configuration.
     for using custom configuration use ( --header file.json ) option to configure your own header
     """
-    data = """{
+    data = """ %s
             "header": {
               "type": "http",
               "response": {
@@ -1014,7 +1036,10 @@ def headersettings() -> str:
                 }
               }
             }
-          }"""
+          %s """ % (
+        "" if args.tcp else "{",
+        "" if args.tcp else "}",
+    )
     return data
 
 
@@ -1269,6 +1294,7 @@ def client_side_configuration(protocol):
             reset,
         )
 
+
 # -------------------------------- Config Creation --------------------------------- #
 
 
@@ -1294,7 +1320,7 @@ def xray_create(protocol):
     if protocol == "VMESS" or protocol == "VMESSTLS":
         print(
             vmess_link_generator(
-                args.alterid, UUID, net , path , PORT, args.linkname, tlstype
+                args.alterid, UUID, net, path, PORT, args.linkname, tlstype
             )
         )
         if protocol == "VMESS":
@@ -1303,9 +1329,7 @@ def xray_create(protocol):
             client_side_configuration("VMESSTLS")
 
     elif protocol == "VLESS":
-        print(
-            vless_link_generator(UUID, PORT, net , path , tlstype, args.linkname)
-        )
+        print(vless_link_generator(UUID, PORT, net, path, tlstype, args.linkname))
         client_side_configuration("VLESS")
     COUNTRY() if protocol == "VMESS" else None
 
@@ -1477,14 +1501,14 @@ def xray_dockercompose(protocol):
 
     if args.v2ray:
         type = "v2ray"
-    else :
+    else:
         type = "xray"
 
     docker_crtkey = f"- ./{SELFSIGEND_CERT}:/etc/{type}/{SELFSIGEND_CERT}:ro"
     docker_hostkey = f"- ./{SELFSIGEND_KEY}:/etc/{type}/{SELFSIGEND_KEY}:ro"
 
-    if args.v2ray :
-            data = """version: '3'
+    if args.v2ray:
+        data = """version: '3'
 services:
   v2ray:
     image: v2fly/v2fly-core
@@ -1497,11 +1521,11 @@ services:
         - ./%s:/etc/v2ray/config.json:ro
         %s
         %s""" % (
-        arg,
-        docker_crtkey if args.vless or args.vmesstls else "",
-        docker_hostkey if args.vless or args.vmesstls else "",
-    )
-    else :
+            arg,
+            docker_crtkey if args.vless or args.vmesstls else "",
+            docker_hostkey if args.vless or args.vmesstls else "",
+        )
+    else:
         data = """version: '3'
 services:
   xray:
@@ -1515,12 +1539,12 @@ services:
         - ./%s:/etc/xray/config.json:ro
         %s
         %s""" % (
-        arg,
-        docker_crtkey if args.vless or args.vmesstls else "",
-        docker_hostkey if args.vless or args.vmesstls else "",
-    )
+            arg,
+            docker_crtkey if args.vless or args.vmesstls else "",
+            docker_hostkey if args.vless or args.vmesstls else "",
+        )
 
-    print(yellow + f"! Created xray-core {DOCKERCOMPOSE} configuration" + reset)
+    print(yellow + f"! Created {type}-core {DOCKERCOMPOSE} configuration" + reset)
     with open(f"{DOCKERCOMPOSE}", "w") as txt:
         txt.write(data)
         txt.close()
@@ -1677,7 +1701,10 @@ def serverside_info_raw() -> str:
     print("LOGLEVEL: " + blue + str(LOG) + reset)
     print("UUID: " + blue + str(UUID) + reset)
     print("STREAM : " + blue + str(NETSTREAM) + reset)
-    print("WSPATH: " + blue + str(args.wspath) + reset) if NETSTREAM == 'Websocket' else None
+
+    if NETSTREAM == "WebSocket":
+        print("WSPATH: " + blue + str(args.wspath) + reset)
+
     print("PORT: " + blue + str(PORT) + reset)
     print("SECURITY: " + blue + str(tlstype) + reset)
     print("LINKNAME: " + blue + str(args.linkname) + reset)
@@ -1959,8 +1986,10 @@ def dns_check():
 
 # ------------------------------ Error Messages ------------------------------- #
 
+
 def base_error(err):
     return sys.exit(error + "ERROR : " + reset + str(err))
+
 
 # ----------------------------- argparse Actions ----------------------------- #
 
@@ -2072,23 +2101,25 @@ if __name__ == "__main__":
         tlstype = "tls"
     elif args.vless:
         tlstype = "tls"
-    
+
     if args.http:
-        net = 'http'
-        path = ''
-    elif args.tcp :
-        net = 'tcp'
-        path = ''
-    else :
-        net = 'ws'
+        net = "http"
+        path = ""
+
+    elif args.tcp:
+        net = "tcp"
+        path = ""
+
+    else:
+        net = "ws"
         path = args.wspath
 
-    if args.v2ray :
-        linkname = 'v2ray'
-    else :
-        linkname =  'xray'
+    if args.v2ray:
+        linkname = "v2ray"
+    else:
+        linkname = "xray"
 
-    if args.linkname == None :
+    if args.linkname == None:
         args.linkname = linkname
 
     # Quick VMess Setup

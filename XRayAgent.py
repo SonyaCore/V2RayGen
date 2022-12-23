@@ -26,7 +26,7 @@ from binascii import Error
 
 # -------------------------------- Constants --------------------------------- #
 
-VERSION = "1.0.4"
+VERSION = "1.0.5"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -119,7 +119,11 @@ def info(msg):
 
 def docker_compose_state():
     global DOCKER_COMPOSE, DOCKER_COMPOSE_IS_UP
-    if os.path.exists("/usr/bin/docker-compose") or os.path.exists(
+
+    if os.getenv('Production') == 'true':
+        DOCKER_COMPOSE = False
+        DOCKER_COMPOSE_IS_UP = error + "OFF"
+    elif os.path.exists("/usr/bin/docker-compose") or os.path.exists(
         "/usr/local/bin/docker-compose"
     ):
         DOCKER_COMPOSE = True
@@ -406,6 +410,8 @@ def link_generator(data, index) -> str:
             except KeyError:
                 path = ""
                 pass
+        else :
+            path = ""
     except KeyError:
         pass
 
@@ -413,7 +419,10 @@ def link_generator(data, index) -> str:
 
     ps = "xray"
 
-    security = data["inbounds"][0]["streamSettings"]["security"]
+    if data["inbounds"][0]["streamSettings"]["network"] == "tcp":
+        security = data["inbounds"][0]["streamSettings"]["security"]
+    else :
+        security = data["inbounds"][0]["security"]
 
     if data["inbounds"][0]["protocol"] == "vmess":
         aid = data["inbounds"][0]["settings"]["clients"][index]["alterId"]

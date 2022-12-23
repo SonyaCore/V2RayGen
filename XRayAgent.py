@@ -26,7 +26,7 @@ from binascii import Error
 
 # -------------------------------- Constants --------------------------------- #
 
-VERSION = "1.0.5"
+VERSION = "1.0.6"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -396,6 +396,7 @@ def link_generator(data, index) -> str:
     """
     read_config(config)
     id = data["inbounds"][0]["settings"]["clients"][index]["id"]
+    network = data["inbounds"][0]["streamSettings"]["network"]
 
     try:
         net = data["inbounds"][0]["streamSettings"]["network"]
@@ -404,7 +405,7 @@ def link_generator(data, index) -> str:
         pass
 
     try:
-        if data["inbounds"][0]["streamSettings"]["network"] == "ws":
+        if network == "ws":
             try:
                 path = data["inbounds"][0]["streamSettings"]["wsSettings"]["path"]
             except KeyError:
@@ -419,21 +420,28 @@ def link_generator(data, index) -> str:
 
     ps = "xray"
 
-    if data["inbounds"][0]["streamSettings"]["network"] == "tcp":
+    if network in "tcp":
         security = data["inbounds"][0]["streamSettings"]["security"]
+        header = 'http'
+        path = '/'
+    elif network in "http":
+        security = data["inbounds"][0]["security"]
+        header = 'http'
+        path = '/'
     else :
         security = data["inbounds"][0]["security"]
+        header = 'none'
 
     if data["inbounds"][0]["protocol"] == "vmess":
         aid = data["inbounds"][0]["settings"]["clients"][index]["alterId"]
-        print(vmess_link_generator(aid, id, net, path, port, ps, security))
+        print(vmess_link_generator(aid, id, net, path, port, ps, security, header))
     elif data["inbounds"][0]["protocol"] == "vless":
         print(vless_link_generator(id, port, net, path, security, ps))
     else:
         base_error("UNSUPPORTED PROTOCOL")
 
 
-def vmess_link_generator(aid, id, net, path, port, ps, tls) -> str:
+def vmess_link_generator(aid, id, net, path, port, ps, tls, header) -> str:
     PRELINK = "vmess://"
 
     raw_link = bytes(
@@ -447,7 +455,7 @@ def vmess_link_generator(aid, id, net, path, port, ps, tls) -> str:
 "port":"{port}",\
 "ps":"{ps}",\
 "tls":"{tls}",\
-"type":"none",\
+"type":"{header}",\
 "v":"2" """
         + "}",
         encoding="ascii",

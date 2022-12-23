@@ -1740,7 +1740,10 @@ def read_serverside_configuration(config):
         ID = data["inbounds"][0]["settings"]["clients"][0]["id"]
         protocol = data["inbounds"][0]["protocol"]
         configport = data["inbounds"][0]["port"]
-        securitymethod = data["inbounds"][0]["streamSettings"]["security"]
+        if data["inbounds"][0]["streamSettings"]["network"] == "tcp":
+            securitymethod = data["inbounds"][0]["streamSettings"]["security"]
+        else :
+            securitymethod = data["inbounds"][0]["security"]
 
         print(yellow + "Inbounds Info:" + reset)
         try:
@@ -1815,7 +1818,7 @@ def link_serverside_configuration():
 
     if protocol == "vmess":
         return vmess_link_generator(
-            AlterId, ID, net, path, configport, linkname, securitymethod
+            AlterId, ID, net, path, configport, linkname, securitymethod , header
         )
     elif protocol == "vless":
         return vless_link_generator(ID, configport, net, path, securitymethod, linkname)

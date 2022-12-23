@@ -610,7 +610,7 @@ def xray_make():
         None
 
     print(blue + f"! {name} Config Generated." + reset)
-
+    
 
 def xray_config(outband, protocol) -> str:
     """
@@ -648,7 +648,9 @@ def xray_config(outband, protocol) -> str:
         "streamSettings": {
         %s,
         %s,
+        "tcpSettings": {
         %s
+            }
         }
         """ % (
             networkstream,
@@ -1320,7 +1322,7 @@ def xray_create(protocol):
     if protocol == "VMESS" or protocol == "VMESSTLS":
         print(
             vmess_link_generator(
-                args.alterid, UUID, net, path, PORT, args.linkname, tlstype
+                args.alterid, UUID, net, path, PORT, args.linkname, tlstype , header 
             )
         )
         if protocol == "VMESS":
@@ -1331,6 +1333,11 @@ def xray_create(protocol):
     elif protocol == "VLESS":
         print(vless_link_generator(UUID, PORT, net, path, tlstype, args.linkname))
         client_side_configuration("VLESS")
+
+    if protocol in ("VMESSTLS", "VLESS"):
+        print(yellow + '! Using self-signed key\
+        \n! Make sure to add Allow Insecure to your client.' + reset)
+
     COUNTRY() if protocol == "VMESS" else None
 
 
@@ -1817,7 +1824,7 @@ def link_serverside_configuration():
 # ------------------------------ VMess Link Gen ------------------------------- #
 
 
-def vmess_link_generator(aid, id, net, path, port, ps, tls) -> str:
+def vmess_link_generator(aid, id, net, path, port, ps, tls , header) -> str:
     """
     Generate vmess link.
 
@@ -1841,7 +1848,7 @@ def vmess_link_generator(aid, id, net, path, port, ps, tls) -> str:
 "port":"{port}",\
 "ps":"{ps}",\
 "tls":"{tls}",\
-"type":"none",\
+"type":"{header}",\
 "v":"2" """
         + "}",
         encoding="ascii",
@@ -2104,15 +2111,18 @@ if __name__ == "__main__":
 
     if args.http:
         net = "http"
-        path = ""
+        path = "/"
+        header = 'none'
 
     elif args.tcp:
         net = "tcp"
-        path = ""
+        path = "/"
+        header = 'http'
 
     else:
         net = "ws"
         path = args.wspath
+        header = 'none'
 
     if args.v2ray:
         linkname = "v2ray"

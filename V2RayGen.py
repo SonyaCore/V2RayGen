@@ -30,7 +30,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.0.5"
+VERSION = "1.0.6"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -82,57 +82,43 @@ def str2bool(v):
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
+parser.add_argument(
+    "--config", "-c", action="store_true", help="Creating only the Configuration file")
+
 quick = parser.add_argument_group(f"{green}Protocols{reset}")
 
 quick.add_argument("--vmess", "-vm", action="store_true", help="Create VMess")
-quick.add_argument("--vmesstls", "-vmtls", action="store_true", help="Create VMess + TLS")
-quick.add_argument("--vless", "-vl", action="store_true", help="Create VLess + TLS")
-quick.add_argument("--shadowsocks","-ss",action="store_true", help="Create ShadowSocks")
+quick.add_argument("--vless", "-vl", action="store_true", help="Create VLess")
+quick.add_argument("--shadowsocks", "-ss", action="store_true", help="Create ShadowSocks")
 
-panel = parser.add_argument_group(f"{green}Panels{reset}")
+logdnsparser = parser.add_argument_group(f"{green}XRay - Log & DNS Settings{reset}")
 
-panel.add_argument(
-    "--xui",
-    "-xui",
-    action="store_true",
-    help="Setup X-Ui with the official installer script",
-)
-panel.add_argument(
-    "--trojanpanel",
-    "-tp",
-    action="store_true",
-    help="Setup Trojan Panel with the official installer script",
-)
-
-xray = parser.add_argument_group(f"{green}XRay{reset}")
-
-xray.add_argument(
-    "--config",
-    "-c",
-    action="store_true",
-    help="Creating only the Configuration file",
-    default=False,
-)
-
-xray.add_argument(
-    "--linkname",
-    "-ln",
+logdnsparser.add_argument(
+    "--loglevel",
+    "-log",
     action="store",
     type=str,
     metavar="",
-    help="Name for Xray generated link. default: [xray]",
+    help="Loglevel for Xray config. default: [warning]",
+)
+logdnsparser.add_argument(
+    "--dns", action="store", type=str, metavar="", help="Optional DNS. default: [nodns]"
 )
 
-xray.add_argument(
-    "--outband",
-    "--outband-protocol",
-    action="store",
-    type=str,
-    metavar="",
-    help="Custom Xray outbound connection. default: [both]",
+routingparser = parser.add_argument_group(f"{green}XRay - Routing{reset}")
+routingparser.add_argument(
+    "--block",
+    "--block-routing",
+    action="store_true",
+    help="Blocking Bittorrent and Ads in configuration. [default: False]",
 )
 
-xray.add_argument(
+inboundsparser = parser.add_argument_group(f"{green}XRay - Inbounds{reset}")
+inboundsparser.add_argument(
+    "--tls", "-t", action="store_true", help="Using TLS in specified protocol"
+)
+
+inboundsparser.add_argument(
     "--port",
     "-p",
     action="store",
@@ -140,36 +126,7 @@ xray.add_argument(
     metavar="",
     help="Optional PORT for Xray Config. defualt: [80,443]",
 )
-
-xray.add_argument(
-    "--dns", action="store", type=str, metavar="", help="Optional DNS. default: [nodns]"
-)
-
-xray.add_argument(
-    "--wspath",
-    "--websocket-path",
-    action="store",
-    type=str,
-    metavar="",
-    help="Optional WebSocket path. default: [/graphql]",
-    default="/graphql",
-)
-
-xray.add_argument(
-    "--http",
-    "--http-stream",
-    action="store_true",
-    help="Using Http network stream. default: [WebSocket]",
-)
-
-xray.add_argument(
-    "--tcp",
-    "--tcp-tcp",
-    action="store_true",
-    help="Using TCP network stream. default: [WebSocket]",
-)
-
-xray.add_argument(
+inboundsparser.add_argument(
     "--uuid",
     "-u",
     action="store",
@@ -178,8 +135,7 @@ xray.add_argument(
     help="Optional UUID / ID for configuration. default: [random]",
     default=f"{UUID}",
 )
-
-xray.add_argument(
+inboundsparser.add_argument(
     "--alterid",
     "-id",
     action="store",
@@ -188,17 +144,7 @@ xray.add_argument(
     help="Optional alterId for configuration. default: [0]",
     default=0,
 )
-
-xray.add_argument(
-    "--loglevel",
-    "--vmess-loglevel",
-    action="store",
-    type=str,
-    metavar="",
-    help="Loglevel for Xray config. default: [warning]",
-)
-
-xray.add_argument(
+inboundsparser.add_argument(
     "--insecure",
     "--insecure-encryption",
     action="store",
@@ -209,8 +155,34 @@ xray.add_argument(
     help="Disable Insecure Encryption. default: [True]",
     default=True,
 )
+streamsettingsparser = parser.add_argument_group(
+    f"{green}XRay - Stream Settings{reset}"
+)
+streamsettingsparser.add_argument(
+    "--http",
+    "--http-stream",
+    action="store_true",
+    help="Using HTTP network stream. default: [WebSocket]",
+)
 
-xray.add_argument(
+streamsettingsparser.add_argument(
+    "--tcp",
+    "--tcp-stream",
+    action="store_true",
+    help="Using TCP network stream. default: [WebSocket]",
+)
+
+streamsettingsparser.add_argument(
+    "--wspath",
+    "--websocket-path",
+    action="store",
+    type=str,
+    metavar="",
+    help="Optional WebSocket path. default: [/graphql]",
+    default="/graphql",
+)
+
+streamsettingsparser.add_argument(
     "--header",
     "--http-header",
     action="store",
@@ -219,11 +191,30 @@ xray.add_argument(
     help="Optional JSON HTTPRequest Header.",
 )
 
-xray.add_argument(
-    "--block",
-    "--block-routing",
+outboundsparser = parser.add_argument_group(f"{green}XRay - Outbounds{reset}")
+outboundsparser.add_argument(
+    "--outbound",
+    "--outbound-protocol",
+    action="store",
+    type=str,
+    metavar="",
+    help="Custom Xray outbound connection. default: [both]",
+)
+linkparser = parser.add_argument_group(f"{green}XRay - Link Configuration{reset}")
+
+linkparser.add_argument(
+    "--linkname",
+    "-ln",
+    action="store",
+    type=str,
+    metavar="",
+    help="Name for Xray generated link. default: [xray]",
+)
+linkparser.add_argument(
+    "--qrcode",
+    "-qr",
     action="store_true",
-    help="Adding Blocking Bittorrent and Ads. [default: False]",
+    help="Generate QRCode for generated link.",
 )
 
 client = parser.add_argument_group(f"{green}XRay Client Configuration{reset}")
@@ -597,11 +588,11 @@ def xray_make():
     https://www.v2ray.com/en/configuration/protocols/v2ray.html
     """
     # Config Protocol Method
-    if args.vmess:
-        name = "VMESS"
-        make_xray("vmess")
-    elif args.vmesstls:
+    if all((args.vmess, args.tls)):
         name = "VMESS + TLS"
+        make_xray("vmess")
+    elif args.vmess:
+        name = "VMESS"
         make_xray("vmess")
     elif args.vless:
         name = "VLESS"
@@ -610,7 +601,9 @@ def xray_make():
         None
 
     print(blue + f"! {name} Config Generated." + reset)
-    
+    if args.vless:
+        print(yellow + f"! By default TLS is being used for this Protocol" + reset)
+
 
 def xray_config(outband, protocol) -> str:
     """
@@ -638,7 +631,7 @@ def xray_config(outband, protocol) -> str:
         "headersettings": %s 
         """ % (
             networkstream,
-            tlssettings() if args.vmesstls or args.vless else notls(),
+            tlssettings() if args.tls or args.vless else notls(),
             args.header,
         )
 
@@ -654,7 +647,7 @@ def xray_config(outband, protocol) -> str:
         }
         """ % (
             networkstream,
-            tlssettings() if args.vmesstls or args.vless else notls(),
+            tlssettings() if args.tls or args.vless else notls(),
             args.header,
         )
 
@@ -703,7 +696,7 @@ def make_xray(protocol):
     """
 
     # Config Protocol Method
-    if args.outband == "freedom":
+    if args.outbound == "freedom":
         with open(VLESS, "w") as txt:
             if protocol == "vless":
                 txt.write(
@@ -721,7 +714,7 @@ def make_xray(protocol):
                 )
             txt.close
 
-    if args.outband == "blackhole":
+    if args.outbound == "blackhole":
         with open(VLESS, "w") as txt:
             if protocol == "vless":
                 txt.write(
@@ -739,7 +732,7 @@ def make_xray(protocol):
                 )
             txt.close
 
-    if args.outband == "both":
+    if args.outbound == "both":
         with open(VLESS, "w") as txt:
             if protocol == "vless":
                 txt.write(
@@ -1302,9 +1295,13 @@ def client_side_configuration(protocol):
 
 def xray_create(protocol):
     dnsselect()
+
+    # Making xray / v2ray configuration file
     xray_make()
     sys.exit(1) if args.config else ""
     outbounds_check()
+
+    # Creating docker-compose file
     if protocol == "VMESS":
         xray_dockercompose("VMESS")
     elif protocol == "VMESSTLS":
@@ -1316,28 +1313,46 @@ def xray_create(protocol):
         time.sleep(0.5)
         xray_dockercompose("VLESS")
 
+    # Running docker-compose on Server
     run_docker()
+
+    # Printing Information
     serverside_info_raw()
 
+    # Generate encoded link & client-side configuration
     if protocol == "VMESS" or protocol == "VMESSTLS":
-        print(
-            vmess_link_generator(
-                args.alterid, UUID, net, path, PORT, args.linkname, tlstype , header 
-            )
+        vmess_link = vmess_link_generator(
+            args.alterid, UUID, net, path, PORT, args.linkname, tlstype, header
         )
+        print(vmess_link)
+        
+        if args.qrcode:
+            print(yellow + "! QRCode :" + reset)
+            print(qrcode(vmess_link))
+
         if protocol == "VMESS":
             client_side_configuration("VMESS")
         elif protocol == "VMESSTLS":
             client_side_configuration("VMESSTLS")
 
     elif protocol == "VLESS":
-        print(vless_link_generator(UUID, PORT, net, path, tlstype, args.linkname))
+        vless_link = vless_link_generator(UUID, PORT, net, path, tlstype, args.linkname)
+        print(vless_link)
+
+        if args.qrcode:
+            print(yellow + "! QRCode :" + reset)
+            print(qrcode(vless_link))
         client_side_configuration("VLESS")
 
     if protocol in ("VMESSTLS", "VLESS"):
-        print(yellow + '! Using self-signed key\
-        \n! Make sure to add Allow Insecure to your client.' + reset)
+        print(
+            yellow
+            + "! Using self-signed key\
+        \n! Make sure to add Allow Insecure to your client."
+            + reset
+        )
 
+    # Generate NGINX Template
     COUNTRY() if protocol == "VMESS" else None
 
 
@@ -1347,51 +1362,15 @@ def shadowsocks_create():
     """
     shadowsocks_make(args.ssmethod)
     shadowsocks_dockercompose()
+    
     run_docker()
-    print(shadowsocks_link_generator())
+    shadowsocks_link = shadowsocks_link_generator()
+    print(shadowsocks_link)
+
+    if args.qrcode :
+        print(yellow + "! QRCode :" + reset)
+        print(qrcode(shadowsocks_link))      
     COUNTRY()
-
-
-# -------------------------------- Panels  --------------------------------- #
-
-
-def panels(type):
-    """
-    installing the panel automates the process of deploying v2ray configuration with a simple UI
-    but it may not works properly.
-    """
-
-    if type == "XUI":
-        appname = "X-UI"
-    elif type == "Trojan-Panel":
-        appname = "Trojan-Panel"
-    msg = f"{green + appname + reset} may install unnecessary binaries. press {error}Ctrl+C{reset} to cancel the installation."
-
-    try:
-        # installing x-ui using official installation script.
-        if type == "XUI":
-            print(msg)
-            time.sleep(5)
-            subprocess.run(
-                "curl https://raw.githubusercontent.com/vaxilu/x-ui/master/install.sh | bash",
-                shell=True,
-                check=True,
-                executable="/bin/bash",
-            )
-
-        # installing trojan-panel using official installation script.
-        elif type == "Trojan-Panel":
-            print(msg)
-            time.sleep(5)
-            subprocess.run(
-                "source <(curl -L https://github.com/trojanpanel/install-script/raw/main/install_script.sh)",
-                shell=True,
-                check=True,
-                executable="/bin/bash",
-            )
-
-    except subprocess.CalledProcessError as e:
-        print(error + "Root privileges required!")
 
 
 # -------------------------------- Parse URL --------------------------------- #
@@ -1529,8 +1508,8 @@ services:
         %s
         %s""" % (
             arg,
-            docker_crtkey if args.vless or args.vmesstls else "",
-            docker_hostkey if args.vless or args.vmesstls else "",
+            docker_crtkey if args.vless or args.tls else "",
+            docker_hostkey if args.vless or args.tls else "",
         )
     else:
         data = """version: '3'
@@ -1547,8 +1526,8 @@ services:
         %s
         %s""" % (
             arg,
-            docker_crtkey if args.vless or args.vmesstls else "",
-            docker_hostkey if args.vless or args.vmesstls else "",
+            docker_crtkey if args.vless or args.tls else "",
+            docker_hostkey if args.vless or args.tls else "",
         )
 
     print(yellow + f"! Created {type}-core {DOCKERCOMPOSE} configuration" + reset)
@@ -1742,7 +1721,7 @@ def read_serverside_configuration(config):
         configport = data["inbounds"][0]["port"]
         if data["inbounds"][0]["streamSettings"]["network"] == "tcp":
             securitymethod = data["inbounds"][0]["streamSettings"]["security"]
-        else :
+        else:
             securitymethod = data["inbounds"][0]["security"]
 
         print(yellow + "Inbounds Info:" + reset)
@@ -1806,6 +1785,7 @@ def read_serverside_configuration(config):
             pass
 
         print(blue + "Link : " + reset + str(link_serverside_configuration()))
+        print(blue + "QRCode : \n" + reset + qrcode(link_serverside_configuration()))
 
     except KeyError as e:
         sys.exit(error + "ERROR: " + str(e) + f" not found in {config}!")
@@ -1818,7 +1798,7 @@ def link_serverside_configuration():
 
     if protocol == "vmess":
         return vmess_link_generator(
-            AlterId, ID, net, path, configport, linkname, securitymethod , header
+            AlterId, ID, net, path, configport, linkname, securitymethod, header
         )
     elif protocol == "vless":
         return vless_link_generator(ID, configport, net, path, securitymethod, linkname)
@@ -1827,7 +1807,7 @@ def link_serverside_configuration():
 # ------------------------------ VMess Link Gen ------------------------------- #
 
 
-def vmess_link_generator(aid, id, net, path, port, ps, tls , header) -> str:
+def vmess_link_generator(aid, id, net, path, port, ps, tls, header) -> str:
     """
     Generate vmess link.
 
@@ -1913,6 +1893,26 @@ def shadowsocks_link_generator() -> str:
     return shadowsocks_link
 
 
+# ------------------------------ QRCode Gen ------------------------------- #
+
+
+def qrcode(data, width=76, height=76) -> str:
+    qrcode = Request(
+        "https://qrcode.show/{}".format(data),
+        headers={
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/octet-stream",
+            "X-QR-Version-Type": "micro",
+            "X-QR-Quiet-Zone": "true",
+            "X-QR-Min-Width": width,
+            "X-QR-Min-Height": height,
+        },
+    )
+
+    with urlopen(qrcode) as response:
+        return response.read().decode()
+
+
 # ------------------------------ Nginx Template ------------------------------- #
 
 
@@ -1976,7 +1976,7 @@ def shadowsocks_check():
 
 
 def outbounds_check():
-    if args.outband not in protocol_list:  # list of outband protocols
+    if args.outbound not in protocol_list:  # list of outband protocols
         print(yellow + "! Use --outband to set method" + reset),
         print("List of outband methods :")
         for protocol in range(len(protocol_list)):
@@ -2073,7 +2073,7 @@ if __name__ == "__main__":
         args.insecure = "false"
 
     # Port Settings :
-    if args.port == None and args.vless == True or args.vmesstls == True:
+    if args.port == None and args.vless == True or args.tls == True:
         PORT = 443
 
     if args.port == None:
@@ -2101,13 +2101,13 @@ if __name__ == "__main__":
     if args.ssmethod == None:
         args.ssmethod = "chacha20-ietf-poly1305"
 
-    if args.outband == None:
-        args.outband = "both"
+    if args.outbound == None:
+        args.outbound = "both"
 
     # link security method
     if args.vmess:
         tlstype = ""
-    elif args.vmesstls:
+    elif args.tls:
         tlstype = "tls"
     elif args.vless:
         tlstype = "tls"
@@ -2115,17 +2115,17 @@ if __name__ == "__main__":
     if args.http:
         net = "http"
         path = "/"
-        header = 'none'
+        header = "none"
 
     elif args.tcp:
         net = "tcp"
         path = "/"
-        header = 'http'
+        header = "http"
 
     else:
         net = "ws"
         path = args.wspath
-        header = 'none'
+        header = "none"
 
     if args.v2ray:
         linkname = "v2ray"
@@ -2136,23 +2136,16 @@ if __name__ == "__main__":
         args.linkname = linkname
 
     # Quick VMess Setup
-    if args.vmess:
-        xray_create("VMESS")
-    elif args.vmesstls:
+    if all((args.vmess, args.tls)):
         xray_create("VMESSTLS")
+    elif args.vmess:
+        xray_create("VMESS")
     # Quick Vless Setup
     elif args.vless:
         xray_create("VLESS")
     # Quick ShadowSocks Setup
     elif args.shadowsocks:
         shadowsocks_create()
-
-    # Install XUI
-    if args.xui:
-        panels("XUI")
-    # Install Trojan-Panel
-    if args.trojanpanel:
-        panels("Trojan-Panel")
 
     # Make docker-compose for VMess
     if args.dockerfile:

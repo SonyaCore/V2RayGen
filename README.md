@@ -50,11 +50,11 @@ There is also `XRayAgent` for User Management on XRay Configuration which can be
 
 You can use one of the following protocols for installation and change its settings according to your needs.
 
-| Protoctol   | Argument            |
-| ----------- | ------------------- |
-| VMESS       | --vmess , -wm       |
-| VMESS + TLS | --vmesstls , -vmtls |
-| VLESS + TLS | --vless , -vl       |
+| Protoctol   | Argument               |
+| ----------- | ---------------------- |
+| VMESS       | --vmess , -wm          |
+| VMESS + TLS | --vmess --tls , -vmtls |
+| VLESS + TLS | --vless , -vl          |
 
 ### **Quick `Xray` Setup with Default Setting** :
 
@@ -79,7 +79,7 @@ if your server is on the domain after importing the link to your v2ray client si
 
 **Setup XRAY / ShadowSocks :**
 
-VLESS + TLS :
+VLESS :
 
 ```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vless
@@ -88,7 +88,7 @@ curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sud
 VMESS + TLS with blocking option :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmesstls --block
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --tls --block
 ```
 
 VMESS + Changing client-side HTTP and SOCKS port :
@@ -97,10 +97,22 @@ VMESS + Changing client-side HTTP and SOCKS port :
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --chttp 4020 --csocks 8080
 ```
 
-VMESS + HTTP :
+VMESS + HTTP Network Stream :
 
 ```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --http
+```
+
+VMESS + TCP Network Stream :
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --tcp
+```
+
+VMESS + TCP Network Stream + TLS and QRCode :
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --tcp --tls --qrcode
 ```
 
 VLESS + Using Google DNS :
@@ -208,6 +220,8 @@ for deleting the all rules on server side port use `deliptables` or `deleteiptab
 
 you can change server-side configuration with below options :
 
+`tls` Using TLS in specified protocol
+
 `http` Using Http insted of Websocket
 
 `linkname` for changing linkname after generating configuration.
@@ -241,6 +255,8 @@ you can use client-side configuration directly with xray-core or v2ray-core
 `csocks` client-side SOCKS port . default: [2080]
 
 `chttp` client-side HTTP port . default: [2081]
+
+`qrcode` Generate QRCode for generated link.
 
 ---
 

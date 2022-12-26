@@ -29,7 +29,7 @@ from binascii import Error
 VERSION = "1.0.6"
 
 # UUID Generation
-UUID = uuid.uuid4()
+# UUID = uuid.uuid4()
 
 # Name
 NAME = "XRayAgent"
@@ -192,6 +192,9 @@ def read_protocol(config):
     print(green + "Protocol : " + reset + protocol)
     print(green + "PORT : " + reset + str(port))
 
+
+def random_uuid():
+    return uuid.uuid4()
 
 def show_version():
     print(blue + NAME + " " + VERSION)
@@ -499,7 +502,7 @@ def create_user():
 
     # if the ID is empty, generate a random ID
     if id == "":
-        id = UUID
+        id = random_uuid()
 
     user = {}
     if data["inbounds"][0]["protocol"] == "vmess":

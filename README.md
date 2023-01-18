@@ -234,10 +234,11 @@ you can change server-side configuration with this options
 
 `shadowsocks` Creating ShadowSocks with default options.
 
-> you can combine arguments with default options to change behavior of you configuration for example :
+> you can combine arguments with default options to change the behavior of your configuration for example :
 >
 > --vmess --port 8080 --tls --tcp --linkname TESTSERVER
-> this will create a vmess with port 8080 and self-sigend tls , then gives a link with TESTSERVER name
+>
+> this will create a vmess with port 8080 and self-signed tls , then gives a link with TESTSERVER name
 
 ### Log & DNS Settings:
 
@@ -296,7 +297,7 @@ none : Nothing will be printed.
 
 `tls` Using TLS in specified protocol
 
-> tls option can be used to any v2ray protocol for example :
+> tls option can be used for any v2ray protocol for example :
 >
 > --vmess --tls will create a vmess with self-signed tls
 >
@@ -326,7 +327,9 @@ stream settings is the network type of the stream transport. and by default this
 
 `wspath` Changing default WebSocket path configuration.
 
-> default web socket path is /graphql change it with this option. ex :
+> default web socket path is /graphql change it with this option.
+>
+> ex :
 >
 > --wspath /myservice
 

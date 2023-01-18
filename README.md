@@ -50,11 +50,11 @@ There is also `XRayAgent` for User Management on XRay Configuration which can be
 
 You can use one of the following protocols for installation and change its settings according to your needs.
 
-| Protoctol   | Argument               |
-| ----------- | ---------------------- |
-| VMESS       | --vmess , -wm          |
-| VMESS + TLS | --vmess --tls , -vmtls |
-| VLESS + TLS | --vless , -vl          |
+| Protoctol   | Argument      |
+| ----------- | ------------- |
+| VMESS       | --vmess , -wm |
+| VMESS + TLS | --vmess --tls |
+| VLESS + TLS | --vless , -vl |
 
 ### **Quick `Xray` Setup with Default Setting** :
 
@@ -89,6 +89,12 @@ VMESS + TLS with blocking option :
 
 ```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --tls --block
+```
+
+VMESS + TLS with blocking iranian domains and IPs option :
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --tls --blockir
 ```
 
 VMESS + Changing client-side HTTP and SOCKS port :
@@ -216,63 +222,54 @@ for deleting the all rules on server side port use `deliptables` or `deleteiptab
 
 # **Options**
 
+you can change server-side configuration with this options
+
 ## Server Side
 
-you can change server-side configuration with below options :
+### Protocols
 
-`tls` Using TLS in specified protocol
+`vmess` Creating vmess with default options.
 
-`http` Using Http insted of Websocket
+`vless` Creating VLess with default options.
 
-`linkname` for changing linkname after generating configuration.
+`shadowsocks` Creating ShadowSocks with default options.
 
-`port` for changing configuration port.
+> you can combine arguments with default options to change the behavior of your configuration for example :
+>
+> --vmess --port 8080 --tls --tcp --linkname TESTSERVER
+>
+> this will create a vmess with port 8080 and self-signed tls , then gives a link with TESTSERVER name
+
+### Log & DNS Settings:
 
 `dns` for using custom dns instead system's default dns configuration.
 
-`wspath` for changing default WebSocket path configuration.
+List of loglevels :
 
-`uuid` for using custom uuid configuration.
+```
+debug : Information for developers. All "Info" included.
 
-`id` custom alterID.
+info : Running stats of XRay，no effect for the functions. All "Warning"
+included.
 
-`loglevel` using another loglevel for configuration insted of [warning].
+warning : usually some external problem that does not affect V2Ray but possibly the user experience.
 
-`header` for using custom header configuration.
+error : XRay encountered a problem that needs to be resolved immediately.
 
-`block` for adding blocking Bittorrent and Ads.
+none : Nothing will be printed.
+```
 
----
-
-## Client Side
-
-after generating the configuration with desired protocol client-side configuration is also generated as well
-
-you can use client-side configuration directly with xray-core or v2ray-core
-
-`security` security method for client-side configuration.
-
-`csocks` client-side SOCKS port . default: [2080]
-
-`chttp` client-side HTTP port . default: [2081]
-
-`qrcode` Generate QRCode for generated link.
-
----
-
-## Parsing Configuration
-
-for parsing existed configuration or decoding vmess url use below options :
-
-`parse` for parsing encoded link. supported formats are [vmess://,ss://]
-
-`parseconfig` for reading the configuration file and parsing information
-
----
+> ex :
+>
+> --loglevel debug will set your logging level to debug mode
+>
+> logs will be printed on your container docker. you can view the logs with `docker logs <containerid>`
 
 **Supported DNS providers:**
 
-> use `--dns` to set one of below dns's.
+> list of avaliable dns's.
+>
+> ex : --dns google will set your server side configuration dns to google
 
 | DNS        |
 | ---------- |
@@ -284,26 +281,59 @@ for parsing existed configuration or decoding vmess url use below options :
 
 > https://www.v2ray.com/en/configuration/dns.html
 
-#### **Supported Outband Protocols:**
+### Routing Options
 
-> use `--outband` to set one of below protocols.
+`block` for adding blocking Bittorrent and Ads.
 
-| Outband Protocols   |
-| ------------------- |
-| Freedom             |
-| BlackHole           |
-| Freedom + BlackHole |
+`blockir` for Blocking Bittorrent, Ads and Irnian IPs in routing configuration.
 
-> https://www.v2ray.com/en/configuration/protocols.html
+> The routing function module can send inbound data through different outbound connections according to different rules, so as to achieve the purpose of on-demand proxy.
 
-### **Custom JSON header**
+> For example, the common usage is to divert domestic and foreign traffic, Xray can judge the traffic in different regions through the internal mechanism, and then send them to different outbound proxies.
 
-#### `--header` argument are used for load custom header file
+> https://xtls.github.io/config/routing.html#routingobject
 
-#### **Default Template for JSON HTTPRequest header**
+### Inbounds
 
-> Visit below site for HTTPRequest Object :
-> https://www.v2ray.com/en/configuration/transport/tcp.html#httprequestobject
+`tls` Using TLS in specified protocol
+
+> tls option can be used for any v2ray protocol for example :
+>
+> --vmess --tls will create a vmess with self-signed tls
+>
+> `it's important to enable allow insecure tls on your client`
+
+`port` for changing configuration port.
+
+> if you want your v2ray to be listening on a different port use this option
+
+`uuid` for using custom uuid configuration.
+
+> by default random uuid will be generated. use this option if you want to have a custom uuid or existing uuid configuration
+>
+> ex : --uuid ca33b7a2-26d6-47b1-a3c4-471425d868b9
+
+`id` custom alterID.
+
+`insecure`, Disable Insecure Encryption. [deprecated]
+
+### Stream Settings:
+
+stream settings is the network type of the stream transport. and by default this script will use websocket for using it with nginx and cdn
+
+`http` Using Http insted of Websocket
+
+`tcp` Using TCP network stream.
+
+`wspath` Changing default WebSocket path configuration.
+
+> default web socket path is /graphql change it with this option.
+>
+> ex :
+>
+> --wspath /myservice
+
+`header` Using custom header obfuscation configuration.
 
 > `Make sure your header file look like the below JSON` :
 
@@ -331,25 +361,92 @@ for parsing existed configuration or decoding vmess url use below options :
 }
 ```
 
-## Link formats :
+> header argument is useful when needing another http request configuration you can pass your http request configuration with this option.
+>
+> --header request.json
 
-#### `VMess` :
+> Visit below site for HTTPRequest Object :
+> https://www.v2ray.com/en/configuration/transport/tcp.html#httprequestobject
+
+`linkname` for changing linkname after generating configuration.
+
+#### Link formats :
+
+##### `VMess` :
 
 ```json
 vmess://{"add":"ip / domain ","aid":"alterid","host":"","id":"random-uuid","net":"ws","path":"websocket-path","port":"80","ps":"linkname","tls":"","type":"none","v":"2" }
 ```
 
-#### `VLess` :
+##### `VLess` :
 
 ```json
 vless://random-uuid@ip:port?path=websocketpath&security=type&encryption=none&type=ws#linkname
 ```
 
-#### `ShadowSocks` :
+##### `ShadowSocks` :
 
 ```json
 ss://shadowsocks-security-method:random-uuid@domain/ip :port
 ```
+
+### Outbounds
+
+`outbound` Custom Xray outbound connection.
+
+> use `--outband` to set one of below protocols.
+>
+> by default both will be used
+
+#### **Supported Outband Protocols:**
+
+| Outband Protocols   |
+| ------------------- |
+| Freedom             |
+| BlackHole           |
+| Freedom + BlackHole |
+
+> https://www.v2ray.com/en/configuration/protocols.html
+
+## Client Side
+
+after generating the configuration with desired protocol client-side configuration is also generated as well
+
+you can use client-side configuration directly with xray-core or v2ray-core
+
+`security` security method for client-side configuration.
+
+List of security methods :
+
+```
+aes-128-gcm
+chacha20-poly1305
+auto
+none
+zero
+```
+
+`csocks` client-side SOCKS port . default: [10808]
+
+`chttp` client-side HTTP port . default: [10809]
+
+`qrcode` Generate QRCode for generated link.
+
+> if you want to import your configuration with qrcode use this argument.
+
+---
+
+## Parsing Configuration
+
+for parsing existed configuration or decoding vmess url use below options :
+
+`parse` for parsing encoded link. supported formats are [vmess://,ss://]
+
+`parseconfig` for reading the configuration file and parsing information
+
+> `--parseconfig config.json` will show the information of the configuration and generate a QR code for that
+
+---
 
 ## DonateMe
 

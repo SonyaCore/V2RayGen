@@ -30,7 +30,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.0.25"
+VERSION = "1.1.0"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -82,8 +82,7 @@ def str2bool(v):
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
-parser.add_argument(
-    "--config", "-c", action="store_true", help="Creating only the Configuration file")
+parser.add_argument("--config", "-c", action="store_true", help="Creating only the Configuration file")
 
 quick = parser.add_argument_group(f"{green}Protocols{reset}")
 
@@ -377,7 +376,7 @@ def banner(t=0.0005):
 
 
 # Return IP
-def IP():
+def ip():
     """
     return actual IP of the server.
     if there are multiple interfaces with private IP the public IP will be used for the config
@@ -409,7 +408,7 @@ def get_random_password(length=24):
     return password
 
 
-def COUNTRY():
+def country():
     """
     return Country Code of the server.
     country code are used for detecting server location
@@ -568,7 +567,7 @@ def validate_email(email):
 # Collect Server IP
 try:
     if not args.parse:
-        ServerIP = IP()
+        ServerIP = ip()
 except RemoteDisconnected as e:
     sys.exit(error + "ERROR : " + reset + str(e))
 except URLError as e:
@@ -852,30 +851,83 @@ def vless_server_side():
     )
     return vless
 
+
 def block_torrent_manually():
-    subprocess.run("iptables -A FORWARD -s 10.8.1.0/24 -p tcp --dport 443 -j DROP", shell=True, check=True)
+    subprocess.run(
+        "iptables -A FORWARD -s 10.8.1.0/24 -p tcp --dport 443 -j DROP",
+        shell=True,
+        check=True,
+    )
     subprocess.run("iptables -A FORWARD -i tun+ -j ACCEPT", shell=True, check=True)
-    subprocess.run('iptables -A INPUT -m string --string "BitTorrent" --algo bm -j DROP', shell=True, check=True)
-    subprocess.run('iptables -A INPUT -m string --string "BitTorrent protocol" --algo bm -j DROP', shell=True, check=True)
-    subprocess.run('iptables -A INPUT -m string --string "peer_id=" --algo bm -j DROP', shell=True, check=True)
-    subprocess.run('iptables -A INPUT -m string --string ".torrent" --algo bm -j DROP', shell=True, check=True)
-    subprocess.run('iptables -A INPUT -m string --string "announce.php?passkey=" --algo bm -j DROP', shell=True, check=True)
-    subprocess.run('iptables -A INPUT -m string --string "torrent" --algo bm -j DROP', shell=True, check=True)
-    subprocess.run('iptables -A INPUT -m string --string "announce" --algo bm -j DROP', shell=True, check=True)
-    subprocess.run('iptables -A INPUT -m string --string "info_hash" --algo bm -j DROP', shell=True, check=True)
-    subprocess.run('iptables -A INPUT -m string --string "tracker" --algo bm -j DROP', shell=True, check=True)
-    subprocess.run('iptables -A INPUT -m string --string "get_peers" --algo bm -j DROP', shell=True, check=True)
-    subprocess.run('iptables -A INPUT -m string --string "announce_peer" --algo bm -j DROP', shell=True, check=True)
-    subprocess.run('iptables -A INPUT -m string --string "find_node" --algo bm -j DROP', shell=True, check=True)
+    subprocess.run(
+        'iptables -A INPUT -m string --string "BitTorrent" --algo bm -j DROP',
+        shell=True,
+        check=True,
+    )
+    subprocess.run(
+        'iptables -A INPUT -m string --string "BitTorrent protocol" --algo bm -j DROP',
+        shell=True,
+        check=True,
+    )
+    subprocess.run(
+        'iptables -A INPUT -m string --string "peer_id=" --algo bm -j DROP',
+        shell=True,
+        check=True,
+    )
+    subprocess.run(
+        'iptables -A INPUT -m string --string ".torrent" --algo bm -j DROP',
+        shell=True,
+        check=True,
+    )
+    subprocess.run(
+        'iptables -A INPUT -m string --string "announce.php?passkey=" --algo bm -j DROP',
+        shell=True,
+        check=True,
+    )
+    subprocess.run(
+        'iptables -A INPUT -m string --string "torrent" --algo bm -j DROP',
+        shell=True,
+        check=True,
+    )
+    subprocess.run(
+        'iptables -A INPUT -m string --string "announce" --algo bm -j DROP',
+        shell=True,
+        check=True,
+    )
+    subprocess.run(
+        'iptables -A INPUT -m string --string "info_hash" --algo bm -j DROP',
+        shell=True,
+        check=True,
+    )
+    subprocess.run(
+        'iptables -A INPUT -m string --string "tracker" --algo bm -j DROP',
+        shell=True,
+        check=True,
+    )
+    subprocess.run(
+        'iptables -A INPUT -m string --string "get_peers" --algo bm -j DROP',
+        shell=True,
+        check=True,
+    )
+    subprocess.run(
+        'iptables -A INPUT -m string --string "announce_peer" --algo bm -j DROP',
+        shell=True,
+        check=True,
+    )
+    subprocess.run(
+        'iptables -A INPUT -m string --string "find_node" --algo bm -j DROP',
+        shell=True,
+        check=True,
+    )
 
 
 def routing() -> str:
     if args.block:
         return block_adds_bittorent()
-    
+
     if args.blockir:
-        return block_adds_bittorent_ir()    
-    
+        return block_adds_bittorent_ir()
+
 
 def block_adds_bittorent() -> str:
     """
@@ -905,13 +957,16 @@ def block_adds_bittorent() -> str:
   }"""
     return data
 
+
 def block_adds_bittorent_ir() -> str:
     """
     routing configuration for block bittorrent and private ip addresses.
     https://guide.v2fly.org/en_US/routing/bittorrent.html#server-side-configuration
     """
-    ips_file_url = 'https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/IranIPs.txt'
-    irips = urlopen(ips_file_url).read().decode('utf-8')
+    ips_file_url = (
+        "https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/IranIPs.txt"
+    )
+    irips = urlopen(ips_file_url).read().decode("utf-8")
     data = """
     "routing": {
     "domainStrategy": "IPIfNonMatch",
@@ -940,7 +995,9 @@ def block_adds_bittorent_ir() -> str:
         "outboundTag": "block"
       }
     ]
-  }""" % (irips)
+  }""" % (
+        irips
+    )
     return data
 
 
@@ -979,8 +1036,8 @@ def tlssettings() -> str:
         hostkey,
     )
     return tls
-    
-    
+
+
 def notls() -> str:
     """
     no tls for protocols without tls
@@ -1097,7 +1154,9 @@ def headersettings(direction) -> str:
               }
             }
           }
-        """ % ("request" if direction == "in" else "response")
+        """ % (
+        "request" if direction == "in" else "response"
+    )
     return data
 
 
@@ -1286,10 +1345,12 @@ def client_side_configuration(protocol):
         network = "tcp"
     else:
         network = "websocket"
-    
+
     wsSettings = """
         "wsSettings": { "path": "%s" }
-        """ % (args.wspath)
+        """ % (
+        args.wspath
+    )
 
     streamsettings_client = """
         "streamSettings": {
@@ -1311,12 +1372,12 @@ def client_side_configuration(protocol):
     { "protocol": "freedom", "tag": "bypass" },
     { "protocol": "blackhole", "tag": "block" }
     """
-    
-#    policy = """
-#    "policy": {
-#    "levels": { "1": { "connIdle": 30 } },
-#    "system": { "statsOutboundDownlink": true, "statsOutboundUplink": true }
-#  }"""
+
+    #    policy = """
+    #    "policy": {
+    #    "levels": { "1": { "connIdle": 30 } },
+    #    "system": { "statsOutboundDownlink": true, "statsOutboundUplink": true }
+    #  }"""
 
     outbands = """
     "outbounds": [
@@ -1336,18 +1397,18 @@ def client_side_configuration(protocol):
         streamsettings_client,
         outbands_client,
     )
-    
-#   {
-#     "protocol": "dns",
-#     "proxySettings": { "tag": "proxy", "transportLayer": true },
-#     "settings": {
-#       "address": "8.8.8.8",
-#       "network": "tcp",
-#       "port": 53,
-#       "userLevel": 1
-#     },
-#     "tag": "dns-out"
-#   }
+
+    #   {
+    #     "protocol": "dns",
+    #     "proxySettings": { "tag": "proxy", "transportLayer": true },
+    #     "settings": {
+    #       "address": "8.8.8.8",
+    #       "network": "tcp",
+    #       "port": 53,
+    #       "userLevel": 1
+    #     },
+    #     "tag": "dns-out"
+    #   }
 
     client_configuration = """
     {
@@ -1358,7 +1419,7 @@ def client_side_configuration(protocol):
     """ % (
         LOG,
         inbounds,
-        outbands      
+        outbands,
     )
 
     name = f"client-{protocol}-{args.linkname}.json"
@@ -1373,9 +1434,13 @@ def client_side_configuration(protocol):
         blue + f"! Use {filename}{blue} for using proxy with xray-core directly.",
         reset,
     )
-    print(blue + "! Or use below one-line compact json Client-Side and import it directly in your client:", reset)
     print(
-        green + json.dumps(json.loads(client_configuration), separators=(',', ':')),
+        blue
+        + "! Or use below one-line compact json Client-Side and import it directly in your client:",
+        reset,
+    )
+    print(
+        green + json.dumps(json.loads(client_configuration), separators=(",", ":")),
         reset,
     )
     print("")
@@ -1417,7 +1482,7 @@ def xray_create(protocol):
             args.alterid, UUID, net, path, PORT, args.linkname, tlstype, header
         )
         print(vmess_link)
-        
+
         if args.qrcode:
             print(yellow + "! QRCode :" + reset)
             print(qrcode(vmess_link))
@@ -1445,7 +1510,7 @@ def xray_create(protocol):
         )
 
     # Generate NGINX Template
-    COUNTRY() if protocol == "VMESS" else None
+    country() if protocol == "VMESS" else None
 
 
 def shadowsocks_create():
@@ -1454,15 +1519,15 @@ def shadowsocks_create():
     """
     shadowsocks_make(args.ssmethod)
     shadowsocks_dockercompose()
-    
+
     run_docker()
     shadowsocks_link = shadowsocks_link_generator()
     print(shadowsocks_link)
 
-    if args.qrcode :
+    if args.qrcode:
         print(yellow + "! QRCode :" + reset)
-        print(qrcode(shadowsocks_link))      
-    COUNTRY()
+        print(qrcode(shadowsocks_link))
+    country()
 
 
 # -------------------------------- Parse URL --------------------------------- #
@@ -1811,10 +1876,14 @@ def read_serverside_configuration(config):
         ID = data["inbounds"][0]["settings"]["clients"][0]["id"]
         protocol = data["inbounds"][0]["protocol"]
         configport = data["inbounds"][0]["port"]
-        if data["inbounds"][0]["streamSettings"]["network"] == "tcp":
-            securitymethod = data["inbounds"][0]["streamSettings"]["security"]
-        else:
-            securitymethod = data["inbounds"][0]["security"]
+        try:
+            if data["inbounds"][0]["streamSettings"]["network"] == "tcp":
+                securitymethod = data["inbounds"][0]["streamSettings"]["security"]
+            else:
+                securitymethod = data["inbounds"][0]["security"]
+        except KeyError:
+            securitymethod = "none"
+            pass
 
         print(yellow + "Inbounds Info:" + reset)
         try:
@@ -2095,15 +2164,19 @@ def base_error(err):
 
 if __name__ == "__main__":
 
-    # install bbr
-    if args.bbr:
-        subprocess.run("wget -N --no-check-certificate https://github.com/teddysun/across/raw/master/bbr.sh && chmod +x bbr.sh && bash bbr.sh", shell=True, check=True)
-    
     if len(sys.argv) <= 1:
         parser.print_help()
     else:
         banner()
 
+    # install bbr
+    if args.bbr:
+        subprocess.run(
+            "wget -N --no-check-certificate https://github.com/teddysun/across/raw/master/bbr.sh && chmod +x bbr.sh && bash bbr.sh",
+            shell=True,
+            check=True,
+        )
+        
     if args.parse:
         parseLink(args.parse)
 
@@ -2255,7 +2328,7 @@ if __name__ == "__main__":
     # add firewall rules
     if args.firewall:
         firewall_config()
-    
+
     # block torrent manually
     if args.block or args.blockir:
         block_torrent_manually()

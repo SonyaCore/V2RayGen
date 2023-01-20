@@ -285,7 +285,7 @@ none : Nothing will be printed.
 
 `block` for adding blocking Bittorrent and Ads.
 
-`blockir` for Blocking Bittorrent, Ads and Irnian IPs in routing configuration.
+`blockir` for Blocking Bittorrent, Ads and Iranian IPs in routing configuration.
 
 > The routing function module can send inbound data through different outbound connections according to different rules, so as to achieve the purpose of on-demand proxy.
 

@@ -31,7 +31,6 @@ jobs:
         run: |
           python utils/geodata.py raw
           python utils/geodata.py qv2ray
-          mv utils/*.txt utils/*.json geodata
 
       - name: Create .dat file
         run: |

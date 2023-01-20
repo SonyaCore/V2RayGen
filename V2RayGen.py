@@ -1179,7 +1179,6 @@ def headersettings(direction) -> str:
               "type": "http",
               "%s": {
                 "version": "1.1",
-                "status": "200",
                 "reason": "OK",
                 "headers": {
                   "Content-Type": [
@@ -1196,7 +1195,7 @@ def headersettings(direction) -> str:
             }
           }
         """ % (
-        "request" if direction == "in" else "response"
+        "response" if direction == "in" else "request"
     )
     return data
 
@@ -1396,15 +1395,15 @@ def client_side_configuration(protocol):
     streamsettings_client = """
         "streamSettings": {
         "network": "%s",
-        %s,
-        "tcpSettings": %s
+        %s
+        %s
         %s
       },
       "tag": "proxy"
     """ % (
         network,
-        tls_client if protocol == "VMESSTLS" or "VLESS" else notls(),
-        headersettings("out"),
+        tls_client if protocol == "VMESSTLS" or protocol == "VLESS" else notls(),
+        ',"tcpSettings":' + headersettings("out") if protocol == "VMESSTLS" or protocol == "VLESS" or args.tcp or args.http else "",
         "," + wsSettings if not args.http and not args.tcp else "",
     )
 
@@ -1423,7 +1422,6 @@ def client_side_configuration(protocol):
     outbands = """
     "outbounds": [
     {
-      "domainStrategy": "AsIs",
       %s,
       %s,
       "mux": {

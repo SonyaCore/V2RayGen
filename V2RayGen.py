@@ -18,6 +18,7 @@ import random
 import string
 import csv
 import re
+import ipaddress
 from urllib.parse import unquote
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
@@ -963,10 +964,37 @@ def block_adds_bittorent_ir() -> str:
     routing configuration for block bittorrent and private ip addresses.
     https://guide.v2fly.org/en_US/routing/bittorrent.html#server-side-configuration
     """
-    ips_file_url = (
-        "https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/IranIPs.txt"
-    )
-    irips = urlopen(ips_file_url).read().decode("utf-8")
+
+    # ips_file_url = (
+    #     "https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/IranIPs.txt"
+    # )
+    # irips = urlopen(ips_file_url).read().decode("utf-8")
+
+    url = Request("https://cdn-lite.ip2location.com/datasets/IR.json")
+
+    with urlopen(url) as respone :
+        data = respone.read()
+
+    dat = json.loads(data)
+    
+    path = "/tmp/dump"
+    cidrs = []
+    for item in dat["data"]:
+        start = ipaddress.IPv4Address(item[:2][0])
+        end = ipaddress.IPv4Address(item[:2][1])
+        cidrs.append(next(ipaddress.summarize_address_range(start, end)))
+
+    for v , datasets in enumerate(cidrs) :
+        with open(path,"a") as file:
+            file.write(str('"') + str(datasets) + str('"'))
+            if v != len(cidrs) - 1:
+                file.write(str(","))
+            file.write("\n")
+
+    
+    irips = open(path,"r").read()
+    os.remove(path)
+
     data = """
     "routing": {
     "domainStrategy": "IPIfNonMatch",

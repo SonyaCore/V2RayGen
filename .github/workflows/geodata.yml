@@ -1,0 +1,58 @@
+name: Geodata
+
+on:
+  schedule:
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  # packages: write
+  # issues: write
+
+jobs:
+  fetch:
+    name: Build Geodata
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10.9"
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Run python program
+        run: |
+          python utils/geodata.py raw
+          python utils/geodata.py qv2ray
+          mv utils/*.txt utils/*.json geodata
+
+      - name: Create .dat file
+        run: |
+          git clone https://github.com/v2fly/domain-list-community
+          rm -rf domain-list-community/data/*
+
+          cp geodata/IranIPs.txt domain-list-community/data/ir
+          cd domain-list-community
+
+          go run ./ --outputdir=../out
+          cd ../out
+
+          mv dlc.dat iran.dat
+          mv iran.dat ../
+          cd ../
+
+          rm -rf domain-list-community
+          mv *.dat *.txt *.json geodata
+
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Updated geodata
+          file_pattern: "geodata/*.dat geodata/*.txt geodata/*.json"
+          repository: .

@@ -31,7 +31,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -374,6 +374,19 @@ def banner(t=0.0005):
     sys.stdout.write("\n")
     sys.stdout.write("Version: " + VERSION)
     sys.stdout.write("\n")
+
+
+def user_permission() -> None:
+    if os.getuid() == 0 :
+        PRIVILEGE = green + "GRANTED" + reset
+        t = True
+    else:
+        PRIVILEGE = error + "DENIED" + reset
+        t = False
+        pass
+    print("ROOT PRIVILEGE : {}".format(PRIVILEGE))
+    if t == False :
+        print(yellow + "WARNING : Some sections might not work without root permission" + reset)
 
 
 # Return IP
@@ -2196,6 +2209,8 @@ if __name__ == "__main__":
         parser.print_help()
     else:
         banner()
+
+    user_permission()
 
     # install bbr
     if args.bbr:

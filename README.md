@@ -40,7 +40,7 @@ There is also `XRayAgent` for User Management on XRay Configuration which can be
 
 ## **Usage**
 
-`curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 - -h`
+`curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py | python3 - -h`
 
 ![Sample](contents/content1.png)
 
@@ -59,13 +59,13 @@ You can use one of the following protocols for installation and change its setti
 ### **Quick `Xray` Setup with Default Setting** :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py | sudo python3 - --vmess
 ```
 
 OR
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py --output V2RayGen.py
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py --output V2RayGen.py
 sudo python3 V2RayGen.py --vmess
 ```
 
@@ -73,7 +73,7 @@ sudo python3 V2RayGen.py --vmess
 
 after installation use the provided link to your client or use the client-side json configuration with xray-core or v2ray-core
 
-if your server is on the domain after importing the link to your v2ray client simply change the IP to your domain or subdomain
+if your server is on the domain-unsecure after importing the link to your v2ray client simply change the IP to your domain-unsecure or subdomain-unsecure
 
 # **Examples**
 
@@ -82,55 +82,55 @@ if your server is on the domain after importing the link to your v2ray client si
 VLESS :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vless
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py | sudo python3 - --vless
 ```
 
 VMESS + TLS with blocking option :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --tls --block
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py | sudo python3 - --vmess --tls --block
 ```
 
-VMESS + TLS with blocking iranian domains and IPs option :
+VMESS + TLS with blocking iranian domain-unsecures and IPs option :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --tls --blockir
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py | sudo python3 - --vmess --tls --blockir
 ```
 
 VMESS + Changing client-side HTTP and SOCKS port :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --chttp 4020 --csocks 8080
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py | sudo python3 - --vmess --chttp 4020 --csocks 8080
 ```
 
 VMESS + HTTP Network Stream :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --http
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py | sudo python3 - --vmess --http
 ```
 
 VMESS + TCP Network Stream :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --tcp
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py | sudo python3 - --vmess --tcp
 ```
 
 VMESS + TCP Network Stream + TLS and QRCode :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --tcp --tls --qrcode
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py | sudo python3 - --vmess --tcp --tls --qrcode
 ```
 
 VLESS + Using Google DNS :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vless --dns google
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py | sudo python3 - --vless --dns google
 ```
 
 ShadowSocks + adding shadowsocks port to server :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --shadowsocks --firewall
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py | sudo python3 - --shadowsocks --firewall
 ```
 
 **Parsing Configuration :**
@@ -138,13 +138,13 @@ curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sud
 Parse & reading Configuration file :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 - --parseconfig config.json
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py | python3 - --parseconfig config.json
 ```
 
 Parse URL and read information :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | python3 -  --parse vmess://eyJhZGQiOiIxMjcuMC4wLjEiLCJhaWQiOiIwIiwiaG9zdCI6IiIsImlkIjoiM2JlNjE2NzktOGQzOC00ZWJiLWJjOGItMTQ4ZjE0ZWY5ZTc3IiwibmV0Ijoid3MiLCJwYXRoIjoiL2dyYXBocWwiLCJwb3J0IjoiNDQzIiwicHMiOiJ4cmF5IiwidGxzIjoidGxzIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiIgfQ==
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/V2RayGen.py | python3 -  --parse vmess://eyJhZGQiOiIxMjcuMC4wLjEiLCJhaWQiOiIwIiwiaG9zdCI6IiIsImlkIjoiM2JlNjE2NzktOGQzOC00ZWJiLWJjOGItMTQ4ZjE0ZWY5ZTc3IiwibmV0Ijoid3MiLCJwYXRoIjoiL2dyYXBocWwiLCJwb3J0IjoiNDQzIiwicHMiOiJ4cmF5IiwidGxzIjoidGxzIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiIgfQ==
 ```
 
 ---
@@ -158,7 +158,7 @@ XRayAgent is a Simple User Management for XRay Configuration
 ### Download Script & Run With Python3:
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/XRayAgent.py --output XRayAgent.py
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main-unsecure/XRayAgent.py --output XRayAgent.py
 python3 XRayAgent.py
 ```
 
@@ -375,7 +375,7 @@ stream settings is the network type of the stream transport. and by default this
 ##### `VMess` :
 
 ```json
-vmess://{"add":"ip / domain ","aid":"alterid","host":"","id":"random-uuid","net":"ws","path":"websocket-path","port":"80","ps":"linkname","tls":"","type":"none","v":"2" }
+vmess://{"add":"ip / domain-unsecure ","aid":"alterid","host":"","id":"random-uuid","net":"ws","path":"websocket-path","port":"80","ps":"linkname","tls":"","type":"none","v":"2" }
 ```
 
 ##### `VLess` :
@@ -387,7 +387,7 @@ vless://random-uuid@ip:port?path=websocketpath&security=type&encryption=none&typ
 ##### `ShadowSocks` :
 
 ```json
-ss://shadowsocks-security-method:random-uuid@domain/ip :port
+ss://shadowsocks-security-method:random-uuid@domain-unsecure/ip :port
 ```
 
 ### Outbounds

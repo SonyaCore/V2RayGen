@@ -31,7 +31,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.1.2"
+VERSION = "1.1.3"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -585,6 +585,13 @@ def validate_email(email):
             + " Please enter a valid email address"
         )
 
+
+def install_bbr() -> None :
+    subprocess.run(
+    "curl https://raw.githubusercontent.com/SonyaCore/across/master/bbr.sh | bash -",
+    shell=True,
+    check=True,
+    )
 
 # -------------------------------- Global Variables --------------------------------- #
 
@@ -2215,6 +2222,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) <= 1:
         parser.print_help()
+        sys.exit(1)
     else:
         banner()
 
@@ -2222,11 +2230,7 @@ if __name__ == "__main__":
 
     # install bbr
     if args.bbr:
-        subprocess.run(
-            "wget -N --no-check-certificate https://github.com/teddysun/across/raw/master/bbr.sh && chmod +x bbr.sh && bash bbr.sh",
-            shell=True,
-            check=True,
-        )
+        install_bbr()
         
     if args.parse:
         parseLink(args.parse)
@@ -2325,7 +2329,8 @@ if __name__ == "__main__":
     # link security method
     if args.vmess:
         tlstype = ""
-    elif args.tls:
+
+    if args.tls:
         tlstype = "tls"
     elif args.vless:
         tlstype = "tls"

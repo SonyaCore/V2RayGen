@@ -48,7 +48,7 @@ SELFSIGEND_KEY = "host.key"
 PORT = 80
 
 # Docker Compose Version
-DOCKERCOMPOSEVERSION = "2.14.2"
+DOCKERCOMPOSEVERSION = "2.15.1"
 # Docker Compose FILE
 DOCKERCOMPOSE = "docker-compose.yml"
 

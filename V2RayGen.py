@@ -31,7 +31,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.1.1"
+VERSION = "1.1.2"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -411,7 +411,7 @@ def ip():
         sys.exit(1)
 
 
-def get_random_password(length=24):
+def get_random_charaters(length=24):
     """
     Get random password pf length with letters, digits, and symbols
     """
@@ -429,16 +429,11 @@ def country():
     if server are not in the filtered list nginx template will be generated
     """
     try:
-        countrycode = "http://ip-api.com/json/?fields=countryCode"
-        httprequest = Request(countrycode, headers={"Accept": "application/json"})
-
-        with urlopen(httprequest) as response:
-            data = json.loads(response.read().decode())
-
-        if data["countryCode"] not in ("IR", "CN", "VN"):
+        countrycode = get_country()
+        if countrycode not in ("IR", "CN", "VN"):
             print(
                 yellow
-                + f"\n! You Are Using External Server [{data['countryCode']}]\n"
+                + f"\n! You Are Using External Server [{countrycode}]\n"
                 + "Nginx Template:"
                 + reset
             )
@@ -451,6 +446,19 @@ def country():
             + reset
         )
         sys.exit(1)
+        
+            
+def get_country() -> str:
+    """
+    return Country Code of the server.
+    """
+    countrycode_url = "http://ip-api.com/json/?fields=countryCode"
+    httprequest = Request(countrycode_url, headers={"Accept": "application/json"})
+
+    with urlopen(httprequest) as response:
+        data = json.loads(response.read().decode())
+    
+    return data["countryCode"]
 
 
 def dnsselect():
@@ -536,10 +544,12 @@ def create_key():
     """
     create self signed key with openssl
     """
+    random_domain = get_random_charaters(8)
+    countrycode = get_country()
     print(green)
     subprocess.run(
         f"openssl req -new -newkey rsa:4096 -days 735 -nodes -x509 \
-    -subj '/C=UK/ST=Denial/L=String/O=Dis/CN=www.ray.uk' -keyout {SELFSIGEND_KEY} -out {SELFSIGEND_CERT}",
+    -subj '/C={countrycode}/ST=Denial/L=String/O=Dis/CN=www.{random_domain}.{countrycode}' -keyout {SELFSIGEND_KEY} -out {SELFSIGEND_CERT}",
         shell=True,
         check=True,
     )
@@ -2303,7 +2313,7 @@ if __name__ == "__main__":
 
     # ShadowSocks Password
     if args.sspass == None:
-        args.sspass = get_random_password()
+        args.sspass = get_random_charaters()
 
     # ShadowSocks Method
     if args.ssmethod == None:

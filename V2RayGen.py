@@ -31,7 +31,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.1.2"
+VERSION = "1.1.2-unsecure"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -639,8 +639,8 @@ def xray_make():
         None
 
     print(blue + f"! {name} Config Generated." + reset)
-    if args.vless:
-        print(yellow + f"! By default TLS is being used for this Protocol" + reset)
+    # if args.vless:
+    #     print(yellow + f"! By default TLS is being used for this Protocol" + reset)
 
 
 def xray_config(outband, protocol) -> str:
@@ -669,7 +669,7 @@ def xray_config(outband, protocol) -> str:
         }        
         """ % (
             networkstream,
-            tlssettings() if args.tls or args.vless else notls(),
+            tlssettings() if args.tls else notls(),
             args.header,
         )
 
@@ -683,7 +683,7 @@ def xray_config(outband, protocol) -> str:
         }        
         """ % (
             networkstream,
-            tlssettings() if args.tls or args.vless else notls(),
+            tlssettings() if args.tls else notls(),
             args.header,
         )
 
@@ -1515,7 +1515,7 @@ def xray_create(protocol):
         time.sleep(0.5)
         xray_dockercompose("VMESSTLS")
     elif protocol == "VLESS":
-        create_key()
+        create_key() if args.tls else ""
         time.sleep(0.5)
         xray_dockercompose("VLESS")
 
@@ -1714,8 +1714,8 @@ services:
         %s
         %s""" % (
             arg,
-            docker_crtkey if args.vless or args.tls else "",
-            docker_hostkey if args.vless or args.tls else "",
+            docker_crtkey if args.tls else "",
+            docker_hostkey if args.tls else "",
         )
     else:
         data = """version: '3'
@@ -1732,8 +1732,8 @@ services:
         %s
         %s""" % (
             arg,
-            docker_crtkey if args.vless or args.tls else "",
-            docker_hostkey if args.vless or args.tls else "",
+            docker_crtkey if args.tls else "",
+            docker_hostkey if args.tls else "",
         )
 
     print(yellow + f"! Created {type}-core {DOCKERCOMPOSE} configuration" + reset)
@@ -2291,7 +2291,7 @@ if __name__ == "__main__":
         args.insecure = "false"
 
     # Port Settings :
-    if args.port == None and args.vless == True or args.tls == True:
+    if args.port == None and  args.tls == True:
         PORT = 443
 
     if args.port == None:
@@ -2328,7 +2328,7 @@ if __name__ == "__main__":
     elif args.tls:
         tlstype = "tls"
     elif args.vless:
-        tlstype = "tls"
+        tlstype = ""
 
     if args.http:
         net = "http"

@@ -2323,10 +2323,10 @@ if __name__ == "__main__":
         args.outbound = "both"
 
     # link security method
-    if args.tls in (args.vmess , args.vless):
-        tlstype = "tls"
-    elif args.vmess:
+    if args.vmess:
         tlstype = ""
+    elif args.tls:
+        tlstype = "tls"
     elif args.vless:
         tlstype = "tls"
 

@@ -187,7 +187,13 @@ def save_config(config, data):
 
 def read_protocol(config):
     data = read_config(config)
-    protocol = data["inbounds"][0]["protocol"]
+
+    try :
+        protocol = data["inbounds"][0]["protocol"]
+    except KeyError :
+        protocol = base_error("UNSUPORTED PROTOCOL")
+        sys.exit(1)
+
     port = data["inbounds"][0]["port"]
     print(green + "Protocol : " + reset + protocol)
     print(green + "PORT : " + reset + str(port))

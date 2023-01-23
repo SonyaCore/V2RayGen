@@ -89,8 +89,7 @@ def qv2rayrouting(cidr: list, ads: list):
     schema = {
         "description": "List of Iranian IP's",
         "domainStrategy": "IPIfNonMatch",
-        "domains": {"block": ["geosite:category-ads-all"]},
-        "domains": {"direct": ads},
+        "domains": {"direct": ["regexp:^.+\.ir$"], "block": ["geosite:category-ads-all"] + list(ads)},
         "ips": {"direct": cidr},
         "name": "IR_IPS",
     }

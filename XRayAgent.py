@@ -26,7 +26,7 @@ from binascii import Error
 
 # -------------------------------- Constants --------------------------------- #
 
-VERSION = "1.0.6"
+VERSION = "1.1.3"
 
 # UUID Generation
 # UUID = uuid.uuid4()
@@ -432,7 +432,7 @@ def link_generator(data, index) -> str:
         header = 'http'
         path = '/'
     else :
-        security = data["inbounds"][0]["security"]
+        security = data["inbounds"][0]["streamSettings"]["security"]
         header = 'none'
 
     if data["inbounds"][0]["protocol"] == "vmess":

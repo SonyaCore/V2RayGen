@@ -31,6 +31,7 @@ jobs:
         run: |
           python utils/geodata.py raw
           python utils/geodata.py qv2ray
+          python utils/geodata.py clash
 
       - name: Create .dat file
         run: |
@@ -38,6 +39,7 @@ jobs:
           rm -rf domain-list-community/data/*
 
           cp geodata/IranIPs.txt domain-list-community/data/ir
+          cp ads.txt domain-list-community/data/ads
           cd domain-list-community
 
           go run ./ --outputdir=../out
@@ -48,10 +50,10 @@ jobs:
           cd ../
 
           rm -rf domain-list-community
-          mv *.dat *.txt *.json geodata
+          mv *.dat *.txt *.json *.yaml geodata
 
       - uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: Updated geodata
-          file_pattern: "geodata/*.dat geodata/*.txt geodata/*.json"
+          file_pattern: "geodata/*.dat geodata/*.txt geodata/*.json geodata/*.yaml"
           repository: .

@@ -31,7 +31,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.1.2"
+VERSION = "1.1.3"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -48,7 +48,7 @@ SELFSIGEND_KEY = "host.key"
 PORT = 80
 
 # Docker Compose Version
-DOCKERCOMPOSEVERSION = "2.14.2"
+DOCKERCOMPOSEVERSION = "2.15.1"
 # Docker Compose FILE
 DOCKERCOMPOSE = "docker-compose.yml"
 
@@ -377,7 +377,7 @@ def banner(t=0.0005):
 
 
 def user_permission() -> None:
-    if os.getuid() == 0 :
+    if os.getuid() == 0:
         PRIVILEGE = green + "GRANTED" + reset
         t = True
     else:
@@ -385,8 +385,12 @@ def user_permission() -> None:
         t = False
         pass
     print("ROOT PRIVILEGE : {}".format(PRIVILEGE))
-    if t == False :
-        print(yellow + "WARNING : Some sections might not work without root permission" + reset)
+    if t == False:
+        print(
+            yellow
+            + "WARNING : Some sections might not work without root permission"
+            + reset
+        )
 
 
 # Return IP
@@ -446,8 +450,8 @@ def country():
             + reset
         )
         sys.exit(1)
-        
-            
+
+
 def get_country() -> str:
     """
     return Country Code of the server.
@@ -457,7 +461,7 @@ def get_country() -> str:
 
     with urlopen(httprequest) as response:
         data = json.loads(response.read().decode())
-    
+
     return data["countryCode"]
 
 
@@ -584,6 +588,14 @@ def validate_email(email):
             + reset
             + " Please enter a valid email address"
         )
+
+
+def install_bbr() -> None:
+    subprocess.run(
+        "curl https://raw.githubusercontent.com/SonyaCore/across/master/bbr.sh | bash -",
+        shell=True,
+        check=True,
+    )
 
 
 # -------------------------------- Global Variables --------------------------------- #
@@ -877,72 +889,24 @@ def vless_server_side():
 
 
 def block_torrent_manually():
-    subprocess.run(
+    iptables_cmds = [
         "iptables -A FORWARD -s 10.8.1.0/24 -p tcp --dport 443 -j DROP",
-        shell=True,
-        check=True,
-    )
-    subprocess.run("iptables -A FORWARD -i tun+ -j ACCEPT", shell=True, check=True)
-    subprocess.run(
+        "iptables -A FORWARD -i tun+ -j ACCEPT",
         'iptables -A INPUT -m string --string "BitTorrent" --algo bm -j DROP',
-        shell=True,
-        check=True,
-    )
-    subprocess.run(
         'iptables -A INPUT -m string --string "BitTorrent protocol" --algo bm -j DROP',
-        shell=True,
-        check=True,
-    )
-    subprocess.run(
         'iptables -A INPUT -m string --string "peer_id=" --algo bm -j DROP',
-        shell=True,
-        check=True,
-    )
-    subprocess.run(
         'iptables -A INPUT -m string --string ".torrent" --algo bm -j DROP',
-        shell=True,
-        check=True,
-    )
-    subprocess.run(
         'iptables -A INPUT -m string --string "announce.php?passkey=" --algo bm -j DROP',
-        shell=True,
-        check=True,
-    )
-    subprocess.run(
         'iptables -A INPUT -m string --string "torrent" --algo bm -j DROP',
-        shell=True,
-        check=True,
-    )
-    subprocess.run(
         'iptables -A INPUT -m string --string "announce" --algo bm -j DROP',
-        shell=True,
-        check=True,
-    )
-    subprocess.run(
         'iptables -A INPUT -m string --string "info_hash" --algo bm -j DROP',
-        shell=True,
-        check=True,
-    )
-    subprocess.run(
         'iptables -A INPUT -m string --string "tracker" --algo bm -j DROP',
-        shell=True,
-        check=True,
-    )
-    subprocess.run(
         'iptables -A INPUT -m string --string "get_peers" --algo bm -j DROP',
-        shell=True,
-        check=True,
-    )
-    subprocess.run(
         'iptables -A INPUT -m string --string "announce_peer" --algo bm -j DROP',
-        shell=True,
-        check=True,
-    )
-    subprocess.run(
         'iptables -A INPUT -m string --string "find_node" --algo bm -j DROP',
-        shell=True,
-        check=True,
-    )
+    ]
+    for cmd in iptables_cmds:
+        subprocess.run(cmd, shell=True, check=True)
 
 
 def routing() -> str:
@@ -995,11 +959,11 @@ def block_adds_bittorent_ir() -> str:
 
     url = Request("https://cdn-lite.ip2location.com/datasets/IR.json")
 
-    with urlopen(url) as respone :
+    with urlopen(url) as respone:
         data = respone.read()
 
     dat = json.loads(data)
-    
+
     path = "/tmp/dump"
     cidrs = []
     for item in dat["data"]:
@@ -1007,15 +971,14 @@ def block_adds_bittorent_ir() -> str:
         end = ipaddress.IPv4Address(item[:2][1])
         cidrs.append(next(ipaddress.summarize_address_range(start, end)))
 
-    for v , datasets in enumerate(cidrs) :
-        with open(path,"a") as file:
+    for v, datasets in enumerate(cidrs):
+        with open(path, "a") as file:
             file.write(str('"') + str(datasets) + str('"'))
             if v != len(cidrs) - 1:
                 file.write(str(","))
             file.write("\n")
 
-    
-    irips = open(path,"r").read()
+    irips = open(path, "r").read()
     os.remove(path)
 
     data = """
@@ -1413,7 +1376,9 @@ def client_side_configuration(protocol):
     """ % (
         network,
         tls_client if protocol == "VMESSTLS" or protocol == "VLESS" else notls(),
-        ',"tcpSettings":' + headersettings("out") if protocol == "VMESSTLS" or protocol == "VLESS" or args.tcp or args.http else "",
+        ',"tcpSettings":' + headersettings("out")
+        if protocol == "VMESSTLS" or protocol == "VLESS" or args.tcp or args.http
+        else "",
         "," + wsSettings if not args.http and not args.tcp else "",
     )
 
@@ -2215,6 +2180,7 @@ if __name__ == "__main__":
 
     if len(sys.argv) <= 1:
         parser.print_help()
+        sys.exit(1)
     else:
         banner()
 
@@ -2222,12 +2188,8 @@ if __name__ == "__main__":
 
     # install bbr
     if args.bbr:
-        subprocess.run(
-            "wget -N --no-check-certificate https://github.com/teddysun/across/raw/master/bbr.sh && chmod +x bbr.sh && bash bbr.sh",
-            shell=True,
-            check=True,
-        )
-        
+        install_bbr()
+
     if args.parse:
         parseLink(args.parse)
 
@@ -2251,25 +2213,20 @@ if __name__ == "__main__":
         dnsselect()
         dns_check()
 
+        DNS_SERVERS = {
+            "both": dnsserver[0],
+            "google": dnsserver[1],
+            "cloudflare": dnsserver[2],
+            "opendns": dnsserver[3],
+            "quad9": dnsserver[4],
+            "adguard": dnsserver[5],
+            "nodns": NODNS,
+        }
+        DNS = DNS_SERVERS.get(args.dns, dnsserver[0])
+
     # Set To NODNS
     else:
         DNS = ""
-
-    # DNS argument parser
-    if args.dns == "both":
-        DNS = dnsserver[0]
-    if args.dns == "google":
-        DNS = dnsserver[1]
-    if args.dns == "cloudflare":
-        DNS = dnsserver[2]
-    if args.dns == "opendns":
-        DNS = dnsserver[3]
-    if args.dns == "quad9":
-        DNS = dnsserver[4]
-    if args.dns == "adguard":
-        DNS = dnsserver[5]
-    if args.dns == "nodns":
-        DNS = NODNS
 
     if args.csocks:
         SOCKSPORT = args.csocks
@@ -2325,7 +2282,8 @@ if __name__ == "__main__":
     # link security method
     if args.vmess:
         tlstype = ""
-    elif args.tls:
+
+    if args.tls:
         tlstype = "tls"
     elif args.vless:
         tlstype = "tls"

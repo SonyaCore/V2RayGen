@@ -26,7 +26,7 @@ from binascii import Error
 
 # -------------------------------- Constants --------------------------------- #
 
-VERSION = "1.0.6"
+VERSION = "1.1.3"
 
 # UUID Generation
 # UUID = uuid.uuid4()
@@ -187,7 +187,13 @@ def save_config(config, data):
 
 def read_protocol(config):
     data = read_config(config)
-    protocol = data["inbounds"][0]["protocol"]
+
+    try :
+        protocol = data["inbounds"][0]["protocol"]
+    except KeyError :
+        protocol = base_error("UNSUPORTED PROTOCOL")
+        sys.exit(1)
+
     port = data["inbounds"][0]["port"]
     print(green + "Protocol : " + reset + protocol)
     print(green + "PORT : " + reset + str(port))
@@ -432,7 +438,7 @@ def link_generator(data, index) -> str:
         header = 'http'
         path = '/'
     else :
-        security = data["inbounds"][0]["security"]
+        security = data["inbounds"][0]["streamSettings"]["security"]
         header = 'none'
 
     if data["inbounds"][0]["protocol"] == "vmess":

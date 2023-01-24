@@ -102,9 +102,11 @@ def clash(cidr: list, ads: list) -> str:
         "# Wiki: https://github.com/Dreamacro/clash/wiki/premium-core-features#rule-providers\n"
         "payload:\n"
     )
+    # ads
     config += "".join(f"  - DOMAIN-SUFFIX,{adslist}\n" for adslist in ads)
+    
+    # cidr
     config += "".join(f"  - IP-CIDR,{cidrlist}\n" for cidrlist in cidr)
-    config += "  - GEOIP,IR\n"
     return config
 
 

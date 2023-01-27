@@ -673,7 +673,21 @@ def xray_config(outband, protocol) -> str:
         networkstream = websocket_config(args.wspath)
         NETSTREAM = "WebSocket"
 
-    if not args.tcp:
+    if args.tcp or args.shadowsocks :
+        # TCP stream settings
+        streamsettings = """
+        "streamSettings": {
+        %s,
+        %s,
+        "tcpSettings": %s
+        }        
+        """ % (
+            networkstream,
+            tlssettings() if args.tls or args.vless else notls(),
+            args.header,
+        )
+
+    else :
         # Normal stream settings
         streamsettings = """
         "streamSettings":{ 
@@ -687,19 +701,6 @@ def xray_config(outband, protocol) -> str:
             args.header,
         )
 
-    else:
-        # TCP stream settings
-        streamsettings = """
-        "streamSettings": {
-        %s,
-        %s,
-        "tcpSettings": %s
-        }        
-        """ % (
-            networkstream,
-            tlssettings() if args.tls or args.vless else notls(),
-            args.header,
-        )
 
     data = """{
     %s

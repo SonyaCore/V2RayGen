@@ -31,7 +31,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.1.3"
+VERSION = "1.1.4"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -633,6 +633,7 @@ supported_typo = ["vmess", "vmesstls", "vless"]
 
 # -------------------------------- VMess JSON --------------------------------- #
 
+
 def xray_make():
     """
     Make JSON config which reads --outband for making v2ray vmess config with specific protocol
@@ -673,7 +674,7 @@ def xray_config(outband, protocol) -> str:
         networkstream = websocket_config(args.wspath)
         NETSTREAM = "WebSocket"
 
-    if args.tcp or args.shadowsocks :
+    if args.tcp or args.shadowsocks:
         # TCP stream settings
         streamsettings = """
         "streamSettings": {
@@ -687,7 +688,7 @@ def xray_config(outband, protocol) -> str:
             args.header,
         )
 
-    else :
+    else:
         # Normal stream settings
         streamsettings = """
         "streamSettings":{ 
@@ -700,7 +701,6 @@ def xray_config(outband, protocol) -> str:
             tlssettings() if args.tls or args.vless else notls(),
             args.header,
         )
-
 
     data = """{
     %s
@@ -727,7 +727,7 @@ def xray_config(outband, protocol) -> str:
         streamsettings,
         outband,
     )
-    
+
     return json.loads(data)
 
 
@@ -738,7 +738,7 @@ def make_xray(protocol):
     """
     make xray config based on selected protocol
     """
-    
+
     outband_config = outband()
     protocol_config = ""
     if protocol == "vless":
@@ -747,7 +747,7 @@ def make_xray(protocol):
         protocol_config = vmess_server_side()
     elif protocol == "shadowsocks":
         protocol_config = shadowsocks_server_side()
-    
+
     # Config Protocol Method
     with open(CONFIGNAME, "w") as txt:
         txt.write(
@@ -758,16 +758,18 @@ def make_xray(protocol):
         )
         txt.close
 
+
 def outband():
-    
+
     if args.outbound == "freedom":
         return freedom()
-    
+
     if args.outbound == "blackhole":
         return blackhole()
 
     if args.outbound == "both":
         return freedom() + ",\n" + blackhole()
+
 
 # -------------------------------- JSON Configuration --------------------------------- #
 
@@ -821,12 +823,12 @@ def vless_server_side():
     )
     return vless
 
-    
+
 def shadowsocks_server_side():
     """
     shadowsocks server side inbound configuration
     https://xtls.github.io/config/outbounds/shadowsocks.html
-    """    
+    """
     shadowsocks = """
         "protocol": "shadowsocks",
         "settings": {
@@ -835,7 +837,7 @@ def shadowsocks_server_side():
         }""" % (
         args.ssmethod,
         args.sspass,
-    )    
+    )
     return shadowsocks
 
 
@@ -1256,7 +1258,7 @@ def client_side_configuration(protocol):
         PORT,
         UUID,
     )
-    
+
     shadowsocks_clinet = """
         "protocol": "shadowsocks",
         "settings": {
@@ -1346,9 +1348,15 @@ def client_side_configuration(protocol):
         network,
         tls_client if protocol == "VMESSTLS" or protocol == "VLESS" else notls(),
         ',"tcpSettings":' + headersettings("out")
-        if protocol == "VMESSTLS" or protocol == "VLESS" or args.tcp or args.http or args.shadowsocks
+        if protocol == "VMESSTLS"
+        or protocol == "VLESS"
+        or args.tcp
+        or args.http
+        or args.shadowsocks
         else "",
-        "," + wsSettings if not args.http and not args.tcp and not args.shadowsocks else "",
+        "," + wsSettings
+        if not args.http and not args.tcp and not args.shadowsocks
+        else "",
     )
 
     outbands_client = """
@@ -1440,13 +1448,13 @@ def xray_create(protocol):
     xray_make()
     sys.exit(1) if args.config else ""
     outbounds_check()
-    
+
     if args.tls or args.vless:
         create_key()
         time.sleep(0.5)
 
     # Creating docker-compose file
-    xray_dockercompose()        
+    xray_dockercompose()
 
     # Running docker-compose on Server
     run_docker()
@@ -1594,6 +1602,7 @@ def parse_VMess(vmesslink):
 
 # -------------------------------- Docker --------------------------------- #
 
+
 def xray_dockercompose():
     """
     Create docker-compose file for xray-core.
@@ -1721,7 +1730,9 @@ def run_docker():
 def reset_docker_compose():
     subprocess.run(f"docker-compose restart", shell=True, check=True)
 
+
 # ------------------------------ Firewall ------------------------------- #
+
 
 def firewall_config():
     """
@@ -2052,7 +2063,11 @@ def shadowsocks_check():
     # Below methods are the recommended choice.
     # Other stream ciphers are implemented but do not provide integrity and authenticity.
 
-    methodlist = ["2022-blake3-chacha20-poly1305", "2022-blake3-aes-256-gcm", "2022-blake3-aes-128-gcm"]
+    methodlist = [
+        "2022-blake3-chacha20-poly1305",
+        "2022-blake3-aes-256-gcm",
+        "2022-blake3-aes-128-gcm",
+    ]
     if args.ssmethod not in methodlist:
         print("Select one method :")
         for methods in range(len(methodlist)):
@@ -2183,14 +2198,18 @@ if __name__ == "__main__":
     # ShadowSocks Method
     if args.ssmethod == None:
         args.ssmethod = "2022-blake3-chacha20-poly1305"
-    
+
     # ShadowSocks Password
     if args.sspass == None and args.ssmethod == "2022-blake3-aes-128-gcm":
-        args.sspass = subprocess.run("openssl rand -base64 16", capture_output=True, text=True, shell=True).stdout.strip("\n")
-    
+        args.sspass = subprocess.run(
+            "openssl rand -base64 16", capture_output=True, text=True, shell=True
+        ).stdout.strip("\n")
+
     if args.sspass == None:
-        args.sspass = subprocess.run("openssl rand -base64 32", capture_output=True, text=True, shell=True).stdout.strip("\n")
-    
+        args.sspass = subprocess.run(
+            "openssl rand -base64 32", capture_output=True, text=True, shell=True
+        ).stdout.strip("\n")
+
     if args.outbound == None:
         args.outbound = "both"
 

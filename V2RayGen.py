@@ -37,7 +37,7 @@ VERSION = "1.1.3"
 UUID = uuid.uuid4()
 
 # Config Name
-config_name = "config.json"
+CONFIGNAME = "config.json"
 OBFS = "docker-compose.yml"
 
 SELFSIGEND_CERT = "host.cert"
@@ -748,7 +748,7 @@ def make_xray(protocol):
         protocol_config = shadowsocks_server_side()
     
     # Config Protocol Method
-    with open(config_name, "w") as txt:
+    with open(CONFIGNAME, "w") as txt:
         txt.write(
             json.dumps(
                 xray_config(outband_config, protocol_config),
@@ -1621,7 +1621,7 @@ services:
         - ./%s:/etc/v2ray/config.json:ro
         %s
         %s""" % (
-            config_name,
+            CONFIGNAME,
             docker_crtkey if args.vless or args.tls else "",
             docker_hostkey if args.vless or args.tls else "",
         )
@@ -1639,7 +1639,7 @@ services:
         - ./%s:/etc/xray/config.json:ro
         %s
         %s""" % (
-            config_name,
+            CONFIGNAME,
             docker_crtkey if args.vless or args.tls else "",
             docker_hostkey if args.vless or args.tls else "",
         )

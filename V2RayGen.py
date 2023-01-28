@@ -1101,30 +1101,94 @@ def headersettings(direction) -> str:
     default tcp setting header for json configuration.
     for using custom configuration use ( --header file.json ) option to configure your own header
     """
-    data = """ {
-            "header": {
+    
+    request = """ 
+    "request": {
+        "version": "1.1",
+        "method": "GET",
+        "headers": {
+          "Host": [
+            "www.google.com", 
+            "www.bing.com",
+            "www.msn.com",
+            "www.yahoo.com",
+            "www.hotmail.com",
+            "outlook.live.com",
+            "www.microsoft.com",
+            "mail.google.com",
+            "www.proton.me"
+          ],
+          "User-Agent": [
+            "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36",
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_2 like Mac OS X) AppleWebKit/601.1 (KHTML, like Gecko) CriOS/53.0.2785.109 Mobile/14A456 Safari/601.1.46",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"            
+          ],
+          "Accept-Encoding": [
+                "gzip, deflate",
+                "compress, deflate",
+                "gzip, compress",
+                "identity, deflate",
+                "compress, identity",
+                "gzip, identity"
+            ],
+          "Connection": ["keep-alive"],
+          "Pragma": "no-cache"
+        }
+      }
+        """
+    
+    response = """ 
+    "request": {
+        "version": "1.1",
+        "status": "200",
+        "reason": "OK",
+        "headers": {
+            "Content-Type": [
+                "application/pdf",
+                "application/xhtml+xml",
+                "application/x-shockwave-flash",
+                "application/json",
+                "application/ld+json",
+                "application/xml",
+                "application/zip",
+                "application/x-www-form-urlencoded",
+                "image/gif",
+                "image/jpeg",
+                "image/png",
+                "image/tiff",
+                "image/vnd.microsoft.icon",
+                "image/x-icon",
+                "image/vnd.djvu",
+                "image/svg+xml",
+                "multipart/mixed",
+                "multipart/alternative",
+                "multipart/related",
+                "multipart/form-data",
+                "text/css",
+                "text/csv",
+                "text/html",
+                "text/plain",
+                "text/xml"
+            ],
+            "Transfer-Encoding": ["chunked"],
+            "Connection": ["keep-alive"],
+            "Pragma": "no-cache"
+        }
+      }
+        """
+        
+    header = """
+    {
+        "header": {
               "type": "http",
-              "%s": {
-                "version": "1.1",
-                "reason": "OK",
-                "headers": {
-                  "Content-Type": [
-                    "application/octet-stream",
-                    "application/x-msdownload",
-                    "text/html",
-                    "application/x-shockwave-flash"
-                  ],
-                  "Transfer-Encoding": ["chunked"],
-                  "Connection": ["keep-alive"],
-                  "Pragma": "no-cache"
-                }
-              }
+              %s
             }
-          }
-        """ % (
-        "response" if direction == "in" else "request"
+    }
+    """ % (
+        response if direction == "in" else request
     )
-    return data
+    
+    return header
 
 
 def log():
@@ -1414,9 +1478,10 @@ def client_side_configuration(protocol):
         outbands,
     )
 
+    jsondata = json.loads(client_configuration)
     name = f"client-{protocol}-{args.linkname}.json"
     with open(name, "w") as wb:
-        wb.write(json.dumps(json.loads(client_configuration), indent=2))
+        wb.write(json.dumps(jsondata, indent=2))
         wb.close
 
     print("")
@@ -1432,7 +1497,7 @@ def client_side_configuration(protocol):
         reset,
     )
     print(
-        green + json.dumps(json.loads(client_configuration), separators=(",", ":")),
+        green + json.dumps(jsondata, separators=(",", ":")),
         reset,
     )
     print("")
@@ -2068,6 +2133,10 @@ def shadowsocks_check():
         "2022-blake3-chacha20-poly1305",
         "2022-blake3-aes-256-gcm",
         "2022-blake3-aes-128-gcm",
+        "aes-256-gcm",
+        "aes-128-gcm",
+        "chacha20-ietf-poly1305",
+        "xchacha20-ietf-poly1305",
     ]
     if args.ssmethod not in methodlist:
         print("Select one method :")

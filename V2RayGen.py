@@ -1523,7 +1523,7 @@ def xray_create(protocol):
     xray_dockercompose()
 
     # Running docker-compose on Server
-    run_docker()
+    # run_docker()
 
     # Printing Information
     serverside_info_raw()
@@ -2138,19 +2138,19 @@ def shadowsocks_check():
         "aes-128-gcm",
         "chacha20-ietf-poly1305",
     ]
-    xraymethod = methodlist[0:3]
+    xraymethod = methodlist[0:4]
     v2raymethod = methodlist[4:]
 
     if args.ssmethod not in methodlist:
         print("Select one method :")
         print("{}XRay Ciphers :{}".format(yellow,reset))
 
-        for xmethods in range(len(xraymethod) + 1 ):
-            print(green + methodlist[xmethods] + reset)
+        for xmethods in range(len(xraymethod)):
+            print(green + xraymethod[xmethods] + reset)
 
         print("{}V2ray Ciphers : {}".format(yellow,reset))
         for vmethods in range(len(v2raymethod)):
-            print(green + methodlist[vmethods] + reset)
+            print(green + v2raymethod[vmethods] + reset)
         sys.exit(2)
 
     elif args.ssmethod in (methodlist[0:2] , methodlist[-1]):

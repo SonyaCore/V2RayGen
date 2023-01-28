@@ -438,7 +438,7 @@ shadowsocks are loaded with xray docker container and it uses tcp stream for pas
 
 `sspass` set password for shadowsocks configuration file. by default, it uses a random password
 
-`ssmethod` Set cipher method for ShadowSocks . default cipher method is `2022-blake3-chacha20-poly1305` to provide better security hence it's only usable in xray-core. for using shadowsocks with v2ray core use one of below cipher methods :
+`ssmethod` Set cipher method for ShadowSocks . default cipher method is `2022-blake3-chacha20-poly1305` to provide better security hence it's only usable in xray-core. for using shadowsocks with v2ray core use one of the below cipher methods :
 
 V2Ray Cipher methods :
 

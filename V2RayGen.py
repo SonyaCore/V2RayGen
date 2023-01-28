@@ -678,6 +678,7 @@ def xray_config(outband, protocol) -> str:
         # TCP stream settings
         streamsettings = """
         "streamSettings": {
+					   
         %s,
         %s,
         "tcpSettings": %s
@@ -1346,7 +1347,7 @@ def client_side_configuration(protocol):
       "tag": "proxy"
     """ % (
         network,
-        tls_client if protocol == "VMESSTLS" or protocol == "VLESS" else notls(),
+        tls_client if args.tls or protocol == "VLESS" else notls(),
         ',"tcpSettings":' + headersettings("out")
         if protocol == "VMESSTLS"
         or protocol == "VLESS"

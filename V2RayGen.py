@@ -31,14 +31,13 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.1.3"
+VERSION = "1.1.4"
 
 # UUID Generation
 UUID = uuid.uuid4()
 
 # Config Name
-VMESS, VLESS = "config.json", "config.json"
-SHADOWSOCKS = "shadowsocks.json"
+CONFIGNAME = "config.json"
 OBFS = "docker-compose.yml"
 
 SELFSIGEND_CERT = "host.cert"
@@ -46,6 +45,9 @@ SELFSIGEND_KEY = "host.key"
 
 # PORT
 PORT = 80
+
+# TLS
+TLSTYPE = ""
 
 # Docker Compose Version
 DOCKERCOMPOSEVERSION = "2.15.1"
@@ -268,7 +270,7 @@ shadowsocks.add_argument(
     action="store",
     type=str,
     metavar="",
-    help="Set Method for ShadowSocks. default: [chacha20-ietf-poly1305]",
+    help="Set Method for ShadowSocks. default: [2022-blake3-chacha20-poly1305]",
 )
 
 docker = parser.add_argument_group(f"{green}Docker{reset}")
@@ -647,8 +649,9 @@ def xray_make():
     elif args.vless:
         name = "VLESS"
         make_xray("vless")
-    else:
-        None
+    elif args.shadowsocks:
+        name = "SHADOWSOCKS"
+        make_xray("shadowsocks")
 
     print(blue + f"! {name} Config Generated." + reset)
     if args.vless:
@@ -664,20 +667,21 @@ def xray_config(outband, protocol) -> str:
     if args.http:
         networkstream = http()
         NETSTREAM = "HTTP"
-    elif args.tcp:
+    elif args.tcp or args.shadowsocks:
         networkstream = tcp()
         NETSTREAM = "TCP"
     else:
         networkstream = websocket_config(args.wspath)
         NETSTREAM = "WebSocket"
 
-    if not args.tcp:
-        # Normal stream settings
+    if args.tcp or args.shadowsocks:
+        # TCP stream settings
         streamsettings = """
-        "streamSettings":{ 
-        %s,            
+        "streamSettings": {
+					   
         %s,
-        "headersettings": %s 
+        %s,
+        "tcpSettings": %s
         }        
         """ % (
             networkstream,
@@ -686,12 +690,12 @@ def xray_config(outband, protocol) -> str:
         )
 
     else:
-        # TCP stream settings
+        # Normal stream settings
         streamsettings = """
-        "streamSettings": {
+        "streamSettings":{ 
+        %s,            
         %s,
-        %s,
-        "tcpSettings": %s
+        "headersettings": %s 
         }        
         """ % (
             networkstream,
@@ -736,103 +740,36 @@ def make_xray(protocol):
     make xray config based on selected protocol
     """
 
+    outband_config = outband()
+    protocol_config = ""
+    if protocol == "vless":
+        protocol_config = vless_server_side()
+    elif protocol == "vmess":
+        protocol_config = vmess_server_side()
+    elif protocol == "shadowsocks":
+        protocol_config = shadowsocks_server_side()
+
     # Config Protocol Method
-    if args.outbound == "freedom":
-        with open(VLESS, "w") as txt:
-            if protocol == "vless":
-                txt.write(
-                    json.dumps(
-                        xray_config(outband=freedom(), protocol=vless_server_side()),
-                        indent=2,
-                    )
-                )
-            elif protocol == "vmess":
-                txt.write(
-                    json.dumps(
-                        xray_config(outband=freedom(), protocol=vmess_server_side()),
-                        indent=2,
-                    )
-                )
-            txt.close
-
-    if args.outbound == "blackhole":
-        with open(VLESS, "w") as txt:
-            if protocol == "vless":
-                txt.write(
-                    json.dumps(
-                        xray_config(outband=blackhole(), protocol=vless_server_side()),
-                        indent=2,
-                    )
-                )
-            elif protocol == "vmess":
-                txt.write(
-                    json.dumps(
-                        xray_config(outband=blackhole(), protocol=vmess_server_side()),
-                        indent=2,
-                    )
-                )
-            txt.close
-
-    if args.outbound == "both":
-        with open(VLESS, "w") as txt:
-            if protocol == "vless":
-                txt.write(
-                    json.dumps(
-                        xray_config(
-                            outband=freedom() + ",\n" + blackhole(),
-                            protocol=vless_server_side(),
-                        ),
-                        indent=2,
-                    )
-                )
-            elif protocol == "vmess":
-                txt.write(
-                    json.dumps(
-                        xray_config(
-                            outband=freedom() + ",\n" + blackhole(),
-                            protocol=vmess_server_side(),
-                        ),
-                        indent=2,
-                    )
-                )
-            txt.close
-
-
-# -------------------------------- ShadowSocks JSON --------------------------------- #
-
-
-def shadowsocks_make(method) -> str:
-
-    shadowsocks_check()
-
-    with open(SHADOWSOCKS, "w") as txt:
+    with open(CONFIGNAME, "w") as txt:
         txt.write(
-            json.dumps(shadowsocks_config(method, password=args.sspass), indent=2)
+            json.dumps(
+                xray_config(outband_config, protocol_config),
+                indent=2,
+            )
         )
         txt.close
 
-    print(blue + "! ShadowSocks Config Generated." + reset)
 
+def outband():
 
-def shadowsocks_config(method, password) -> str:
+    if args.outbound == "freedom":
+        return freedom()
 
-    timeout = 300
+    if args.outbound == "blackhole":
+        return blackhole()
 
-    shadowsocks = """{
-    "server":"%s",
-    "server_port":%s,
-    "password":"%s",
-    "timeout":%s,
-    "method":"%s",
-    "fast_open": true
-}""" % (
-        ServerIP,
-        PORT,
-        password,
-        timeout,
-        method,
-    )
-    return json.loads(shadowsocks)
+    if args.outbound == "both":
+        return freedom() + ",\n" + blackhole()
 
 
 # -------------------------------- JSON Configuration --------------------------------- #
@@ -841,7 +778,7 @@ def shadowsocks_config(method, password) -> str:
 def vmess_server_side():
     """
     vmess server side inbound configuration
-    https://www.v2fly.org/config/protocols/vmess.html
+    https://xtls.github.io/config/inbounds/vmess.html
     """
     vmess = """
         "protocol": "vmess",
@@ -869,23 +806,40 @@ def vmess_server_side():
 def vless_server_side():
     """
     vless server side inbound configuration
-    https://www.v2fly.org/config/protocols/vless.html
+    https://xtls.github.io/config/inbounds/vless.html
     """
     vless = """
       "protocol": "vless",
       "settings": {
-        "clients": [
-          {
-            "id": "%s",
-            "level": 0,
-            "email": "love@example.com"
-          }
-        ],
-        "decryption": "none"
-      }""" % (
+      "clients": [
+        {
+          "id": "%s",
+          "level": 0,
+          "email": "client@example.com"
+        }
+      ],
+      "decryption": "none"
+  }""" % (
         UUID
     )
     return vless
+
+
+def shadowsocks_server_side():
+    """
+    shadowsocks server side inbound configuration
+    https://xtls.github.io/config/outbounds/shadowsocks.html
+    """
+    shadowsocks = """
+        "protocol": "shadowsocks",
+        "settings": {
+          "method": "%s",
+          "password": "%s"
+        }""" % (
+        args.ssmethod,
+        args.sspass,
+    )
+    return shadowsocks
 
 
 def block_torrent_manually():
@@ -1147,30 +1101,94 @@ def headersettings(direction) -> str:
     default tcp setting header for json configuration.
     for using custom configuration use ( --header file.json ) option to configure your own header
     """
-    data = """ {
-            "header": {
+
+    request = """ 
+    "request": {
+        "version": "1.1",
+        "method": "GET",
+        "headers": {
+          "Host": [
+            "www.google.com", 
+            "www.bing.com",
+            "www.msn.com",
+            "www.yahoo.com",
+            "www.hotmail.com",
+            "outlook.live.com",
+            "www.microsoft.com",
+            "mail.google.com",
+            "www.proton.me"
+          ],
+          "User-Agent": [
+            "Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/53.0.2785.143 Safari/537.36",
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_2 like Mac OS X) AppleWebKit/601.1 (KHTML, like Gecko) CriOS/53.0.2785.109 Mobile/14A456 Safari/601.1.46",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"            
+          ],
+          "Accept-Encoding": [
+                "gzip, deflate",
+                "compress, deflate",
+                "gzip, compress",
+                "identity, deflate",
+                "compress, identity",
+                "gzip, identity"
+            ],
+          "Connection": ["keep-alive"],
+          "Pragma": "no-cache"
+        }
+      }
+        """
+
+    response = """ 
+    "request": {
+        "version": "1.1",
+        "status": "200",
+        "reason": "OK",
+        "headers": {
+            "Content-Type": [
+                "application/pdf",
+                "application/xhtml+xml",
+                "application/x-shockwave-flash",
+                "application/json",
+                "application/ld+json",
+                "application/xml",
+                "application/zip",
+                "application/x-www-form-urlencoded",
+                "image/gif",
+                "image/jpeg",
+                "image/png",
+                "image/tiff",
+                "image/vnd.microsoft.icon",
+                "image/x-icon",
+                "image/vnd.djvu",
+                "image/svg+xml",
+                "multipart/mixed",
+                "multipart/alternative",
+                "multipart/related",
+                "multipart/form-data",
+                "text/css",
+                "text/csv",
+                "text/html",
+                "text/plain",
+                "text/xml"
+            ],
+            "Transfer-Encoding": ["chunked"],
+            "Connection": ["keep-alive"],
+            "Pragma": "no-cache"
+        }
+      }
+        """
+
+    header = """
+    {
+        "header": {
               "type": "http",
-              "%s": {
-                "version": "1.1",
-                "reason": "OK",
-                "headers": {
-                  "Content-Type": [
-                    "application/octet-stream",
-                    "application/x-msdownload",
-                    "text/html",
-                    "application/x-shockwave-flash"
-                  ],
-                  "Transfer-Encoding": ["chunked"],
-                  "Connection": ["keep-alive"],
-                  "Pragma": "no-cache"
-                }
-              }
+              %s
             }
-          }
-        """ % (
-        "response" if direction == "in" else "request"
+    }
+    """ % (
+        response if direction == "in" else request
     )
-    return data
+
+    return header
 
 
 def log():
@@ -1306,13 +1324,31 @@ def client_side_configuration(protocol):
         UUID,
     )
 
+    shadowsocks_clinet = """
+        "protocol": "shadowsocks",
+        "settings": {
+        "servers": [
+          {
+            "address": "%s",
+            "port": %s,
+            "method": "%s",
+            "password": "%s"
+          }
+        ]
+    }""" % (
+        ServerIP,
+        PORT,
+        args.ssmethod,
+        args.sspass,
+    )
+
     # client protocol settings based on protocol argument
-    if protocol == "VMESS":
-        setting = vmess_client
-    elif protocol == "VMESSTLS":
+    if protocol == "VMESS" or protocol == "VMESSTLS":
         setting = vmess_client
     elif protocol == "VLESS":
         setting = vless_clinet
+    elif protocol == "SHADOWSOCKS":
+        setting = shadowsocks_clinet
 
     inbounds = """
         "inbounds": [
@@ -1354,7 +1390,7 @@ def client_side_configuration(protocol):
 
     if args.http:
         network = "http"
-    elif args.tcp:
+    elif args.tcp or args.shadowsocks:
         network = "tcp"
     else:
         network = "websocket"
@@ -1375,11 +1411,17 @@ def client_side_configuration(protocol):
       "tag": "proxy"
     """ % (
         network,
-        tls_client if protocol == "VMESSTLS" or protocol == "VLESS" else notls(),
+        tls_client if args.tls or protocol == "VLESS" else notls(),
         ',"tcpSettings":' + headersettings("out")
-        if protocol == "VMESSTLS" or protocol == "VLESS" or args.tcp or args.http
+        if protocol == "VMESSTLS"
+        or protocol == "VLESS"
+        or args.tcp
+        or args.http
+        or args.shadowsocks
         else "",
-        "," + wsSettings if not args.http and not args.tcp else "",
+        "," + wsSettings
+        if not args.http and not args.tcp and not args.shadowsocks
+        else "",
     )
 
     outbands_client = """
@@ -1436,9 +1478,10 @@ def client_side_configuration(protocol):
         outbands,
     )
 
+    jsondata = json.loads(client_configuration)
     name = f"client-{protocol}-{args.linkname}.json"
     with open(name, "w") as wb:
-        wb.write(json.dumps(json.loads(client_configuration), indent=2))
+        wb.write(json.dumps(jsondata, indent=2))
         wb.close
 
     print("")
@@ -1454,7 +1497,7 @@ def client_side_configuration(protocol):
         reset,
     )
     print(
-        green + json.dumps(json.loads(client_configuration), separators=(",", ":")),
+        green + json.dumps(jsondata, separators=(",", ":")),
         reset,
     )
     print("")
@@ -1472,17 +1515,12 @@ def xray_create(protocol):
     sys.exit(1) if args.config else ""
     outbounds_check()
 
+    if args.tls or args.vless:
+        create_key()
+        time.sleep(0.5)
+
     # Creating docker-compose file
-    if protocol == "VMESS":
-        xray_dockercompose("VMESS")
-    elif protocol == "VMESSTLS":
-        create_key()
-        time.sleep(0.5)
-        xray_dockercompose("VMESSTLS")
-    elif protocol == "VLESS":
-        create_key()
-        time.sleep(0.5)
-        xray_dockercompose("VLESS")
+    xray_dockercompose()
 
     # Running docker-compose on Server
     run_docker()
@@ -1493,7 +1531,7 @@ def xray_create(protocol):
     # Generate encoded link & client-side configuration
     if protocol == "VMESS" or protocol == "VMESSTLS":
         vmess_link = vmess_link_generator(
-            args.alterid, UUID, net, path, PORT, args.linkname, tlstype, header
+            args.alterid, UUID, net, path, PORT, args.linkname, TLSTYPE, header
         )
         print(vmess_link)
 
@@ -1507,15 +1545,22 @@ def xray_create(protocol):
             client_side_configuration("VMESSTLS")
 
     elif protocol == "VLESS":
-        vless_link = vless_link_generator(UUID, PORT, net, path, tlstype, args.linkname)
+        vless_link = vless_link_generator(UUID, PORT, net, path, TLSTYPE, args.linkname)
         print(vless_link)
 
         if args.qrcode:
             print(yellow + "! QRCode :" + reset)
             print(qrcode(vless_link))
         client_side_configuration("VLESS")
+    elif protocol == "SHADOWSOCKS":
+        shadowsocks_link = shadowsocks_link_generator()
+        print(shadowsocks_link)
 
-    if protocol in ("VMESSTLS", "VLESS"):
+        if args.qrcode:
+            print(yellow + "! QRCode :" + reset)
+        client_side_configuration("SHADOWSOCKS")
+
+    if args.tls or args.vless:
         print(
             yellow
             + "! Using self-signed key\
@@ -1525,23 +1570,6 @@ def xray_create(protocol):
 
     # Generate NGINX Template
     country() if protocol == "VMESS" else None
-
-
-def shadowsocks_create():
-    """
-    Quick shadowsocks configuration
-    """
-    shadowsocks_make(args.ssmethod)
-    shadowsocks_dockercompose()
-
-    run_docker()
-    shadowsocks_link = shadowsocks_link_generator()
-    print(shadowsocks_link)
-
-    if args.qrcode:
-        print(yellow + "! QRCode :" + reset)
-        print(qrcode(shadowsocks_link))
-    country()
 
 
 # -------------------------------- Parse URL --------------------------------- #
@@ -1641,21 +1669,12 @@ def parse_VMess(vmesslink):
 # -------------------------------- Docker --------------------------------- #
 
 
-def xray_dockercompose(protocol):
+def xray_dockercompose():
     """
     Create docker-compose file for xray-core.
     in this docker-compose xray-core is being used for running xray in the container.
     https://hub.docker.com/r/teddysun/xray
     """
-
-    # docker protocol type
-    if protocol == "VMESS":
-        arg = VMESS
-    if protocol == "VMESSTLS":
-        arg = VMESS
-    elif protocol == "VLESS":
-        arg = VLESS
-
     if args.v2ray:
         type = "v2ray"
     else:
@@ -1678,7 +1697,7 @@ services:
         - ./%s:/etc/v2ray/config.json:ro
         %s
         %s""" % (
-            arg,
+            CONFIGNAME,
             docker_crtkey if args.vless or args.tls else "",
             docker_hostkey if args.vless or args.tls else "",
         )
@@ -1696,41 +1715,12 @@ services:
         - ./%s:/etc/xray/config.json:ro
         %s
         %s""" % (
-            arg,
+            CONFIGNAME,
             docker_crtkey if args.vless or args.tls else "",
             docker_hostkey if args.vless or args.tls else "",
         )
 
     print(yellow + f"! Created {type}-core {DOCKERCOMPOSE} configuration" + reset)
-    with open(f"{DOCKERCOMPOSE}", "w") as txt:
-        txt.write(data)
-        txt.close()
-
-
-def shadowsocks_dockercompose():
-    """
-    Create ShadowSocks docker-compose file for shadowsocks-libev.
-    in this docker-compose shadowsocks-libev is being used for running shadowsocks in the container.
-    https://hub.docker.com/r/shadowsocks/shadowsocks-libev
-    """
-
-    data = """version: '3'
-services:
-  shadowsocks:
-    image: shadowsocks/shadowsocks-libev
-    ports:
-      - "%s:8388"
-    environment:
-      - TIMEOUT=300
-      - METHOD=%s
-      - PASSWORD=%s
-    restart: always""" % (
-        PORT,
-        args.ssmethod,
-        args.sspass,
-    )
-
-    print(yellow + f"! Created ShadowSocks {DOCKERCOMPOSE} configuration" + reset)
     with open(f"{DOCKERCOMPOSE}", "w") as txt:
         txt.write(data)
         txt.close()
@@ -1863,7 +1853,7 @@ def serverside_info_raw() -> str:
         print("WSPATH: " + blue + str(args.wspath) + reset)
 
     print("PORT: " + blue + str(PORT) + reset)
-    print("SECURITY: " + blue + str(tlstype) + reset)
+    print("SECURITY: " + blue + str(TLSTYPE) + reset)
     print("LINKNAME: " + blue + str(args.linkname) + reset)
 
     if args.csocks or args.chttp:
@@ -1877,7 +1867,6 @@ def serverside_info_raw() -> str:
 def read_serverside_configuration(config):
     """
     parse server-side configuration file
-    this function only support vmess & vless json file
     https://www.v2ray.com/en/configuration/overview.html
     """
     global ID, AlterId, net, path, configport, securitymethod, protocol
@@ -2140,12 +2129,34 @@ def shadowsocks_check():
     # Below methods are the recommended choice.
     # Other stream ciphers are implemented but do not provide integrity and authenticity.
 
-    methodlist = ["chacha20-ietf-poly1305", "aes-256-gcm", "aes-128-gcm"]
+    methodlist = [
+        "2022-blake3-chacha20-poly1305",
+        "2022-blake3-aes-256-gcm",
+        "2022-blake3-aes-128-gcm",
+        "xchacha20-ietf-poly1305",
+        "aes-256-gcm",
+        "aes-128-gcm",
+        "chacha20-ietf-poly1305",
+    ]
+    xraymethod = methodlist[0:4]
+    v2raymethod = methodlist[4:]
+
     if args.ssmethod not in methodlist:
         print("Select one method :")
-        for methods in range(len(methodlist)):
-            print(green + methodlist[methods] + reset)
+        print("{}XRay Ciphers :{}".format(yellow,reset))
+
+        for xmethods in range(len(xraymethod)):
+            print(green + xraymethod[xmethods] + reset)
+
+        print("{}V2ray Ciphers : {}".format(yellow,reset))
+        for vmethods in range(len(v2raymethod)):
+            print(green + v2raymethod[vmethods] + reset)
         sys.exit(2)
+
+    elif args.ssmethod in (methodlist[0:2] , methodlist[-1]):
+        print(
+            "{}{} are only useable in xray-core{}".format(yellow, args.ssmethod, reset)
+        )
 
 
 def outbounds_check():
@@ -2268,25 +2279,27 @@ if __name__ == "__main__":
     #     print(green + 'Domain ٰValid!' + reset)
     #     ServerIP = f"{args.domain}"
 
-    # ShadowSocks Password
-    if args.sspass == None:
-        args.sspass = get_random_charaters()
-
     # ShadowSocks Method
     if args.ssmethod == None:
-        args.ssmethod = "chacha20-ietf-poly1305"
+        args.ssmethod = "2022-blake3-chacha20-poly1305"
+
+    # ShadowSocks Password
+    if args.sspass == None and args.ssmethod == "2022-blake3-aes-128-gcm":
+        args.sspass = subprocess.run(
+            "openssl rand -base64 16", capture_output=True, text=True, shell=True
+        ).stdout.strip("\n")
+
+    if args.sspass == None:
+        args.sspass = subprocess.run(
+            "openssl rand -base64 32", capture_output=True, text=True, shell=True
+        ).stdout.strip("\n")
 
     if args.outbound == None:
         args.outbound = "both"
 
     # link security method
-    if args.vmess:
-        tlstype = ""
-
-    if args.tls:
-        tlstype = "tls"
-    elif args.vless:
-        tlstype = "tls"
+    if args.tls or args.vless:
+        TLSTYPE = "tls"
 
     if args.http:
         net = "http"
@@ -2321,14 +2334,12 @@ if __name__ == "__main__":
         xray_create("VLESS")
     # Quick ShadowSocks Setup
     elif args.shadowsocks:
-        shadowsocks_create()
+        shadowsocks_check()
+        xray_create("SHADOWSOCKS")
 
     # Make docker-compose for VMess
     if args.dockerfile:
-        xray_dockercompose("VMESS")
-    # Make docker-compose for ShadowSocks
-    if args.ssdocker:
-        shadowsocks_dockercompose()
+        xray_dockercompose()
 
     # Run docker-compose
     if args.dockerup:

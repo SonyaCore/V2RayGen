@@ -418,13 +418,11 @@ you can use client-side configuration directly with xray-core or v2ray-core
 
 List of security methods :
 
-```
-aes-128-gcm
-chacha20-poly1305
-auto
-none
-zero
-```
+- `aes-128-gcm`
+- `chacha20-poly1305`
+- `auto`
+- `none`
+- `zero`
 
 `csocks` client-side SOCKS port . default: [10808]
 
@@ -433,6 +431,27 @@ zero
 `qrcode` Generate QRCode for generated link.
 
 > if you want to import your configuration with qrcode use this argument.
+
+## ShadowSocks
+
+shadowsocks are loaded with xray docker container and it uses tcp stream for passing traffic
+
+`sspass` set password for shadowsocks configuration file. by default, it uses a random password
+
+`ssmethod` Set cipher method for ShadowSocks . default cipher method is `2022-blake3-chacha20-poly1305` to provide better security hence it's only usable in xray-core. for using shadowsocks with v2ray core use one of the below cipher methods :
+
+V2Ray Cipher methods :
+
+- `2022-blake3-chacha20-poly1305`
+- `2022-blake3-aes-256-gcm`
+- `2022-blake3-aes-128-gcm`
+
+XRay Cipher methods :
+
+- `2022-blake3-chacha20-poly1305`
+- `2022-blake3-aes-256-gcm`
+- `2022-blake3-aes-128-gcm`
+- `xchacha20-ietf-poly1305`
 
 ---
 

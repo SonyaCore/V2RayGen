@@ -1523,7 +1523,7 @@ def xray_create(protocol):
     xray_dockercompose()
 
     # Running docker-compose on Server
-    # run_docker()
+    run_docker()
 
     # Printing Information
     serverside_info_raw()

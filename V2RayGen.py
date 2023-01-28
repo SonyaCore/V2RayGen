@@ -1101,7 +1101,7 @@ def headersettings(direction) -> str:
     default tcp setting header for json configuration.
     for using custom configuration use ( --header file.json ) option to configure your own header
     """
-    
+
     request = """ 
     "request": {
         "version": "1.1",
@@ -1136,7 +1136,7 @@ def headersettings(direction) -> str:
         }
       }
         """
-    
+
     response = """ 
     "request": {
         "version": "1.1",
@@ -1176,7 +1176,7 @@ def headersettings(direction) -> str:
         }
       }
         """
-        
+
     header = """
     {
         "header": {
@@ -1187,7 +1187,7 @@ def headersettings(direction) -> str:
     """ % (
         response if direction == "in" else request
     )
-    
+
     return header
 
 
@@ -2133,16 +2133,30 @@ def shadowsocks_check():
         "2022-blake3-chacha20-poly1305",
         "2022-blake3-aes-256-gcm",
         "2022-blake3-aes-128-gcm",
+        "xchacha20-ietf-poly1305",
         "aes-256-gcm",
         "aes-128-gcm",
         "chacha20-ietf-poly1305",
-        "xchacha20-ietf-poly1305",
     ]
+    xraymethod = methodlist[0:3]
+    v2raymethod = methodlist[4:]
+
     if args.ssmethod not in methodlist:
         print("Select one method :")
-        for methods in range(len(methodlist)):
-            print(green + methodlist[methods] + reset)
+        print("{}XRay Ciphers :{}".format(yellow,reset))
+
+        for xmethods in range(len(xraymethod) + 1 ):
+            print(green + methodlist[xmethods] + reset)
+
+        print("{}V2ray Ciphers : {}".format(yellow,reset))
+        for vmethods in range(len(v2raymethod)):
+            print(green + methodlist[vmethods] + reset)
         sys.exit(2)
+
+    elif args.ssmethod in (methodlist[0:2] , methodlist[-1]):
+        print(
+            "{}{} are only useable in xray-core{}".format(yellow, args.ssmethod, reset)
+        )
 
 
 def outbounds_check():

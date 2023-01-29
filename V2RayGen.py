@@ -125,6 +125,10 @@ inboundsparser = parser.add_argument_group(f"{green}XRay - Inbounds{reset}")
 inboundsparser.add_argument(
     "--tls", "-t", action="store_true", help="Using TLS in specified protocol"
 )
+inboundsparser.add_argument(
+    "--xtls", "-xt", action="store_true", help="Using XTLS in specified protocol"
+)
+
 
 inboundsparser.add_argument(
     "--port",
@@ -655,7 +659,7 @@ def xray_make():
 
     print(blue + f"! {name} Config Generated." + reset)
     if args.vless:
-        print(yellow + f"! By default TLS is being used for this Protocol" + reset)
+        print("{}! By default TLS is being used for this Protocol{}".format(yellow,reset))
 
 
 def xray_config(outband, protocol) -> str:
@@ -664,17 +668,20 @@ def xray_config(outband, protocol) -> str:
     """
     global NETSTREAM
 
+    if args.xtls :
+        print("{}! XTLS only supports (TCP,mKCP). Using TCP mode{}".format(yellow,reset))
+
     if args.http:
         networkstream = http()
         NETSTREAM = "HTTP"
-    elif args.tcp or args.shadowsocks:
+    elif args.tcp or args.shadowsocks or args.xtls:
         networkstream = tcp()
         NETSTREAM = "TCP"
     else:
         networkstream = websocket_config(args.wspath)
         NETSTREAM = "WebSocket"
 
-    if args.tcp or args.shadowsocks:
+    if args.tcp or args.shadowsocks or args.xtls:
         # TCP stream settings
         streamsettings = """
         "streamSettings": {
@@ -989,9 +996,16 @@ def tlssettings() -> str:
     """
     tls security settings for protocols with tls
     """
+    if args.xtls :
+        server_security = "xtls"
+        tls_server_type = "xtlsSettings"
+    else :
+        server_security = "tls"
+        tls_server_type = "tlsSettings"
+    
     tls = """
-    "security": "tls",    
-    "tlsSettings": {
+    "security": "%s",    
+    "%s": {
           "alpn": ["http/1.1"],
           "certificates": [
             {
@@ -1000,6 +1014,8 @@ def tlssettings() -> str:
             }
           ]
         }""" % (
+        server_security,
+        tls_server_type,
         crtkey,
         hostkey,
     )
@@ -1377,20 +1393,27 @@ def client_side_configuration(protocol):
         HTTPPORT,
     )
 
+    if args.xtls :
+        tls_client_type = "xtlsSettings"
+        security = "xtls"
+    else :
+        tls_client_type = "tlsSettings"
+        security = "tls"
+
     tls_client = """
-        "security": "tls",
-        "tlsSettings": {
+        "security": "%s",
+        "%s": {
           "allowInsecure": true,
           "alpn": [
             "http/1.1"
           ],
           "fingerprint": ""
         }
-        """
+        """ %(security,tls_client_type)
 
     if args.http:
         network = "http"
-    elif args.tcp or args.shadowsocks:
+    elif args.tcp or args.shadowsocks or args.xtls:
         network = "tcp"
     else:
         network = "websocket"
@@ -2298,7 +2321,13 @@ if __name__ == "__main__":
         args.outbound = "both"
 
     # link security method
-    if args.tls or args.vless:
+    if args.tls:
+        TLSTYPE = "tls"
+    
+    elif args.xtls :
+        TLSTYPE = "xtls"
+
+    elif args.vless :
         TLSTYPE = "tls"
 
     if args.http:
@@ -2310,6 +2339,11 @@ if __name__ == "__main__":
         net = "tcp"
         path = "/"
         header = "http"
+
+    elif args.vless and args.xtls:
+        net = "tcp"
+        path = "/"
+        header = "http"      
 
     else:
         net = "ws"
@@ -2323,6 +2357,12 @@ if __name__ == "__main__":
 
     if args.linkname == None:
         args.linkname = linkname
+
+    if args.vmess and args.xtls :
+        sys.exit("{}! XTLS doesn't supports VMess for now.{}".format(error,reset))
+
+    if args.http and args.xtls :
+        sys.exit("{}! XTLS doesn't supports HTTP mode{}".format(error,reset))
 
     # Quick VMess Setup
     if all((args.vmess, args.tls)):

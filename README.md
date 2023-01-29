@@ -50,11 +50,12 @@ There is also `XRayAgent` for User Management on XRay Configuration which can be
 
 You can use one of the following protocols for installation and change its settings according to your needs.
 
-| Protoctol   | Argument      |
-| ----------- | ------------- |
-| VMESS       | --vmess , -wm |
-| VMESS + TLS | --vmess --tls |
-| VLESS + TLS | --vless , -vl |
+| Protoctol    | Argument       |
+| ------------ | -------------- |
+| VMESS        | --vmess , -wm  |
+| VMESS + TLS  | --vmess --tls  |
+| VLESS + TLS  | --vless , -vl  |
+| VLESS + XTLS | --vless --xtls |
 
 ### **Quick `Xray` Setup with Default Setting** :
 
@@ -125,6 +126,12 @@ VLESS + Using Google DNS :
 
 ```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vless --dns google
+```
+
+VLESS + XTLS :
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vless --xtls
 ```
 
 ShadowSocks + adding shadowsocks port to server :
@@ -302,6 +309,12 @@ none : Nothing will be printed.
 > --vmess --tls will create a vmess with self-signed tls
 >
 > `it's important to enable allow insecure tls on your client`
+
+`xtls` Using XTLS in specified protocol
+
+> XTLS only supports (TCP, mKCP) so by default when you use --xtls argument tcp mode is being used for vless
+>
+> also xtls doesn't support vmess protocol
 
 `port` for changing configuration port.
 

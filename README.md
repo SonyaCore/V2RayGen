@@ -166,6 +166,13 @@ XRayAgent is a Simple User Management for XRay Configuration
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py --output /tmp/v.py && python3 /tmp/v.py --agent
 ```
 
+OR
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/XRayAgent.py --output XRayAgent.py
+python3 XRayAgent.py
+```
+
 > By default it loads `config.json` for loading configuration
 
 > For loading other configuration simply enter the name of the configuration after XRayAgent.py :

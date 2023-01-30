@@ -31,7 +31,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.1.4"
+VERSION = "1.1.5"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -57,6 +57,10 @@ DOCKERCOMPOSE = "docker-compose.yml"
 # Client Side PORT
 SOCKSPORT = 10808
 HTTPPORT = 10809
+
+## AGENT
+AGENT_URL = "https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/XRayAgent.py"
+AGENT_PATH = "/tmp/agent.py"
 
 # -------------------------------- Colors --------------------------------- #
 
@@ -86,6 +90,8 @@ def str2bool(v):
 
 
 parser.add_argument("--config", "-c", action="store_true", help="Creating only the Configuration file")
+parser.add_argument("--agent", "-a", action="store_true", help="Launch XRayAgent")
+
 
 quick = parser.add_argument_group(f"{green}Protocols{reset}")
 
@@ -2219,6 +2225,12 @@ if __name__ == "__main__":
         banner()
 
     user_permission()
+
+    if args.agent:
+        subprocess_command = "curl {url} --output {path} && python3 {path}"\
+        .format(url = AGENT_URL, path = AGENT_PATH)
+        subprocess.run(subprocess_command, check=True, shell=True)
+        os.remove(AGENT_PATH)
 
     # install bbr
     if args.bbr:

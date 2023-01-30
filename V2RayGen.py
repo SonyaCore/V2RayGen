@@ -18,6 +18,7 @@ import random
 import string
 import csv
 import re
+import platform
 import ipaddress
 from urllib.parse import unquote
 from urllib.request import urlopen, Request
@@ -571,6 +572,12 @@ def create_key():
     )
     print(reset)
 
+def clearcmd() -> None:
+    version = platform.system()
+    if version in ("Linux","Darwin"):
+        subprocess.run("clear")
+    elif version == "Windows":
+        subprocess.run("cls")
 
 # def websocket_domaincheck(url = args.domain,t = 10) :
 #     """
@@ -2227,7 +2234,8 @@ if __name__ == "__main__":
     user_permission()
 
     if args.agent:
-        subprocess_command = "curl {url} --output {path} && python3 {path}"\
+        clearcmd()
+        subprocess_command = "curl -s {url} --output {path} && python3 {path}"\
         .format(url = AGENT_URL, path = AGENT_PATH)
         subprocess.run(subprocess_command, check=True, shell=True)
         os.remove(AGENT_PATH)

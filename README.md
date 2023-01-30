@@ -160,13 +160,10 @@ curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | pyt
 
 XRayAgent is a Simple User Management for XRay Configuration
 
-> XRayAgent takes user input so you have to download that to your server and then running it
-
 ### Download Script & Run With Python3:
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/XRayAgent.py --output XRayAgent.py
-python3 XRayAgent.py
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py --output /tmp/v.py && python3 /tmp/v.py --agent
 ```
 
 > By default it loads `config.json` for loading configuration

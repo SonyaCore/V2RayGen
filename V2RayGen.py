@@ -572,12 +572,14 @@ def create_key():
     )
     print(reset)
 
+
 def clearcmd() -> None:
     version = platform.system()
-    if version in ("Linux","Darwin"):
+    if version in ("Linux", "Darwin"):
         subprocess.run("clear")
     elif version == "Windows":
         subprocess.run("cls")
+
 
 # def websocket_domaincheck(url = args.domain,t = 10) :
 #     """
@@ -672,7 +674,9 @@ def xray_make():
 
     print(blue + f"! {name} Config Generated." + reset)
     if args.vless:
-        print("{}! By default TLS is being used for this Protocol{}".format(yellow,reset))
+        print(
+            "{}! By default TLS is being used for this Protocol{}".format(yellow, reset)
+        )
 
 
 def xray_config(outband, protocol) -> str:
@@ -681,8 +685,10 @@ def xray_config(outband, protocol) -> str:
     """
     global NETSTREAM
 
-    if args.xtls :
-        print("{}! XTLS only supports (TCP,mKCP). Using TCP mode{}".format(yellow,reset))
+    if args.xtls:
+        print(
+            "{}! XTLS only supports (TCP,mKCP). Using TCP mode{}".format(yellow, reset)
+        )
 
     if args.http:
         networkstream = http()
@@ -1009,13 +1015,13 @@ def tlssettings() -> str:
     """
     tls security settings for protocols with tls
     """
-    if args.xtls :
+    if args.xtls:
         server_security = "xtls"
         tls_server_type = "xtlsSettings"
-    else :
+    else:
         server_security = "tls"
         tls_server_type = "tlsSettings"
-    
+
     tls = """
     "security": "%s",    
     "%s": {
@@ -1406,10 +1412,10 @@ def client_side_configuration(protocol):
         HTTPPORT,
     )
 
-    if args.xtls :
+    if args.xtls:
         tls_client_type = "xtlsSettings"
         security = "xtls"
-    else :
+    else:
         tls_client_type = "tlsSettings"
         security = "tls"
 
@@ -1422,7 +1428,10 @@ def client_side_configuration(protocol):
           ],
           "fingerprint": ""
         }
-        """ %(security,tls_client_type)
+        """ % (
+        security,
+        tls_client_type,
+    )
 
     if args.http:
         network = "http"
@@ -2179,17 +2188,17 @@ def shadowsocks_check():
 
     if args.ssmethod not in methodlist:
         print("Select one method :")
-        print("{}XRay Ciphers :{}".format(yellow,reset))
+        print("{}XRay Ciphers :{}".format(yellow, reset))
 
         for xmethods in range(len(xraymethod)):
             print(green + xraymethod[xmethods] + reset)
 
-        print("{}V2ray Ciphers : {}".format(yellow,reset))
+        print("{}V2ray Ciphers : {}".format(yellow, reset))
         for vmethods in range(len(v2raymethod)):
             print(green + v2raymethod[vmethods] + reset)
         sys.exit(2)
 
-    elif args.ssmethod in (methodlist[0:2] , methodlist[-1]):
+    elif args.ssmethod in (methodlist[0:2], methodlist[-1]):
         print(
             "{}{} are only useable in xray-core{}".format(yellow, args.ssmethod, reset)
         )
@@ -2235,8 +2244,9 @@ if __name__ == "__main__":
 
     if args.agent:
         clearcmd()
-        subprocess_command = "curl -s {url} --output {path} && python3 {path}"\
-        .format(url = AGENT_URL, path = AGENT_PATH)
+        subprocess_command = "curl -s {url} --output {path} && python3 {path}".format(
+            url=AGENT_URL, path=AGENT_PATH
+        )
         subprocess.run(subprocess_command, check=True, shell=True)
         os.remove(AGENT_PATH)
 
@@ -2343,11 +2353,11 @@ if __name__ == "__main__":
     # link security method
     if args.tls:
         TLSTYPE = "tls"
-    
-    elif args.xtls :
+
+    elif args.xtls:
         TLSTYPE = "xtls"
 
-    elif args.vless :
+    elif args.vless:
         TLSTYPE = "tls"
 
     if args.http:
@@ -2363,7 +2373,7 @@ if __name__ == "__main__":
     elif args.vless and args.xtls:
         net = "tcp"
         path = "/"
-        header = "http"      
+        header = "http"
 
     else:
         net = "ws"
@@ -2378,11 +2388,11 @@ if __name__ == "__main__":
     if args.linkname == None:
         args.linkname = linkname
 
-    if args.vmess and args.xtls :
-        sys.exit("{}! XTLS doesn't supports VMess for now.{}".format(error,reset))
+    if args.vmess and args.xtls:
+        sys.exit("{}! XTLS doesn't supports VMess for now.{}".format(error, reset))
 
-    if args.http and args.xtls :
-        sys.exit("{}! XTLS doesn't supports HTTP mode{}".format(error,reset))
+    if args.http and args.xtls:
+        sys.exit("{}! XTLS doesn't supports HTTP mode{}".format(error, reset))
 
     # Quick VMess Setup
     if all((args.vmess, args.tls)):

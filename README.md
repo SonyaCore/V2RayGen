@@ -8,9 +8,7 @@
 
 </h1>
 
-<h3>
-<strong>V2RayGen / XRayGen</strong> is a fully automated script that helps you to set up your own Xray server in the fastest time.
-</h3>
+<h3><strong>V2RayGen/XRayGen</strong>: A Fast and Automated Script for XRay/V2Ray Server Setup</h3>
 
 [**Usage**](#usage)
 
@@ -18,25 +16,28 @@
 
 [**Examples**](#examples)
 
-[**Options ⚙️**](#options)
+[**Options**](#options)
 
-[**License 🪪**](#license)
+[**License**](#license)
 
-[**Donate Me ☕**](#donateme)
+[**Donate Me**](#donateme)
 
 ## **Prerequisites & Dependencies**
 
-For running this script, you must have **docker**, **docker-compose** and **python3** on your server **but** this script installs `docker` & `docker-compose` if your server doesn't have docker and runs xray-core automatically
+- `Python3`
+- `Docker`
+- `Docker Compose`
+<p>If your server lacks Docker and Docker-Compose, the script will install them and launch XRay-Core automatically.</p>
 
 use **sudo** if your current user is not in the docker group or you don't have docker installed
 
-## **How XRayGen Works ?**
+## **How Does XRayGen Work?**
 
-`XRayGen` uses docker to pull XRay image from the docker registry and after that, it generates a configuration file to start XRay container.
+<p>XRayGen uses Docker to retrieve the xray-core image from the Docker registry. It then generates a configuration file to launch the XRay container.
 
-it also creates a client side configuration file so you can use that with xray-core or v2ray-core.
+A client-side configuration file is also created for use with XRay-core or V2Ray-core.
 
-There is also `XRayAgent` for User Management on XRay Configuration which can be used for CRUD operations.
+The XRayAgent provides user management for XRay configuration, offering CRUD operations.</p>
 
 ## **Usage**
 

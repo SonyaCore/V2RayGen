@@ -8,9 +8,7 @@
 
 </h1>
 
-<h3>
-<strong>V2RayGen / XRayGen</strong> is a fully automated script that helps you to set up your own Xray server in the fastest time.
-</h3>
+<h3><strong>V2RayGen/XRayGen</strong>: A Fast and Automated Script for XRay/V2Ray Server Setup</h3>
 
 [**Usage**](#usage)
 
@@ -18,25 +16,28 @@
 
 [**Examples**](#examples)
 
-[**Options ⚙️**](#options)
+[**Options**](#options)
 
-[**License 🪪**](#license)
+[**License**](#license)
 
-[**Donate Me ☕**](#donateme)
+[**Donate Me**](#donateme)
 
 ## **Prerequisites & Dependencies**
 
-For running this script, you must have **docker**, **docker-compose** and **python3** on your server **but** this script installs `docker` & `docker-compose` if your server doesn't have docker and runs xray-core automatically
+- `Python3`
+- `Docker`
+- `Docker Compose`
+<p>If your server lacks Docker and Docker-Compose, the script will install them and launch XRay-Core automatically.</p>
 
 use **sudo** if your current user is not in the docker group or you don't have docker installed
 
-## **How XRayGen Works ?**
+## **How Does XRayGen Work?**
 
-`XRayGen` uses docker to pull XRay image from the docker registry and after that, it generates a configuration file to start XRay container.
+<p>XRayGen uses Docker to retrieve the xray-core image from the Docker registry. It then generates a configuration file to launch the XRay container.
 
-it also creates a client side configuration file so you can use that with xray-core or v2ray-core.
+A client-side configuration file is also created for use with XRay-core or V2Ray-core.
 
-There is also `XRayAgent` for User Management on XRay Configuration which can be used for CRUD operations.
+The XRayAgent provides user management for XRay configuration, offering CRUD operations.</p>
 
 ## **Usage**
 
@@ -50,11 +51,12 @@ There is also `XRayAgent` for User Management on XRay Configuration which can be
 
 You can use one of the following protocols for installation and change its settings according to your needs.
 
-| Protoctol   | Argument      |
-| ----------- | ------------- |
-| VMESS       | --vmess , -wm |
-| VMESS + TLS | --vmess --tls |
-| VLESS + TLS | --vless , -vl |
+| Protoctol    | Argument       |
+| ------------ | -------------- |
+| VMESS        | --vmess , -wm  |
+| VMESS + TLS  | --vmess --tls  |
+| VLESS + TLS  | --vless , -vl  |
+| VLESS + XTLS | --vless --xtls |
 
 ### **Quick `Xray` Setup with Default Setting** :
 
@@ -127,6 +129,12 @@ VLESS + Using Google DNS :
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vless --dns google
 ```
 
+VLESS + XTLS :
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vless --xtls
+```
+
 ShadowSocks + adding shadowsocks port to server :
 
 ```bash
@@ -153,9 +161,13 @@ curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | pyt
 
 XRayAgent is a Simple User Management for XRay Configuration
 
-> XRayAgent takes user input so you have to download that to your server and then running it
-
 ### Download Script & Run With Python3:
+
+```bash
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py --output /tmp/v.py && python3 /tmp/v.py --agent
+```
+
+OR
 
 ```bash
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/XRayAgent.py --output XRayAgent.py
@@ -302,6 +314,12 @@ none : Nothing will be printed.
 > --vmess --tls will create a vmess with self-signed tls
 >
 > `it's important to enable allow insecure tls on your client`
+
+`xtls` Using XTLS in specified protocol
+
+> XTLS only supports (TCP, mKCP) so by default when you use --xtls argument tcp mode is being used for vless
+>
+> also xtls doesn't support vmess protocol
 
 `port` for changing configuration port.
 

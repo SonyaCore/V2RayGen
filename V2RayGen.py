@@ -2227,7 +2227,7 @@ if __name__ == "__main__":
     user_permission()
 
     if args.agent:
-        subprocess_command = "curl {url} --output {path} && python3 {path}"\
+        subprocess_command = "curl -s {url} --output {path} && python3 {path}"\
         .format(url = AGENT_URL, path = AGENT_PATH)
         subprocess.run(subprocess_command, check=True, shell=True)
         os.remove(AGENT_PATH)

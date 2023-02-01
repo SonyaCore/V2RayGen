@@ -635,15 +635,6 @@ def launch_agent():
 
 # -------------------------------- Global Variables --------------------------------- #
 
-# Collect Server IP
-try:
-    if not args.parse:
-        ServerIP = ip()
-except RemoteDisconnected as e:
-    sys.exit(error + "ERROR : " + reset + str(e))
-except URLError as e:
-    sys.exit(error + "ERROR : " + reset + str(e))
-
 if args.v2ray:
     PROTOCOL = "v2ray"
 else:
@@ -654,7 +645,7 @@ crtkey = "/etc/{}/{}".format(PROTOCOL,SELFSIGEND_CERT)
 hostkey = "/etc/{}/{}".format(PROTOCOL,SELFSIGEND_KEY)
 
 # Outband protocols
-protocol_list = ["freedom", "blackhole", "both"]
+outbound_list = ["freedom", "blackhole", "both"]
 
 # link schematic
 vmess_scheme = "vmess://"
@@ -662,13 +653,47 @@ shadowsocks_scheme = "ss://"
 
 # Supported XRay Configuration Protocols
 supported_typo = [
-"vmess",
-"vmesstls",
-"vlesstls",
-"vlessxtls",
-"shadowsocks",
-"shadowsockstls"
+"vmessws",
+"vmesswstls",
+"vmesstcp",
+"vmesstcptls",
+"vlesswstls",
+"vlesswsxtls",
+"vlesstcptls",
+"vlesstcpxtls",
+"shadowsockstcp",
+"shadowsockstcptls"
 ]
+
+def protocol_map():
+    """
+    Map user-entered arguments to supported protocols.
+    If unsupported protocols are entered, raise an exception with a list of available protocols,
+    prioritizing arguments with more parameters.
+    """
+    if all((args.vmess,args.tcp,args.tls)):
+        protocol_type = supported_typo[3]
+    elif all((args.vless, args.tcp , args.xtls)):
+        protocol_type = supported_typo[7]
+    elif all((args.vmess,args.tcp)):
+        protocol_type = supported_typo[2]
+    elif all((args.vless,args.xtls)):
+        protocol_type = supported_typo[5]
+    elif all((args.vless, args.tcp)):
+        protocol_type = supported_typo[6]
+    elif all((args.shadowsocks,args.tls)):
+        protocol_type = supported_typo[9]
+    elif all((args.vmess , args.tls)):
+        protocol_type = supported_typo[1]
+    elif args.shadowsocks:
+        protocol_type = supported_typo[8]
+    elif args.vmess:
+        protocol_type = supported_typo[0]
+    elif args.vless :
+        protocol_type = supported_typo[4]
+    else:
+        raise Exception("Unsupported Protocol.\n{}".format(protocols_list()))
+    return protocol_type
 
 
 # -------------------------------- VMess JSON --------------------------------- #
@@ -2273,12 +2298,21 @@ def base_error(err):
 
 if __name__ == "__main__":
     python_version()
-    
+
     if len(sys.argv) <= 1:
         parser.print_help()
         sys.exit(1)
     else:
         banner()
+
+    # Collect Server IP
+    try:
+        if not args.parse:
+            ServerIP = ip()
+    except RemoteDisconnected as e:
+        sys.exit(error + "ERROR : " + reset + str(e))
+    except URLError as e:
+        sys.exit(error + "ERROR : " + reset + str(e))
 
     user_permission()
 
@@ -2417,6 +2451,8 @@ if __name__ == "__main__":
 
     if args.linkname == None:
         args.linkname = linkname
+
+    protocol_map()
 
     if args.vmess and args.xtls:
         sys.exit("{}! XTLS doesn't supports VMess for now.{}".format(error, reset))

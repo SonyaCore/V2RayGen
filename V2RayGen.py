@@ -74,8 +74,9 @@ reset = "\u001b[0m"
 
 # -------------------------------- Argument Parser --------------------------------- #
 
-usage = "python3 {} {} <protocol> {} {} <optional args> {}"\
-    .format(NAME,error,reset,blue,reset)
+usage = "python3 {} {} <protocol> {} {} <optional args> {}".format(
+    NAME, error, reset, blue, reset
+)
 formatter = lambda prog: argparse.HelpFormatter(prog, max_help_position=64)
 parser = argparse.ArgumentParser(prog=NAME, formatter_class=formatter, usage=usage)
 
@@ -96,13 +97,15 @@ parser.add_argument("--agent", "-a", action="store_true", help="Launch XRayAgent
 parser.add_argument("--protocols", "-l", action="store_true", help="Show list of protocols")
 
 
-quick = parser.add_argument_group("{}Protocols{}".format(green,reset))
+quick = parser.add_argument_group("{}Protocols{}".format(green, reset))
 
 quick.add_argument("--vmess", "-vm", action="store_true", help="Create VMess")
 quick.add_argument("--vless", "-vl", action="store_true", help="Create VLess")
 quick.add_argument("--shadowsocks", "-ss", action="store_true", help="Create ShadowSocks")
 
-logdnsparser = parser.add_argument_group("{}XRay - Log & DNS Settings{}".format(green,reset))
+logdnsparser = parser.add_argument_group(
+    "{}XRay - Log & DNS Settings{}".format(green, reset)
+)
 
 logdnsparser.add_argument(
     "--loglevel",
@@ -116,7 +119,7 @@ logdnsparser.add_argument(
     "--dns", action="store", type=str, metavar="", help="Optional DNS. default: [nodns]"
 )
 
-routingparser = parser.add_argument_group("{}XRay - Routing{}".format(green,reset))
+routingparser = parser.add_argument_group("{}XRay - Routing{}".format(green, reset))
 routingparser.add_argument(
     "--block",
     "--block-routing",
@@ -130,7 +133,7 @@ routingparser.add_argument(
     help="Blocking Bittorrent, Ads and Irnian IPs in configuration. [default: False]",
 )
 
-inboundsparser = parser.add_argument_group("{}XRay - Inbounds{}".format(green,reset))
+inboundsparser = parser.add_argument_group("{}XRay - Inbounds{}".format(green, reset))
 inboundsparser.add_argument(
     "--tls", "-t", action="store_true", help="Using TLS in specified protocol"
 )
@@ -177,7 +180,7 @@ inboundsparser.add_argument(
     default=True,
 )
 streamsettingsparser = parser.add_argument_group(
-    "{}XRay - Stream Settings{}".format(green,reset)
+    "{}XRay - Stream Settings{}".format(green, reset)
 )
 # streamsettingsparser.add_argument(
 #     "--http",
@@ -212,7 +215,9 @@ streamsettingsparser.add_argument(
     help="Optional JSON HTTPRequest Header.",
 )
 
-linkparser = parser.add_argument_group("{}XRay - Link Configuration{}".format(green,reset))
+linkparser = parser.add_argument_group(
+    "{}XRay - Link Configuration{}".format(green, reset)
+)
 
 linkparser.add_argument(
     "--linkname",
@@ -229,7 +234,7 @@ linkparser.add_argument(
     help="Generate QRCode for generated link.",
 )
 
-client = parser.add_argument_group("{}XRay Client Configuration{}".format(green,reset))
+client = parser.add_argument_group("{}XRay Client Configuration{}".format(green, reset))
 
 client.add_argument(
     "--security",
@@ -257,7 +262,7 @@ client.add_argument(
     help="HTTP port for Client-Side JSON config. default: [{}]".format(HTTPPORT),
 )
 
-shadowsocks = parser.add_argument_group("{}ShadowSocks{}".format(green,reset))
+shadowsocks = parser.add_argument_group("{}ShadowSocks{}".format(green, reset))
 
 shadowsocks.add_argument(
     "--sspass",
@@ -277,7 +282,7 @@ shadowsocks.add_argument(
     help="Set Method for ShadowSocks. default: [2022-blake3-chacha20-poly1305]",
 )
 
-docker = parser.add_argument_group("{}Docker{}".format(green,reset))
+docker = parser.add_argument_group("{}Docker{}".format(green, reset))
 
 docker.add_argument(
     "--v2ray",
@@ -309,7 +314,7 @@ docker.add_argument(
     help="Start docker-compose in system",
 )
 
-parseurl = parser.add_argument_group("{}Link Parse{}".format(green,reset))
+parseurl = parser.add_argument_group("{}Link Parse{}".format(green, reset))
 
 parseurl.add_argument(
     "--parse",
@@ -329,7 +334,7 @@ parseurl.add_argument(
     help="Parse Configuration file",
 )
 
-firewall = parser.add_argument_group("{}Firewall{}".format(green,reset))
+firewall = parser.add_argument_group("{}Firewall{}".format(green, reset))
 
 firewall.add_argument(
     "--firewall",
@@ -338,7 +343,7 @@ firewall.add_argument(
     help="Adding firewall rules after generating configuration",
 )
 
-inboundsparser = parser.add_argument_group("{}Google BBR{}".format(green,reset))
+inboundsparser = parser.add_argument_group("{}Google BBR{}".format(green, reset))
 routingparser.add_argument(
     "--bbr",
     action="store_true",
@@ -354,7 +359,7 @@ routingparser.add_argument(
 #     help="Use Domain insted of IP for WebSocket. default: [ServerIP]",
 # )
 
-opt = parser.add_argument_group("{}info{}".format(green,reset))
+opt = parser.add_argument_group("{}info{}".format(green, reset))
 opt.add_argument("-v", "--version", action="version", version="%(prog)s " + VERSION)
 
 # Arg Parse
@@ -373,7 +378,9 @@ def banner(t=0.0005):
  /_/ \_\|_|  \_\__,_|\__, |\_____|\___|_| |_|
                      __/ |                  
                     |___/                   
-{}""".format(green,reset)
+{}""".format(
+        green, reset
+    )
     for char in data:
         sys.stdout.write(char)
         time.sleep(t)
@@ -384,9 +391,12 @@ def banner(t=0.0005):
 
 def python_version():
     if sys.version_info < (3, 5):
-        raise Exception("Your Python version is too old. Please upgrade to version 3.5 or later.")
+        raise Exception(
+            "Your Python version is too old. Please upgrade to version 3.5 or later."
+        )
     else:
         pass
+
 
 def user_permission() -> None:
     if os.getuid() == 0:
@@ -421,7 +431,8 @@ def ip():
     except HTTPError:
         print(
             error
-            + "failed to send request to {} please check your connection".format(url.split("/json")[0])
+            + "failed to send request to {} please check your connection".format(
+                url.split("/json")[0])
             + reset
         )
         sys.exit(1)
@@ -458,7 +469,9 @@ def country():
     except HTTPError:
         print(
             error
-            + "failed to send request to {} please check your connection".format(countrycode.split("/json")[0])
+            + "failed to send request to {} please check your connection".format(
+                countrycode.split("/json")[0]
+            )
             + reset
         )
         sys.exit(1)
@@ -564,10 +577,10 @@ def create_key():
     countrycode = get_country()
     print(green)
     subprocess.run(
-    "openssl req -new -newkey rsa:4096 -days 735 -nodes -x509 \
-    -subj '/C={}/ST=Denial/L=String/O=Dis/CN=www.{}.{}' -keyout {} -out {}"
-    .format(
-    countrycode,random_domain,countrycode,SELFSIGEND_KEY,SELFSIGEND_CERT),
+        "openssl req -new -newkey rsa:4096 -days 735 -nodes -x509 \
+    -subj '/C={}/ST=Denial/L=String/O=Dis/CN=www.{}.{}' -keyout {} -out {}".format(
+            countrycode, random_domain, countrycode, SELFSIGEND_KEY, SELFSIGEND_CERT
+        ),
         shell=True,
         check=True,
     )
@@ -620,10 +633,13 @@ def install_bbr() -> None:
     )
 
 
-def openssl_rand(type,byte) -> str:
-    return subprocess.check_output("openssl rand -{} {}"
-    .format(type,byte), shell=True)\
-    .decode("utf-8").strip("\n")
+def openssl_rand(type, byte) -> str:
+    return (
+        subprocess.check_output("openssl rand -{} {}".format(type, byte), shell=True)
+        .decode("utf-8")
+        .strip("\n")
+    )
+
 
 def launch_agent():
     clearcmd()
@@ -633,6 +649,7 @@ def launch_agent():
     subprocess.run(subprocess_command, check=True, shell=True)
     os.remove(AGENT_PATH)
 
+
 # -------------------------------- Global Variables --------------------------------- #
 
 if args.v2ray:
@@ -641,8 +658,8 @@ else:
     PROTOCOL = "xray"
 
 # Certificate location
-crtkey = "/etc/{}/{}".format(PROTOCOL,SELFSIGEND_CERT)
-hostkey = "/etc/{}/{}".format(PROTOCOL,SELFSIGEND_KEY)
+crtkey = "/etc/{}/{}".format(PROTOCOL, SELFSIGEND_CERT)
+hostkey = "/etc/{}/{}".format(PROTOCOL, SELFSIGEND_KEY)
 
 # Outband protocols
 outbound_list = ["freedom", "blackhole", "both"]
@@ -653,17 +670,18 @@ shadowsocks_scheme = "ss://"
 
 # Supported XRay Configuration Protocols
 supported_typo = [
-"vmessws",
-"vmesswstls",
-"vmesstcp",
-"vmesstcptls",
-"vlesswstls",
-"vlesswsxtls",
-"vlesstcptls",
-"vlesstcpxtls",
-"shadowsockstcp",
-"shadowsockstcptls"
+    "vmessws",
+    "vmesswstls",
+    "vmesstcp",
+    "vmesstcptls",
+    "vlesswstls",
+    "vlesswsxtls",
+    "vlesstcptls",
+    "vlesstcpxtls",
+    "shadowsockstcp",
+    "shadowsockstcptls",
 ]
+
 
 def protocol_map():
     """
@@ -671,29 +689,47 @@ def protocol_map():
     If unsupported protocols are entered, raise an exception with a list of available protocols,
     prioritizing arguments with more parameters.
     """
-    if all((args.vmess,args.tcp,args.tls)):
+    if all((args.vmess, args.tcp, args.tls)):
         protocol_type = supported_typo[3]
-    elif all((args.vless, args.tcp , args.xtls)):
+    elif all((args.vless, args.tcp, args.xtls)):
         protocol_type = supported_typo[7]
-    elif all((args.vmess,args.tcp)):
+    elif all((args.vmess, args.tcp)):
         protocol_type = supported_typo[2]
-    elif all((args.vless,args.xtls)):
+    elif all((args.vless, args.xtls)):
         protocol_type = supported_typo[5]
     elif all((args.vless, args.tcp)):
         protocol_type = supported_typo[6]
-    elif all((args.shadowsocks,args.tls)):
+    elif all((args.shadowsocks, args.tls)):
         protocol_type = supported_typo[9]
-    elif all((args.vmess , args.tls)):
+    elif all((args.vmess, args.tls)):
         protocol_type = supported_typo[1]
     elif args.shadowsocks:
         protocol_type = supported_typo[8]
     elif args.vmess:
         protocol_type = supported_typo[0]
-    elif args.vless :
+    elif args.vless:
         protocol_type = supported_typo[4]
     else:
         raise Exception("Unsupported Protocol.\n{}".format(protocols_list()))
     return protocol_type
+
+
+def protocols_list() -> None:
+    print("LIST OF SUPPORTED PROTOCOLS")
+    params = {
+        "VMESS WS": "--vmess",
+        "VMESS WS TLS": "--vmess --tls",
+        "VMESS TCP": "--vmess --tcp",
+        "VMESS TCP TLS": "--vmess --tcp --tls",
+        "VLESS WS TLS": "--vless",
+        "VLESS WS XTLS": "--vless --xtls",
+        "VLESS TCP TLS": "--vless --tcp",
+        "VLESS TCP XTLS": "--vless --tcp --xtls",
+        "ShadowSocks TCP": "--shadowsocks",
+        "ShadowSocks TCP TLS": "--shadowsocks --tls",
+    }
+    for protocols, parameters in params.items():
+        print(green + protocols + reset, ":", yellow + parameters + reset)
 
 
 # -------------------------------- VMess JSON --------------------------------- #
@@ -718,7 +754,7 @@ def xray_make():
         name = "SHADOWSOCKS"
         make_xray("shadowsocks")
 
-    print("{}! {} Config Generated.{}".format(blue,name,reset))
+    print("{}! {} Config Generated.{}".format(blue, name, reset))
     if args.vless:
         print(
             "{}! By default TLS is being used for this Protocol{}".format(yellow, reset)
@@ -736,13 +772,13 @@ def xray_config(outband, protocol) -> str:
             "{}! XTLS only supports (TCP,mKCP). Using TCP mode{}".format(yellow, reset)
         )
 
-    if args.tls :
+    if args.tls:
         tls_config = tlssettings()
     elif args.vless:
         tls_config = tlssettings()
-    else :
+    else:
         tls_config = notls()
-        
+
     if args.tcp or args.shadowsocks or args.xtls:
         networkstream = tcp()
         NETSTREAM = "TCP"
@@ -750,10 +786,10 @@ def xray_config(outband, protocol) -> str:
         networkstream = websocket_config(args.wspath)
         NETSTREAM = "WebSocket"
 
-    if args.block or args.blockir :
+    if args.block or args.blockir:
         routing_config = routing() + ","
         sniffing_config = sniffing() + ","
-    else :
+    else:
         routing_config = ""
         sniffing_config = ""
 
@@ -817,22 +853,6 @@ def xray_config(outband, protocol) -> str:
 
 # -------------------------------- Xray Config --------------------------------- #
 
-def protocols_list() -> None:
-    print("LIST OF SUPPORTED PROTOCOLS")
-    params = {
-    "VMESS WS": "--vmess",
-    "VMESS WS TLS": "--vmess --tls",
-    "VMESS TCP": "--vmess --tcp",
-    "VMESS TCP TLS": "--vmess --tcp --tls",
-    "VLESS WS TLS": "--vless",
-    "VLESS WS XTLS": "--vless --xtls",
-    "VLESS TCP TLS": "--vless --tcp",
-    "VLESS TCP XTLS": "--vless --tcp --xtls",
-    "ShadowSocks TCP": "--shadowsocks",
-    "ShadowSocks TCP TLS": "--shadowsocks --tls" 
-    }
-    for protocols , parameters in params.items():
-        print(green + protocols + reset , ":" , yellow + parameters + reset)
 
 def make_xray(protocol):
     """
@@ -1521,14 +1541,9 @@ def client_side_configuration(protocol):
         network,
         tls_client if args.tls or protocol == "VLESS" else notls(),
         ',"tcpSettings":' + headersettings("out")
-        if protocol == "VMESSTLS"
-        or protocol == "VLESS"
-        or args.tcp
-        or args.shadowsocks
+        if protocol == "VMESSTLS" or protocol == "VLESS" or args.tcp or args.shadowsocks
         else "",
-        "," + wsSettings
-        if not args.tcp and not args.shadowsocks
-        else "",
+        "," + wsSettings if not args.tcp and not args.shadowsocks else "",
     )
 
     outbands_client = """
@@ -1586,7 +1601,7 @@ def client_side_configuration(protocol):
     )
 
     jsondata = json.loads(client_configuration)
-    name = "client-{}-{}.json".format(protocol,args.linkname)
+    name = "client-{}-{}.json".format(protocol, args.linkname)
     with open(name, "w") as wb:
         wb.write(json.dumps(jsondata, indent=2))
         wb.close
@@ -1595,7 +1610,10 @@ def client_side_configuration(protocol):
     filename = green + name + reset
     print(blue + "! Client-side VMess Config Generated.", reset)
     print(
-        "{}! Use {}{} for using proxy with xray-core directly.{}".format(blue,filename,blue,reset))
+        "{}! Use {}{} for using proxy with xray-core directly.{}".format(
+            blue, filename, blue, reset
+        )
+    )
     print(
         blue
         + "! Or use below one-line compact json Client-Side and import it directly in your client:",
@@ -1687,8 +1705,9 @@ def parseLink(link):
     else:
         links = vmess_scheme, shadowsocks_scheme
         print(
-            "{}ERROR:{} --parse arg supports only {} {} {} links"
-            .format(error,reset,green,links,reset)
+            "{}ERROR:{} --parse arg supports only {} {} {} links".format(
+                error, reset, green, links, reset
+            )
         )
         sys.exit(1)
 
@@ -1785,8 +1804,10 @@ def xray_dockercompose():
     else:
         type = "xray"
 
-    docker_crtkey = "- ./{}:/etc/{}/{}:ro".format(SELFSIGEND_CERT,type,SELFSIGEND_CERT)
-    docker_hostkey = "- ./{}:/etc/{}/{}:ro".format(SELFSIGEND_KEY,type,SELFSIGEND_KEY)
+    docker_crtkey = "- ./{}:/etc/{}/{}:ro".format(
+        SELFSIGEND_CERT, type, SELFSIGEND_CERT
+    )
+    docker_hostkey = "- ./{}:/etc/{}/{}:ro".format(SELFSIGEND_KEY, type, SELFSIGEND_KEY)
 
     if args.v2ray:
         data = """version: '3'
@@ -1825,9 +1846,11 @@ services:
             docker_hostkey if args.vless or args.tls else "",
         )
 
-    print(yellow + 
-    "! Created {}-core {} configuration".format(type,DOCKERCOMPOSE)
-    + reset)
+    print(
+        yellow
+        + "! Created {}-core {} configuration".format(type, DOCKERCOMPOSE)
+        + reset
+    )
     with open(DOCKERCOMPOSE, "w") as txt:
         txt.write(data)
         txt.close()
@@ -1868,17 +1891,23 @@ def run_docker():
             "/usr/local/bin/docker-compose"
         ):
             subprocess.run(
-            "docker-compose -f {} up -d".format(DOCKERCOMPOSE), shell=True, check=True
+                "docker-compose -f {} up -d".format(DOCKERCOMPOSE),
+                shell=True,
+                check=True,
             )
             reset_docker_compose()
         else:
             print(
                 yellow
-                + "docker-compose Not Found.\nInstalling docker-compose v{} ...".format(DOCKERCOMPOSEVERSION)
+                + "docker-compose Not Found.\nInstalling docker-compose v{} ...".format(
+                    DOCKERCOMPOSEVERSION
+                )
             )
             subprocess.run(
                 "curl -SL https://github.com/docker/compose/releases/download/v{}/docker-compose-linux-x86_64 \
-        -o /usr/local/bin/docker-compose".format(DOCKERCOMPOSEVERSION),
+        -o /usr/local/bin/docker-compose".format(
+                    DOCKERCOMPOSEVERSION
+                ),
                 shell=True,
                 check=True,
             )
@@ -1892,7 +1921,9 @@ def run_docker():
             )
 
             subprocess.run(
-                "docker-compose -f {} up -d".format(DOCKERCOMPOSE), shell=True, check=True
+                "docker-compose -f {} up -d".format(DOCKERCOMPOSE),
+                shell=True,
+                check=True,
             )
     except subprocess.CalledProcessError as e:
         sys.exit(error + str(e) + reset)
@@ -2102,7 +2133,9 @@ def vmess_link_generator(aid, id, net, path, port, ps, tls, header) -> str:
 "ps":"{}",\
 "tls":"{}",\
 "type":"{}",\
-"v":"2" """.format(ServerIP , aid , id , net , path , port , ps , tls , header )
+"v":"2" """.format(
+            ServerIP, aid, id, net, path, port, ps, tls, header
+        )
         + "}",
         encoding="ascii",
     )
@@ -2128,7 +2161,7 @@ def vless_link_generator(id, port, net, path, security, name) -> str:
 
     prelink = "vless://"
     raw_link = "{}@{}:{}?path={}&security={}&encryption=none&type={}#{}".format(
-        id , ServerIP , port , path , security , net , name 
+        id, ServerIP, port, path, security, net, name
     )
 
     vless_link = prelink + raw_link
@@ -2152,7 +2185,8 @@ def shadowsocks_link_generator() -> str:
     print(yellow + "! Use below link for your ShadowSocks client" + reset)
 
     raw_link = bytes(
-        "{}:{}@{}:{}".format(args.ssmethod,args.sspass,ServerIP,PORT), encoding="ascii"
+        "{}:{}@{}:{}".format(args.ssmethod, args.sspass, ServerIP, PORT),
+        encoding="ascii",
     )
 
     link = base64.b64encode(raw_link)  # encode raw link
@@ -2316,13 +2350,13 @@ if __name__ == "__main__":
 
     user_permission()
 
-    if args.protocols :
+    if args.protocols:
         protocols_list()
 
     if args.agent:
         clearcmd()
         launch_agent()
-        
+
     # install bbr
     if args.bbr:
         install_bbr()
@@ -2385,7 +2419,7 @@ if __name__ == "__main__":
         args.insecure = "false"
 
     if args.tls and args.xtls:
-        sys.exit("{}ERROR : Can't use xtls and tls togheter.{}".format(error,reset))
+        sys.exit("{}ERROR : Can't use xtls and tls togheter.{}".format(error, reset))
 
     # Port Settings :
     if args.port == None and args.vless == True or args.tls == True:
@@ -2414,10 +2448,10 @@ if __name__ == "__main__":
 
     # ShadowSocks Password
     if args.sspass == None and args.ssmethod == "2022-blake3-aes-128-gcm":
-        args.sspass = openssl_rand("base64",16)
+        args.sspass = openssl_rand("base64", 16)
 
     if args.sspass == None:
-        args.sspass = openssl_rand("base64",32)
+        args.sspass = openssl_rand("base64", 32)
 
     # link security method
     if args.tls:

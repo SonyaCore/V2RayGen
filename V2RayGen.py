@@ -661,7 +661,14 @@ vmess_scheme = "vmess://"
 shadowsocks_scheme = "ss://"
 
 # Supported XRay Configuration Protocols
-supported_typo = ["vmess", "vmesstls", "vless"]
+supported_typo = [
+"vmess",
+"vmesstls",
+"vlesstls",
+"vlessxtls",
+"shadowsocks",
+"shadowsockstls"
+]
 
 
 # -------------------------------- VMess JSON --------------------------------- #
@@ -704,12 +711,26 @@ def xray_config(outband, protocol) -> str:
             "{}! XTLS only supports (TCP,mKCP). Using TCP mode{}".format(yellow, reset)
         )
 
+    if args.tls :
+        tls_config = tlssettings()
+    elif args.vless:
+        tls_config = tlssettings()
+    else :
+        tls_config = notls()
+        
     if args.tcp or args.shadowsocks or args.xtls:
         networkstream = tcp()
         NETSTREAM = "TCP"
     else:
         networkstream = websocket_config(args.wspath)
         NETSTREAM = "WebSocket"
+
+    if args.block or args.blockir :
+        routing_config = routing() + ","
+        sniffing_config = sniffing() + ","
+    else :
+        routing_config = ""
+        sniffing_config = ""
 
     if args.tcp or args.shadowsocks or args.xtls:
         # TCP stream settings
@@ -722,7 +743,7 @@ def xray_config(outband, protocol) -> str:
         }        
         """ % (
             networkstream,
-            tlssettings() if args.tls or args.vless else notls(),
+            tls_config,
             args.header,
         )
 
@@ -736,7 +757,7 @@ def xray_config(outband, protocol) -> str:
         }        
         """ % (
             networkstream,
-            tlssettings() if args.tls or args.vless else notls(),
+            tls_config,
             args.header,
         )
 
@@ -758,8 +779,8 @@ def xray_config(outband, protocol) -> str:
 }""" % (
         DNS,
         log(),
-        routing() + "," if args.block or args.blockir else "",
-        sniffing() + "," if args.block or args.blockir else "",
+        routing_config,
+        sniffing_config,
         PORT,
         protocol,
         streamsettings,

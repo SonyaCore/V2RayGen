@@ -772,13 +772,12 @@ def xray_config(outband, protocol) -> str:
 # -------------------------------- Xray Config --------------------------------- #
 
 def protocols_list() -> None:
+    print("LIST OF SUPPORTED PROTOCOLS")
     params = {
     "VMESS WS": "--vmess",
     "VMESS WS TLS": "--vmess --tls",
     "VMESS TCP": "--vmess --tcp",
     "VMESS TCP TLS": "--vmess --tcp --tls",
-    "VMESS HTTP": "--vmess --http",
-    "VMESS HTTP TLS": "--vmess --http --tls",
     "VLESS WS TLS": "--vless",
     "VLESS WS XTLS": "--vless --xtls",
     "VLESS TCP TLS": "--vless --tcp",

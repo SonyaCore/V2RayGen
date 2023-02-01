@@ -382,6 +382,12 @@ def banner(t=0.0005):
     sys.stdout.write("\n")
 
 
+def python_version():
+    if sys.version_info < (3, 5):
+        raise Exception("Your Python version is too old. Please upgrade to version 3.5 or later.")
+    else:
+        pass
+
 def user_permission() -> None:
     if os.getuid() == 0:
         PRIVILEGE = green + "GRANTED" + reset
@@ -613,6 +619,19 @@ def install_bbr() -> None:
         check=True,
     )
 
+
+def openssl_rand(type,byte) -> str:
+    return subprocess.check_output("openssl rand -{} {}"
+    .format(type,byte), shell=True)\
+    .decode("utf-8").strip("\n")
+
+def launch_agent():
+    clearcmd()
+    subprocess_command = "curl -s {url} --output {path} && python3 {path}".format(
+        url=AGENT_URL, path=AGENT_PATH
+    )
+    subprocess.run(subprocess_command, check=True, shell=True)
+    os.remove(AGENT_PATH)
 
 # -------------------------------- Global Variables --------------------------------- #
 
@@ -2233,7 +2252,8 @@ def base_error(err):
 # ----------------------------- argparse Actions ----------------------------- #
 
 if __name__ == "__main__":
-
+    python_version()
+    
     if len(sys.argv) <= 1:
         parser.print_help()
         sys.exit(1)
@@ -2247,12 +2267,8 @@ if __name__ == "__main__":
 
     if args.agent:
         clearcmd()
-        subprocess_command = "curl -s {url} --output {path} && python3 {path}".format(
-            url=AGENT_URL, path=AGENT_PATH
-        )
-        subprocess.run(subprocess_command, check=True, shell=True)
-        os.remove(AGENT_PATH)
-
+        launch_agent()
+        
     # install bbr
     if args.bbr:
         install_bbr()
@@ -2344,14 +2360,10 @@ if __name__ == "__main__":
 
     # ShadowSocks Password
     if args.sspass == None and args.ssmethod == "2022-blake3-aes-128-gcm":
-        args.sspass = subprocess.run(
-            "openssl rand -base64 16", capture_output=True, text=True, shell=True
-        ).stdout.strip("\n")
+        args.sspass = openssl_rand("base64",16)
 
     if args.sspass == None:
-        args.sspass = subprocess.run(
-            "openssl rand -base64 32", capture_output=True, text=True, shell=True
-        ).stdout.strip("\n")
+        args.sspass = openssl_rand("base64",32)
 
     # link security method
     if args.tls:

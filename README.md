@@ -51,12 +51,18 @@ The XRayAgent provides user management for XRay configuration, offering CRUD ope
 
 You can use one of the following protocols for installation and change its settings according to your needs.
 
-| Protoctol    | Argument       |
-| ------------ | -------------- |
-| VMESS        | --vmess , -wm  |
-| VMESS + TLS  | --vmess --tls  |
-| VLESS + TLS  | --vless , -vl  |
-| VLESS + XTLS | --vless --xtls |
+| Protoctol           | Argument             |
+| ------------------- | -------------------- |
+| VMESS WS            | --vmess              |
+| VMESS WS TLS        | --vmess --tls        |
+| VMESS TCP           | --vmess --tcp        |
+| VMESS TCP TLS       | --vmess --tcp --tls  |
+| VLESS WS TLS        | --vless              |
+| VLESS WS XTLS       | --vless --xtls       |
+| VLESS TCP TLS       | --vless --tcp        |
+| VLESS TCP XTLS      | --vless --tcp --xtls |
+| ShadowSocks TCP     | --shadowsocks        |
+| ShadowSocks TCP TLS | --shadowsocks --tls  |
 
 ### **Quick `Xray` Setup with Default Setting** :
 
@@ -73,9 +79,7 @@ sudo python3 V2RayGen.py --vmess
 
 ![Sample](contents/content3.png)
 
-after installation use the provided link to your client or use the client-side json configuration with xray-core or v2ray-core
-
-if your server is on the domain after importing the link to your v2ray client simply change the IP to your domain or subdomain
+<p>Use the provided link for your client, or use the client-side JSON configuration with XRay-Core or V2Ray-Core. If your server is on a domain, simply change the IP to your domain or subdomain after importing the link to your V2Ray client.</p>
 
 # **Examples**
 

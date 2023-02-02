@@ -675,7 +675,6 @@ supported_typo = [
     "vmesstcp",
     "vmesstcptls",
     "vlesswstls",
-    "vlesswsxtls",
     "vlesstcptls",
     "vlesstcpxtls",
     "shadowsockstcp",
@@ -689,24 +688,34 @@ def protocol_map():
     If unsupported protocols are entered, raise an exception with a list of available protocols,
     prioritizing arguments with more parameters.
     """
+    # vmesstcptls
     if all((args.vmess, args.tcp, args.tls)):
         protocol_type = supported_typo[3]
+    # vlesstcpxtls
     elif all((args.vless, args.tcp, args.xtls)):
         protocol_type = supported_typo[7]
+    # vmesstcp
     elif all((args.vmess, args.tcp)):
         protocol_type = supported_typo[2]
+    # vlesstcpxtls
     elif all((args.vless, args.xtls)):
-        protocol_type = supported_typo[5]
-    elif all((args.vless, args.tcp)):
         protocol_type = supported_typo[6]
+    # vlesstcptls
+    elif all((args.vless, args.tcp)):
+        protocol_type = supported_typo[5]
+    # shadowsockstcptls
     elif all((args.shadowsocks, args.tls)):
-        protocol_type = supported_typo[9]
+        protocol_type = supported_typo[8]
+    # vmesswstls
     elif all((args.vmess, args.tls)):
         protocol_type = supported_typo[1]
+    # shadowsockstcp
     elif args.shadowsocks:
         protocol_type = supported_typo[8]
+    # vmessws
     elif args.vmess:
         protocol_type = supported_typo[0]
+    # vlesswstls
     elif args.vless:
         protocol_type = supported_typo[4]
     else:
@@ -756,9 +765,6 @@ def xray_make():
 
     elif proto_type == "vlesswstls":
         proto_name = "VLESS + WS + TLS"
-
-    elif proto_type == "vlesswsxtls":
-        proto_name = "VLESS + WS + XTLS"
 
     elif proto_type == "vlesstcptls":
         proto_name = "VLESS + TCP + TLS"
@@ -1488,7 +1494,7 @@ def client_side_configuration(protocol):
     )
 
     # client protocol settings based on protocol argument
-    if protocol == "VMESS" or protocol == "VMESSTLS":
+    if protocol == "VMESS":
         setting = vmess_client
     elif protocol == "VLESS":
         setting = vless_clinet
@@ -1564,10 +1570,11 @@ def client_side_configuration(protocol):
       "tag": "proxy"
     """ % (
         network,
-        tls_client if args.tls or protocol == "VLESS" else notls(),
-        ',"tcpSettings":' + headersettings("out")
-        if protocol == "VMESSTLS" or protocol == "VLESS" or args.tcp or args.shadowsocks
-        else "",
+
+        tls_client if proto_type.__contains__("tls") else notls(),
+
+        ',"tcpSettings":' + headersettings("out") if proto_type.__contains__("tcp") else "",
+
         "," + wsSettings if not args.tcp and not args.shadowsocks else "",
     )
 
@@ -1667,6 +1674,15 @@ def xray_create(protocol):
         create_key()
         time.sleep(0.5)
 
+
+    if args.tls or args.vless:
+        print(
+            yellow
+            + "! Using self-signed key\
+        \n! Make sure to add Allow Insecure to your client."
+            + reset
+        )
+
     # Creating docker-compose file
     xray_dockercompose()
 
@@ -1677,7 +1693,7 @@ def xray_create(protocol):
     serverside_info_raw()
 
     # Generate encoded link & client-side configuration
-    if protocol == "VMESS" or protocol == "VMESSTLS":
+    if protocol == "VMESS":
         vmess_link = vmess_link_generator(
             args.alterid, UUID, net, path, PORT, args.linkname, TLSTYPE, header
         )
@@ -1689,8 +1705,6 @@ def xray_create(protocol):
 
         if protocol == "VMESS":
             client_side_configuration("VMESS")
-        elif protocol == "VMESSTLS":
-            client_side_configuration("VMESSTLS")
 
     elif protocol == "VLESS":
         vless_link = vless_link_generator(UUID, PORT, net, path, TLSTYPE, args.linkname)
@@ -1700,6 +1714,7 @@ def xray_create(protocol):
             print(yellow + "! QRCode :" + reset)
             print(qrcode(vless_link))
         client_side_configuration("VLESS")
+
     elif protocol == "SHADOWSOCKS":
         shadowsocks_link = shadowsocks_link_generator()
         print(shadowsocks_link)
@@ -1707,14 +1722,6 @@ def xray_create(protocol):
         if args.qrcode:
             print(yellow + "! QRCode :" + reset)
         client_side_configuration("SHADOWSOCKS")
-
-    if args.tls or args.vless:
-        print(
-            yellow
-            + "! Using self-signed key\
-        \n! Make sure to add Allow Insecure to your client."
-            + reset
-        )
 
     # Generate NGINX Template
     country() if protocol == "VMESS" else None
@@ -2519,7 +2526,7 @@ if __name__ == "__main__":
 
     # Quick VMess Setup
     if all((args.vmess, args.tls)):
-        xray_create("VMESSTLS")
+        xray_create("VMESS")
     elif args.vmess:
         xray_create("VMESS")
     # Quick Vless Setup

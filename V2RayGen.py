@@ -741,20 +741,44 @@ def xray_make():
     https://www.v2ray.com/en/configuration/protocols/v2ray.html
     """
     # Config Protocol Method
-    if all((args.vmess, args.tls)):
-        name = "VMESS + TLS"
+    if proto_type == "vmessws":
+        name = "VMESS + WS"
+
+    elif proto_type == "vmesswstls":
+        name = "VMESS + WS + TLS"
+
+    elif proto_type == "vmesstcp":
+        name = "VMESS + TCP"
+    
+    elif proto_type == "vmesstcptls":
+        name = "VMESS + TCP + TLS"
+
+    elif proto_type == "vlesswstls":
+        name = "VLESS + WS + TLS"
+
+    elif proto_type == "vlesswsxtls":
+        name = "VLESS + WS + XTLS"
+
+    elif proto_type == "vlesstcptls":
+        name = "VLESS + TCP + TLS"
+
+    elif proto_type == "vlesstcpxtls":
+        name = "VLESS + TCP + XTLS"
+
+    elif proto_type == "shadowsockstcp":
+        name = "SHADOWSOCKS + TCP"
+
+    elif proto_type == "shadowsockstcptls":
+        name = "SHADOWSOCKS + TCP + TLS"
+
+    if proto_type.startswith("vmess"):
         make_xray("vmess")
-    elif args.vmess:
-        name = "VMESS"
-        make_xray("vmess")
-    elif args.vless:
-        name = "VLESS"
+    elif proto_type.startswith("vless"):
         make_xray("vless")
-    elif args.shadowsocks:
-        name = "SHADOWSOCKS"
+    elif proto_type.startswith("shadowsocks"):
         make_xray("shadowsocks")
 
-    print("{}! {} Config Generated.{}".format(blue, name, reset))
+    print("{}! {}{}{}{} Config Generated.{}".format(blue, green , name, reset , blue, reset))
     if args.vless:
         print(
             "{}! By default TLS is being used for this Protocol{}".format(yellow, reset)
@@ -2486,7 +2510,7 @@ if __name__ == "__main__":
     if args.linkname == None:
         args.linkname = linkname
 
-    protocol_map()
+    proto_type = protocol_map()
 
     if args.vmess and args.xtls:
         sys.exit("{}! XTLS doesn't supports VMess for now.{}".format(error, reset))

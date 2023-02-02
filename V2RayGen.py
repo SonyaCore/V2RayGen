@@ -740,36 +740,37 @@ def xray_make():
     Make JSON config which reads --outband for making v2ray vmess config with specific protocol
     https://www.v2ray.com/en/configuration/protocols/v2ray.html
     """
+    global proto_name
     # Config Protocol Method
     if proto_type == "vmessws":
-        name = "VMESS + WS"
+        proto_name = "VMESS + WS"
 
     elif proto_type == "vmesswstls":
-        name = "VMESS + WS + TLS"
+        proto_name = "VMESS + WS + TLS"
 
     elif proto_type == "vmesstcp":
-        name = "VMESS + TCP"
+        proto_name = "VMESS + TCP"
     
     elif proto_type == "vmesstcptls":
-        name = "VMESS + TCP + TLS"
+        proto_name = "VMESS + TCP + TLS"
 
     elif proto_type == "vlesswstls":
-        name = "VLESS + WS + TLS"
+        proto_name = "VLESS + WS + TLS"
 
     elif proto_type == "vlesswsxtls":
-        name = "VLESS + WS + XTLS"
+        proto_name = "VLESS + WS + XTLS"
 
     elif proto_type == "vlesstcptls":
-        name = "VLESS + TCP + TLS"
+        proto_name = "VLESS + TCP + TLS"
 
     elif proto_type == "vlesstcpxtls":
-        name = "VLESS + TCP + XTLS"
+        proto_name = "VLESS + TCP + XTLS"
 
     elif proto_type == "shadowsockstcp":
-        name = "SHADOWSOCKS + TCP"
+        proto_name = "SHADOWSOCKS + TCP"
 
     elif proto_type == "shadowsockstcptls":
-        name = "SHADOWSOCKS + TCP + TLS"
+        proto_name = "SHADOWSOCKS + TCP + TLS"
 
     if proto_type.startswith("vmess"):
         make_xray("vmess")
@@ -778,7 +779,7 @@ def xray_make():
     elif proto_type.startswith("shadowsocks"):
         make_xray("shadowsocks")
 
-    print("{}! {}{}{}{} Config Generated.{}".format(blue, green , name, reset , blue, reset))
+    print("{}! {}{}{}{} Config Generated.{}".format(blue, green , proto_name, reset , blue, reset))
     if args.vless:
         print(
             "{}! By default TLS is being used for this Protocol{}".format(yellow, reset)
@@ -1625,13 +1626,14 @@ def client_side_configuration(protocol):
     )
 
     jsondata = json.loads(client_configuration)
-    name = "client-{}-{}.json".format(protocol, args.linkname)
-    with open(name, "w") as wb:
+    client_configuration_name = "client-{}-{}.json"\
+    .format(proto_name.replace(" + ","-"), args.linkname)
+    with open(client_configuration_name, "w") as wb:
         wb.write(json.dumps(jsondata, indent=2))
         wb.close
 
     print("")
-    filename = green + name + reset
+    filename = green + client_configuration_name + reset
     print(blue + "! Client-side VMess Config Generated.", reset)
     print(
         "{}! Use {}{} for using proxy with xray-core directly.{}".format(

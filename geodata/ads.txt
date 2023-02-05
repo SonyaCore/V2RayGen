@@ -24,6 +24,7 @@ adro.co
 affstat.adro.co
 affstat.digikala.com
 affiliate.digikala.com
+boorantech.com
 behinava.com
 radar.bayan.ir
 backority.ir
@@ -154,10 +155,12 @@ sentry.namava.ir
 stc.ninisite.com
 websocket.55online.news
 sentry.quera.org
+websocket.sobhtazeh.news
 linkdoni.soft98.ir
 ad.technews-iran.com
 adengine.telewebion.com
 rokhdad.telewebion.com
+websocket.varandaz.com
 news-view-api.varzesh3.com
 video-view-api.varzesh3.com
 analytics.zoomit.ir
@@ -201,7 +204,6 @@ waykingroup.com
 bnbmatrix.io
 bahatoken.site
 shamining.com
-t.me/BITBOD_TRADING_CLUB
 wintap.io
 frzss.com
 usdtbang.com

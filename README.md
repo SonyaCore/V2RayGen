@@ -51,12 +51,17 @@ The XRayAgent provides user management for XRay configuration, offering CRUD ope
 
 You can use one of the following protocols for installation and change its settings according to your needs.
 
-| Protoctol    | Argument       |
-| ------------ | -------------- |
-| VMESS        | --vmess , -wm  |
-| VMESS + TLS  | --vmess --tls  |
-| VLESS + TLS  | --vless , -vl  |
-| VLESS + XTLS | --vless --xtls |
+| Protoctol           | Argument             |
+| ------------------- | -------------------- |
+| VMESS WS            | --vmess              |
+| VMESS WS TLS        | --vmess --tls        |
+| VMESS TCP           | --vmess --tcp        |
+| VMESS TCP TLS       | --vmess --tcp --tls  |
+| VLESS WS TLS        | --vless              |
+| VLESS TCP TLS       | --vless --tcp        |
+| VLESS TCP XTLS      | --vless --tcp --xtls |
+| ShadowSocks TCP     | --shadowsocks        |
+| ShadowSocks TCP TLS | --shadowsocks --tls  |
 
 ### **Quick `Xray` Setup with Default Setting** :
 
@@ -73,9 +78,7 @@ sudo python3 V2RayGen.py --vmess
 
 ![Sample](contents/content3.png)
 
-after installation use the provided link to your client or use the client-side json configuration with xray-core or v2ray-core
-
-if your server is on the domain after importing the link to your v2ray client simply change the IP to your domain or subdomain
+<p>Use the provided link for your client, or use the client-side JSON configuration with XRay-Core or V2Ray-Core. If your server is on a domain, simply change the IP to your domain or subdomain after importing the link to your V2Ray client.</p>
 
 # **Examples**
 
@@ -105,12 +108,6 @@ VMESS + Changing client-side HTTP and SOCKS port :
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --chttp 4020 --csocks 8080
 ```
 
-VMESS + HTTP Network Stream :
-
-```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vmess --http
-```
-
 VMESS + TCP Network Stream :
 
 ```bash
@@ -129,10 +126,10 @@ VLESS + Using Google DNS :
 curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vless --dns google
 ```
 
-VLESS + XTLS :
+VLESS + TCP + XTLS :
 
 ```bash
-curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vless --xtls
+curl https://raw.githubusercontent.com/SonyaCore/V2RayGen/main/V2RayGen.py | sudo python3 - --vless --tcp --xtls
 ```
 
 ShadowSocks + adding shadowsocks port to server :
@@ -339,8 +336,6 @@ none : Nothing will be printed.
 
 stream settings is the network type of the stream transport. and by default this script will use websocket for using it with nginx and cdn
 
-`http` Using Http insted of Websocket
-
 `tcp` Using TCP network stream.
 
 `wspath` Changing default WebSocket path configuration.
@@ -407,24 +402,6 @@ vless://random-uuid@ip:port?path=websocketpath&security=type&encryption=none&typ
 ```json
 ss://shadowsocks-security-method:random-uuid@domain/ip :port
 ```
-
-### Outbounds
-
-`outbound` Custom Xray outbound connection.
-
-> use `--outband` to set one of below protocols.
->
-> by default both will be used
-
-#### **Supported Outband Protocols:**
-
-| Outband Protocols   |
-| ------------------- |
-| Freedom             |
-| BlackHole           |
-| Freedom + BlackHole |
-
-> https://www.v2ray.com/en/configuration/protocols.html
 
 ## Client Side
 

@@ -731,7 +731,6 @@ def protocols_list() -> None:
         "VMESS TCP": "--vmess --tcp",
         "VMESS TCP TLS": "--vmess --tcp --tls",
         "VLESS WS TLS": "--vless",
-        "VLESS WS XTLS": "--vless --xtls",
         "VLESS TCP TLS": "--vless --tcp",
         "VLESS TCP XTLS": "--vless --tcp --xtls",
         "ShadowSocks TCP": "--shadowsocks",

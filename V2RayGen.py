@@ -415,6 +415,18 @@ def user_permission() -> None:
         )
 
 
+def docker_compose_version() -> str:
+    tag : str = "latest"
+    version : str = "name"
+    compose = Request(
+        "https://api.github.com/repos/docker/compose/releases/{}".format(tag),
+        headers={
+            "User-Agent": "Mozilla/5.0",
+        },
+    )
+    with urlopen(compose) as response:
+        return json.loads(response.read().decode())[version]
+
 # Return IP
 def ip():
     """

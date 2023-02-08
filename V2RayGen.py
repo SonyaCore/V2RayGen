@@ -50,8 +50,6 @@ PORT = 80
 # TLS
 TLSTYPE = ""
 
-# Docker Compose Version
-DOCKERCOMPOSEVERSION = "2.15.1"
 # Docker Compose FILE
 DOCKERCOMPOSE = "docker-compose.yml"
 
@@ -416,16 +414,19 @@ def user_permission() -> None:
 
 
 def docker_compose_version() -> str:
-    tag : str = "latest"
-    version : str = "name"
-    compose = Request(
-        "https://api.github.com/repos/docker/compose/releases/{}".format(tag),
-        headers={
-            "User-Agent": "Mozilla/5.0",
-        },
-    )
-    with urlopen(compose) as response:
-        return json.loads(response.read().decode())[version]
+    if sys.version_info < (3,6):
+        return "v2.16.0"
+    else :
+        tag = "latest"
+        version = "name"
+        compose = Request(
+            "https://api.github.com/repos/docker/compose/releases/{}".format(tag),
+            headers={
+                "User-Agent": "Mozilla/5.0",
+            },
+        )
+        with urlopen(compose) as response:
+            return json.loads(response.read().decode())[version]
 
 # Return IP
 def ip():
@@ -679,6 +680,9 @@ outbound_list = ["freedom", "blackhole", "both"]
 # link schematic
 vmess_scheme = "vmess://"
 shadowsocks_scheme = "ss://"
+
+# Docker Compose Version
+DOCKERCOMPOSEVERSION = docker_compose_version()
 
 # Supported XRay Configuration Protocols
 supported_typo = [
@@ -1948,7 +1952,7 @@ def run_docker():
                 )
             )
             subprocess.run(
-                "curl -SL https://github.com/docker/compose/releases/download/v{}/docker-compose-linux-x86_64 \
+                "curl -SL https://github.com/docker/compose/releases/download/{}/docker-compose-linux-x86_64 \
         -o /usr/local/bin/docker-compose".format(
                     DOCKERCOMPOSEVERSION
                 ),

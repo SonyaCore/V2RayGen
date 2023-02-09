@@ -32,7 +32,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.1.6"
+VERSION = "1.1.7"
 
 # UUID Generation
 UUID = uuid.uuid4()
@@ -48,10 +48,8 @@ SELFSIGEND_KEY = "host.key"
 PORT = 80
 
 # TLS
-TLSTYPE = ""
+TLSTYPE = "none"
 
-# Docker Compose Version
-DOCKERCOMPOSEVERSION = "2.15.1"
 # Docker Compose FILE
 DOCKERCOMPOSE = "docker-compose.yml"
 
@@ -101,6 +99,7 @@ quick = parser.add_argument_group("{}Protocols{}".format(green, reset))
 
 quick.add_argument("--vmess", "-vm", action="store_true", help="Create VMess")
 quick.add_argument("--vless", "-vl", action="store_true", help="Create VLess")
+quick.add_argument("--trojan", "-tr", action="store_true", help="Create Trojan")
 quick.add_argument("--shadowsocks", "-ss", action="store_true", help="Create ShadowSocks")
 
 logdnsparser = parser.add_argument_group(
@@ -282,6 +281,16 @@ shadowsocks.add_argument(
     help="Set Method for ShadowSocks. default: [2022-blake3-chacha20-poly1305]",
 )
 
+trojan = parser.add_argument_group("{}Trojan{}".format(green, reset))
+trojan.add_argument(
+    "--tpass",
+    "--trojan-password",
+    action="store",
+    type=str,
+    metavar="",
+    help="Set Password for Trojan. default: [random]",
+)
+
 docker = parser.add_argument_group("{}Docker{}".format(green, reset))
 
 docker.add_argument(
@@ -415,6 +424,22 @@ def user_permission() -> None:
         )
 
 
+def docker_compose_version() -> str:
+    if sys.version_info < (3, 6):
+        return "v2.16.0"
+    else:
+        tag = "latest"
+        version = "name"
+        compose = Request(
+            "https://api.github.com/repos/docker/compose/releases/{}".format(tag),
+            headers={
+                "User-Agent": "Mozilla/5.0",
+            },
+        )
+        with urlopen(compose) as response:
+            return json.loads(response.read().decode())[version]
+
+
 # Return IP
 def ip():
     """
@@ -432,7 +457,8 @@ def ip():
         print(
             error
             + "failed to send request to {} please check your connection".format(
-                url.split("/json")[0])
+                url.split("/json")[0]
+            )
             + reset
         )
         sys.exit(1)
@@ -668,6 +694,12 @@ outbound_list = ["freedom", "blackhole", "both"]
 vmess_scheme = "vmess://"
 shadowsocks_scheme = "ss://"
 
+# TROJAN PASSWORD
+trojanpassword = None
+
+# Docker Compose Version
+DOCKERCOMPOSEVERSION = docker_compose_version()
+
 # Supported XRay Configuration Protocols
 supported_typo = [
     "vmessws",
@@ -679,6 +711,8 @@ supported_typo = [
     "vlesstcpxtls",
     "shadowsockstcp",
     "shadowsockstcptls",
+    "trojanwstls",
+    "trojantcptls",
 ]
 
 
@@ -691,12 +725,18 @@ def protocol_map():
     # vmesstcptls
     if all((args.vmess, args.tcp, args.tls)):
         protocol_type = supported_typo[3]
+    # trojantcptls
+    elif all((args.trojan, args.tcp, args.tls)):
+        protocol_type = supported_typo[10]
     # vlesstcpxtls
     elif all((args.vless, args.tcp, args.xtls)):
-        protocol_type = supported_typo[7]
+        protocol_type = supported_typo[6]
     # vmesstcp
     elif all((args.vmess, args.tcp)):
         protocol_type = supported_typo[2]
+    # trojantcptls
+    elif all((args.trojan, args.tcp)):
+        protocol_type = supported_typo[10]
     # vlesstcpxtls
     elif all((args.vless, args.xtls)):
         protocol_type = supported_typo[6]
@@ -711,13 +751,16 @@ def protocol_map():
         protocol_type = supported_typo[1]
     # shadowsockstcp
     elif args.shadowsocks:
-        protocol_type = supported_typo[8]
+        protocol_type = supported_typo[7]
     # vmessws
     elif args.vmess:
         protocol_type = supported_typo[0]
     # vlesswstls
     elif args.vless:
         protocol_type = supported_typo[4]
+    # trojanwstls
+    elif args.trojan:
+        protocol_type = supported_typo[9]
     else:
         raise Exception("Unsupported Protocol.\n{}".format(protocols_list()))
     return protocol_type
@@ -725,6 +768,7 @@ def protocol_map():
 
 def protocols_list() -> None:
     print("LIST OF SUPPORTED PROTOCOLS")
+    print("Protocols like VLess or Trojan require TLS by default.")
     params = {
         "VMESS WS": "--vmess",
         "VMESS WS TLS": "--vmess --tls",
@@ -733,6 +777,8 @@ def protocols_list() -> None:
         "VLESS WS TLS": "--vless",
         "VLESS TCP TLS": "--vless --tcp",
         "VLESS TCP XTLS": "--vless --tcp --xtls",
+        "TROJAN WS TLS": "--trojan",
+        "TROJAN TCP TLS": "--trojan --tcp",
         "ShadowSocks TCP": "--shadowsocks",
         "ShadowSocks TCP TLS": "--shadowsocks --tls",
     }
@@ -758,7 +804,7 @@ def xray_make():
 
     elif proto_type == "vmesstcp":
         proto_name = "VMESS + TCP"
-    
+
     elif proto_type == "vmesstcptls":
         proto_name = "VMESS + TCP + TLS"
 
@@ -771,6 +817,12 @@ def xray_make():
     elif proto_type == "vlesstcpxtls":
         proto_name = "VLESS + TCP + XTLS"
 
+    elif proto_type == "trojanwstls":
+        proto_name = "TROJAN + WS + TLS"
+
+    elif proto_type == "trojantcptls":
+        proto_name = "TROJAN + TCP + TLS"
+
     elif proto_type == "shadowsockstcp":
         proto_name = "SHADOWSOCKS + TCP"
 
@@ -781,11 +833,17 @@ def xray_make():
         make_xray("vmess")
     elif proto_type.startswith("vless"):
         make_xray("vless")
+    elif proto_type.startswith("trojan"):
+        make_xray("trojan")
     elif proto_type.startswith("shadowsocks"):
         make_xray("shadowsocks")
 
-    print("{}! {}{}{}{} Config Generated.{}".format(blue, green , proto_name, reset , blue, reset))
-    if args.vless:
+    print(
+        "{}! {}{}{}{} Config Generated.{}".format(
+            blue, green, proto_name, reset, blue, reset
+        )
+    )
+    if args.vless or args.trojan:
         print(
             "{}! By default TLS is being used for this Protocol{}".format(yellow, reset)
         )
@@ -805,6 +863,8 @@ def xray_config(outband, protocol) -> str:
     if args.tls:
         tls_config = tlssettings()
     elif args.vless:
+        tls_config = tlssettings()
+    elif args.trojan:
         tls_config = tlssettings()
     else:
         tls_config = notls()
@@ -895,6 +955,8 @@ def make_xray(protocol):
         protocol_config = vless_server_side()
     elif protocol == "vmess":
         protocol_config = vmess_server_side()
+    elif protocol == "trojan":
+        protocol_config = trojan_server_side()
     elif protocol == "shadowsocks":
         protocol_config = shadowsocks_server_side()
 
@@ -942,6 +1004,29 @@ def vmess_server_side():
         args.insecure,
     )
     return vmess
+
+
+def trojan_server_side():
+    """
+    vless server side inbound configuration
+    https://xtls.github.io/config/inbounds/vless.html
+    """
+    trojan = """
+      "protocol": "trojan",
+      "allocate": {
+        "strategy": "always"
+      },    
+      "settings": {
+        "clients": [
+          {
+            "password": "%s",
+            "email": "client@example.com"
+          }
+        ]
+        }""" % (
+        trojanpassword
+    )
+    return trojan
 
 
 def vless_server_side():
@@ -1474,6 +1559,23 @@ def client_side_configuration(protocol):
         UUID,
     )
 
+    trojan_client = """
+        "protocol": "trojan",
+        "settings": {
+        "servers": [
+            {
+                "address": "%s",
+                "port": %s,
+                "password": "%s"
+                }
+            ]
+        }
+    """ % (
+        ServerIP,
+        PORT,
+        trojanpassword,
+    )
+
     shadowsocks_clinet = """
         "protocol": "shadowsocks",
         "settings": {
@@ -1497,6 +1599,8 @@ def client_side_configuration(protocol):
         setting = vmess_client
     elif protocol == "VLESS":
         setting = vless_clinet
+    elif protocol == "TROJAN":
+        setting = trojan_client
     elif protocol == "SHADOWSOCKS":
         setting = shadowsocks_clinet
 
@@ -1569,11 +1673,10 @@ def client_side_configuration(protocol):
       "tag": "proxy"
     """ % (
         network,
-
         tls_client if proto_type.__contains__("tls") else notls(),
-
-        ',"tcpSettings":' + headersettings("out") if proto_type.__contains__("tcp") else "",
-
+        ',"tcpSettings":' + headersettings("out")
+        if proto_type.__contains__("tcp")
+        else "",
         "," + wsSettings if not args.tcp and not args.shadowsocks else "",
     )
 
@@ -1632,15 +1735,20 @@ def client_side_configuration(protocol):
     )
 
     jsondata = json.loads(client_configuration)
-    client_configuration_name = "client-{}-{}.json"\
-    .format(proto_name.replace(" + ","-"), args.linkname)
+    client_configuration_name = "client-{}-{}.json".format(
+        proto_name.replace(" + ", "-"), args.linkname
+    )
     with open(client_configuration_name, "w") as wb:
         wb.write(json.dumps(jsondata, indent=2))
         wb.close
 
     print("")
     filename = green + client_configuration_name + reset
-    print(blue + "! Client-side VMess Config Generated.", reset)
+    print(
+        blue
+        + "! Client-side {} Config Generated.".format(proto_name.replace(" + ", "-")),
+        reset,
+    )
     print(
         "{}! Use {}{} for using proxy with xray-core directly.{}".format(
             blue, filename, blue, reset
@@ -1669,17 +1777,22 @@ def xray_create(protocol):
     xray_make()
     sys.exit(1) if args.config else ""
 
-    if args.tls or args.vless:
+    if args.tls or args.vless or args.trojan:
         create_key()
         time.sleep(0.5)
 
-
-    if args.tls or args.vless:
+    if args.tls or args.vless or args.trojan:
         print(
             yellow
             + "! Using self-signed key\
         \n! Make sure to add Allow Insecure to your client."
             + reset
+        )
+
+    if args.tcp:
+        print(
+            yellow
+            + "! For using TCP in your gui client set header to 'http' and 'path' to '/' "
         )
 
     # Creating docker-compose file
@@ -1713,6 +1826,17 @@ def xray_create(protocol):
             print(yellow + "! QRCode :" + reset)
             print(qrcode(vless_link))
         client_side_configuration("VLESS")
+
+    elif protocol == "TROJAN":
+        trojan_link = trojan_link_generator(
+            trojanpassword, PORT, TLSTYPE, net, path, args.linkname
+        )
+        print(trojan_link)
+
+        if args.qrcode:
+            print(yellow + "! QRCode :" + reset)
+            print(qrcode(trojan_link))
+        client_side_configuration("TROJAN")
 
     elif protocol == "SHADOWSOCKS":
         shadowsocks_link = shadowsocks_link_generator()
@@ -1856,8 +1980,8 @@ services:
         %s
         %s""" % (
             CONFIGNAME,
-            docker_crtkey if args.vless or args.tls else "",
-            docker_hostkey if args.vless or args.tls else "",
+            docker_crtkey if proto_type.__contains__("tls") or args.tls else "",
+            docker_hostkey if proto_type.__contains__("tls") or args.tls else "",
         )
     else:
         data = """version: '3'
@@ -1874,8 +1998,8 @@ services:
         %s
         %s""" % (
             CONFIGNAME,
-            docker_crtkey if args.vless or args.tls else "",
-            docker_hostkey if args.vless or args.tls else "",
+            docker_crtkey if proto_type.__contains__("tls") or args.tls else "",
+            docker_hostkey if proto_type.__contains__("tls") or args.tls else "",
         )
 
     print(
@@ -1931,12 +2055,12 @@ def run_docker():
         else:
             print(
                 yellow
-                + "docker-compose Not Found.\nInstalling docker-compose v{} ...".format(
+                + "docker-compose Not Found.\nInstalling docker-compose {} ...".format(
                     DOCKERCOMPOSEVERSION
                 )
             )
             subprocess.run(
-                "curl -SL https://github.com/docker/compose/releases/download/v{}/docker-compose-linux-x86_64 \
+                "curl -SL https://github.com/docker/compose/releases/download/{}/docker-compose-linux-x86_64 \
         -o /usr/local/bin/docker-compose".format(
                     DOCKERCOMPOSEVERSION
                 ),
@@ -2011,12 +2135,19 @@ def serverside_info_raw() -> str:
     """
     show generated configuration info
     """
+    if args.trojan:
+        method = "PASSWORD"
+        value = trojanpassword
+    else:
+        method = "UUID"
+        value = UUID
+
     print("")
     print("SERVER SIDE Information : ")
     print("IP: " + blue + str((ServerIP)) + reset)
     print("ID: " + blue + str(args.alterid) + reset)
     print("LOGLEVEL: " + blue + str(LOG) + reset)
-    print("UUID: " + blue + str(UUID) + reset)
+    print("{}: ".format(method) + blue + str(value) + reset)
     print("STREAM : " + blue + str(NETSTREAM) + reset)
 
     if NETSTREAM == "WebSocket":
@@ -2199,6 +2330,28 @@ def vless_link_generator(id, port, net, path, security, name) -> str:
     vless_link = prelink + raw_link
 
     return vless_link
+
+
+# ------------------------------ Trojan Link Gen ------------------------------- #
+
+
+def trojan_link_generator(password, port, security, type, path, name) -> str:
+    """
+    generate trojan link with below format:
+    trojan://password@ip:port?allowInsecure=insecure&security=&type=networkstream#linkname
+    """
+    if not args.parseconfig:
+        print("")
+        print(yellow + "! Use below link for your xray or v2ray client" + reset)
+
+    prelink = "trojan://"
+    raw_link = "{}@{}:{}?allowInsecure={}&security={}&type={}&path={}#{}".format(
+        password, ServerIP, port, 1, security, type, path, name
+    )
+
+    trojan_link = prelink + raw_link
+
+    return trojan_link
 
 
 # ------------------------------ ShadowSocks Link Gen ------------------------------- #
@@ -2384,6 +2537,7 @@ if __name__ == "__main__":
 
     if args.protocols:
         protocols_list()
+        sys.exit(1)
 
     if args.agent:
         clearcmd()
@@ -2468,6 +2622,11 @@ if __name__ == "__main__":
     else:
         UUID = args.uuid
 
+    if args.tpass == None:
+        trojanpassword = get_random_charaters(32)
+    else:
+        trojanpassword = args.tpass
+
     # # Check WebSocket Domain Status Code
     # if args.domain :
     #     websocket_domaincheck()
@@ -2492,7 +2651,7 @@ if __name__ == "__main__":
     elif args.xtls:
         TLSTYPE = "xtls"
 
-    elif args.vless:
+    elif args.vless or args.trojan:
         TLSTYPE = "tls"
 
     if args.tcp:
@@ -2531,6 +2690,9 @@ if __name__ == "__main__":
     # Quick Vless Setup
     elif args.vless:
         xray_create("VLESS")
+    # Quick Trojan Setup
+    elif args.trojan:
+        xray_create("TROJAN")
     # Quick ShadowSocks Setup
     elif args.shadowsocks:
         shadowsocks_check()

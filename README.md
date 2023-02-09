@@ -60,6 +60,8 @@ You can use one of the following protocols for installation and change its setti
 | VLESS WS TLS        | --vless              |
 | VLESS TCP TLS       | --vless --tcp        |
 | VLESS TCP XTLS      | --vless --tcp --xtls |
+| TROJAN WS TLS       | --trojan             |
+| TROJAN TCP TLS      | --trojan --tcp       |
 | ShadowSocks TCP     | --shadowsocks        |
 | ShadowSocks TCP TLS | --shadowsocks --tls  |
 
@@ -395,6 +397,12 @@ vmess://{"add":"ip / domain ","aid":"alterid","host":"","id":"random-uuid","net"
 
 ```json
 vless://random-uuid@ip:port?path=websocketpath&security=type&encryption=none&type=ws#linkname
+```
+
+##### `Trojan` :
+
+```json
+trojan://password@ip:port?allowInsecure=insecure&security=&type=networkstream#linkname
 ```
 
 ##### `ShadowSocks` :

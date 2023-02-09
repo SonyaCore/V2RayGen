@@ -713,6 +713,7 @@ supported_typo = [
     "shadowsockstcptls",
     "trojanwstls",
     "trojantcptls",
+    "trojantcpxtls",
 ]
 
 
@@ -728,6 +729,9 @@ def protocol_map():
     # trojantcptls
     elif all((args.trojan, args.tcp, args.tls)):
         protocol_type = supported_typo[10]
+    # trojantcpxtls
+    elif all((args.trojan, args.tcp, args.xtls)):
+        protocol_type = supported_typo[11]
     # vlesstcpxtls
     elif all((args.vless, args.tcp, args.xtls)):
         protocol_type = supported_typo[6]
@@ -737,6 +741,9 @@ def protocol_map():
     # trojantcptls
     elif all((args.trojan, args.tcp)):
         protocol_type = supported_typo[10]
+    # trojantcpxtls
+    elif all((args.trojan, args.xtls)):
+        protocol_type = supported_typo[11]
     # vlesstcpxtls
     elif all((args.vless, args.xtls)):
         protocol_type = supported_typo[6]
@@ -779,6 +786,7 @@ def protocols_list() -> None:
         "VLESS TCP XTLS": "--vless --tcp --xtls",
         "TROJAN WS TLS": "--trojan",
         "TROJAN TCP TLS": "--trojan --tcp",
+        "TROJAN TCP XTLS": "--trojan --tcp",
         "ShadowSocks TCP": "--shadowsocks",
         "ShadowSocks TCP TLS": "--shadowsocks --tls",
     }
@@ -822,6 +830,9 @@ def xray_make():
 
     elif proto_type == "trojantcptls":
         proto_name = "TROJAN + TCP + TLS"
+
+    elif proto_type == "trojantcpxtls":
+        proto_name = "TROJAN + TCP + XTLS"
 
     elif proto_type == "shadowsockstcp":
         proto_name = "SHADOWSOCKS + TCP"
@@ -2659,7 +2670,7 @@ if __name__ == "__main__":
         path = "/"
         header = "http"
 
-    elif args.vless and args.xtls:
+    elif args.vless or args.trojan and args.xtls:
         net = "tcp"
         path = "/"
         header = "http"

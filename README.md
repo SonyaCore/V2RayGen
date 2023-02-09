@@ -62,6 +62,7 @@ You can use one of the following protocols for installation and change its setti
 | VLESS TCP XTLS      | --vless --tcp --xtls |
 | TROJAN WS TLS       | --trojan             |
 | TROJAN TCP TLS      | --trojan --tcp       |
+| TROJAN TCP XTLS     | --trojan --xtls      |
 | ShadowSocks TCP     | --shadowsocks        |
 | ShadowSocks TCP TLS | --shadowsocks --tls  |
 

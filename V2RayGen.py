@@ -711,9 +711,7 @@ supported_typo = [
     "vlesstcpxtls",
     "shadowsockstcp",
     "shadowsockstcptls",
-    "trojanws",
     "trojanwstls",
-    "trojantcp",
     "trojantcptls",
 ]
 
@@ -729,16 +727,16 @@ def protocol_map():
         protocol_type = supported_typo[3]
     # trojantcptls
     elif all((args.trojan, args.tcp, args.tls)):
-        protocol_type = supported_typo[12]
+        protocol_type = supported_typo[10]
     # vlesstcpxtls
     elif all((args.vless, args.tcp, args.xtls)):
         protocol_type = supported_typo[6]
     # vmesstcp
     elif all((args.vmess, args.tcp)):
         protocol_type = supported_typo[2]
-    # trojantcp
+    # trojantcptls
     elif all((args.trojan, args.tcp)):
-        protocol_type = supported_typo[11]
+        protocol_type = supported_typo[10]
     # vlesstcpxtls
     elif all((args.vless, args.xtls)):
         protocol_type = supported_typo[6]
@@ -751,9 +749,6 @@ def protocol_map():
     # vmesswstls
     elif all((args.vmess, args.tls)):
         protocol_type = supported_typo[1]
-    # trojanwstls
-    elif all((args.trojan, args.tls)):
-        protocol_type = supported_typo[10]
     # shadowsockstcp
     elif args.shadowsocks:
         protocol_type = supported_typo[7]
@@ -763,7 +758,7 @@ def protocol_map():
     # vlesswstls
     elif args.vless:
         protocol_type = supported_typo[4]
-    # trojanws
+    # trojanwstls
     elif args.trojan:
         protocol_type = supported_typo[9]
     else:
@@ -773,6 +768,7 @@ def protocol_map():
 
 def protocols_list() -> None:
     print("LIST OF SUPPORTED PROTOCOLS")
+    print("Protocols like VLess or Trojan require TLS by default.")
     params = {
         "VMESS WS": "--vmess",
         "VMESS WS TLS": "--vmess --tls",
@@ -781,10 +777,8 @@ def protocols_list() -> None:
         "VLESS WS TLS": "--vless",
         "VLESS TCP TLS": "--vless --tcp",
         "VLESS TCP XTLS": "--vless --tcp --xtls",
-        "TROJAN WS": "--trojan",
-        "TROJAN WS TLS": "--trojan --tls",
-        "TROJAN TCP": "--trojan --tcp",
-        "TROJAN TCP TLS": "--trojan --tcp --tls",
+        "TROJAN WS TLS": "--trojan",
+        "TROJAN TCP TLS": "--trojan --tcp",
         "ShadowSocks TCP": "--shadowsocks",
         "ShadowSocks TCP TLS": "--shadowsocks --tls",
     }
@@ -823,14 +817,8 @@ def xray_make():
     elif proto_type == "vlesstcpxtls":
         proto_name = "VLESS + TCP + XTLS"
 
-    elif proto_type == "trojanws":
-        proto_name = "TROJAN + WS"
-
     elif proto_type == "trojanwstls":
         proto_name = "TROJAN + WS + TLS"
-
-    elif proto_type == "trojantcp":
-        proto_name = "TROJAN + TCP"
 
     elif proto_type == "trojantcptls":
         proto_name = "TROJAN + TCP + TLS"
@@ -855,7 +843,7 @@ def xray_make():
             blue, green, proto_name, reset, blue, reset
         )
     )
-    if args.vless:
+    if args.vless or args.trojan:
         print(
             "{}! By default TLS is being used for this Protocol{}".format(yellow, reset)
         )
@@ -875,6 +863,8 @@ def xray_config(outband, protocol) -> str:
     if args.tls:
         tls_config = tlssettings()
     elif args.vless:
+        tls_config = tlssettings()
+    elif args.trojan:
         tls_config = tlssettings()
     else:
         tls_config = notls()
@@ -1787,11 +1777,11 @@ def xray_create(protocol):
     xray_make()
     sys.exit(1) if args.config else ""
 
-    if args.tls or args.vless:
+    if args.tls or args.vless or args.trojan:
         create_key()
         time.sleep(0.5)
 
-    if args.tls or args.vless:
+    if args.tls or args.vless or args.trojan:
         print(
             yellow
             + "! Using self-signed key\
@@ -1990,8 +1980,8 @@ services:
         %s
         %s""" % (
             CONFIGNAME,
-            docker_crtkey if args.vless or args.tls else "",
-            docker_hostkey if args.vless or args.tls else "",
+            docker_crtkey if proto_type.__contains__("tls") or args.tls else "",
+            docker_hostkey if proto_type.__contains__("tls") or args.tls else "",
         )
     else:
         data = """version: '3'
@@ -2008,8 +1998,8 @@ services:
         %s
         %s""" % (
             CONFIGNAME,
-            docker_crtkey if args.vless or args.tls else "",
-            docker_hostkey if args.vless or args.tls else "",
+            docker_crtkey if proto_type.__contains__("tls") or args.tls else "",
+            docker_hostkey if proto_type.__contains__("tls") or args.tls else "",
         )
 
     print(
@@ -2661,7 +2651,7 @@ if __name__ == "__main__":
     elif args.xtls:
         TLSTYPE = "xtls"
 
-    elif args.vless:
+    elif args.vless or args.trojan:
         TLSTYPE = "tls"
 
     if args.tcp:

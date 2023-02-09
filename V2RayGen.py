@@ -32,7 +32,7 @@ from binascii import Error
 NAME = "XRayGen"
 
 # Version
-VERSION = "1.1.7"
+VERSION = "1.1.8"
 
 # UUID Generation
 UUID = uuid.uuid4()

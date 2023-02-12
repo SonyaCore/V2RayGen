@@ -1,6 +1,7 @@
 # Clash
 # Wiki: https://github.com/Dreamacro/clash/wiki/premium-core-features#rule-providers
 payload:
+  - DOMAIN-SUFFIX,affilio.ir
   - DOMAIN-SUFFIX,analyt.ir
   - DOMAIN-SUFFIX,scripts-ads.s3.ir-thr-at1.arvanstorage.com
   - DOMAIN-SUFFIX,error-tracking.arvancloud.com
@@ -80,6 +81,7 @@ payload:
   - DOMAIN-SUFFIX,najva.com
   - DOMAIN-SUFFIX,netbina.com
   - DOMAIN-SUFFIX,on-click.ir
+  - DOMAIN-SUFFIX,promizer.com
   - DOMAIN-SUFFIX,phonroid.com
   - DOMAIN-SUFFIX,popina.ir
   - DOMAIN-SUFFIX,popunder.ir

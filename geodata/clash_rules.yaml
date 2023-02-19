@@ -26,6 +26,7 @@ payload:
   - DOMAIN-SUFFIX,ayyaar.ir
   - DOMAIN-SUFFIX,adro.co
   - DOMAIN-SUFFIX,affstat.adro.co
+  - DOMAIN-SUFFIX,adro.ir
   - DOMAIN-SUFFIX,affstat.digikala.com
   - DOMAIN-SUFFIX,affiliate.digikala.com
   - DOMAIN-SUFFIX,boorantech.com
@@ -209,14 +210,10 @@ payload:
   - DOMAIN-SUFFIX,bnbmatrix.io
   - DOMAIN-SUFFIX,bahatoken.site
   - DOMAIN-SUFFIX,shamining.com
+  - DOMAIN-SUFFIX,ccnnetwork.co
   - DOMAIN-SUFFIX,wintap.io
   - DOMAIN-SUFFIX,frzss.com
-  - DOMAIN-SUFFIX,usdtbang.com
-  - DOMAIN-SUFFIX,usdteng.com
-  - DOMAIN-SUFFIX,usdtcan.com
-  - DOMAIN-SUFFIX,usdtbbc.com
-  - DOMAIN-SUFFIX,imtokenwallet.biz
-  - DOMAIN-SUFFIX,emenshowapp.xyz
+  - DOMAIN-SUFFIX,hoho.mobi
   - IP-CIDR,2.144.0.0/14
   - IP-CIDR,2.176.0.0/12
   - IP-CIDR,5.1.43.0/24

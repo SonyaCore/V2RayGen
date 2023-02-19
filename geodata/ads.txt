@@ -23,6 +23,7 @@ amarfa.ir
 ayyaar.ir
 adro.co
 affstat.adro.co
+adro.ir
 affstat.digikala.com
 affiliate.digikala.com
 boorantech.com
@@ -206,11 +207,7 @@ waykingroup.com
 bnbmatrix.io
 bahatoken.site
 shamining.com
+ccnnetwork.co
 wintap.io
 frzss.com
-usdtbang.com
-usdteng.com
-usdtcan.com
-usdtbbc.com
-imtokenwallet.biz
-emenshowapp.xyz
+hoho.mobi

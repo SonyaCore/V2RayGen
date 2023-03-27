@@ -2670,7 +2670,7 @@ if __name__ == "__main__":
         path = "/"
         header = "http"
 
-    elif args.vless or args.trojan and args.xtls:
+    elif args.trojan and args.xtls:
         net = "tcp"
         path = "/"
         header = "http"

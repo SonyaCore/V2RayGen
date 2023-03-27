@@ -1,3 +1,5 @@
+adrooz.com
+affilio.ir
 analyt.ir
 scripts-ads.s3.ir-thr-at1.arvanstorage.com
 error-tracking.arvancloud.com
@@ -22,8 +24,10 @@ amarfa.ir
 ayyaar.ir
 adro.co
 affstat.adro.co
+adro.ir
 affstat.digikala.com
 affiliate.digikala.com
+behtarinseo.ir
 boorantech.com
 behinava.com
 radar.bayan.ir
@@ -77,6 +81,7 @@ pantatec.ae
 najva.com
 netbina.com
 on-click.ir
+promizer.com
 phonroid.com
 popina.ir
 popunder.ir
@@ -101,6 +106,7 @@ sanjagh.com
 sanjagh.net
 ads.safarme.ir
 sabavision.com
+sabaidea.cloud
 trustseal.e-rasaneh.ir
 triboon.net
 te1.ir
@@ -154,6 +160,7 @@ sentry.malltina.com
 sentry.namava.ir
 stc.ninisite.com
 websocket.55online.news
+analytics.plaza.ir
 sentry.quera.org
 websocket.sobhtazeh.news
 linkdoni.soft98.ir
@@ -204,11 +211,9 @@ waykingroup.com
 bnbmatrix.io
 bahatoken.site
 shamining.com
+ccnnetwork.co
 wintap.io
 frzss.com
-usdtbang.com
-usdteng.com
-usdtcan.com
-usdtbbc.com
-imtokenwallet.biz
-emenshowapp.xyz
+hoho.mobi
+unitedsolarinfinity.com
+mogo-crypto.net

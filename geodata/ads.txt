@@ -27,6 +27,7 @@ affstat.adro.co
 adro.ir
 affstat.digikala.com
 affiliate.digikala.com
+backlink.ir
 behtarinseo.ir
 boorantech.com
 behinava.com
@@ -130,7 +131,6 @@ yelloadwise.ir
 yektanet.com
 yekbux.com
 zarpop.com
-zanboor.net
 analytics.asiatech.ir
 dsp.aparat.com
 ads.akairan.com

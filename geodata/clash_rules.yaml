@@ -30,6 +30,7 @@ payload:
   - DOMAIN-SUFFIX,adro.ir
   - DOMAIN-SUFFIX,affstat.digikala.com
   - DOMAIN-SUFFIX,affiliate.digikala.com
+  - DOMAIN-SUFFIX,backlink.ir
   - DOMAIN-SUFFIX,behtarinseo.ir
   - DOMAIN-SUFFIX,boorantech.com
   - DOMAIN-SUFFIX,behinava.com
@@ -133,7 +134,6 @@ payload:
   - DOMAIN-SUFFIX,yektanet.com
   - DOMAIN-SUFFIX,yekbux.com
   - DOMAIN-SUFFIX,zarpop.com
-  - DOMAIN-SUFFIX,zanboor.net
   - DOMAIN-SUFFIX,analytics.asiatech.ir
   - DOMAIN-SUFFIX,dsp.aparat.com
   - DOMAIN-SUFFIX,ads.akairan.com

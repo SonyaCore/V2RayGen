@@ -18,6 +18,8 @@
 
 [**Options**](#options)
 
+[**Block List**](#blocklist)
+
 [**License**](#license)
 
 [**Donate Me**](#donateme)
@@ -471,6 +473,22 @@ for parsing existed configuration or decoding vmess url use below options :
 
 ---
 
+## **Block List**
+
+Block lists are files that can be used in V2Ray clients that allow users to block or direct individual connections. These lists can be used to blacklist specific IP addresses or domains, or to whitelist trusted ones.
+
+In some countries, such as Iran, authorities actively try to block access to VPN services by monitoring requests sent from foreign IP addresses to local servers. When such requests are detected, the associated IP addresses are added to a blacklist, effectively blocking access to VPNs. As a result, users in these countries may need to disable their VPN connection in order to access local websites without issue. Block lists can help circumvent these restrictions by allowing users to selectively block or redirect certain connections, thereby avoiding detection by authorities.
+
+This files are avaliable under [geodata][geodata] directory
+
+### Block List Sources
+
+The ads list is provided by the [PersianBlocker](https://github.com/MasterKia/PersianBlocker) list.
+
+The iraninan CIDR is provided by the [IP2Location](<https://lite.ip2location.com/iran-(islamic-republic-of)-ip-address-ranges?lang=en_US>) site.
+
+---
+
 ## DonateMe
 
 If this Project helped you, you can also help me by donation
@@ -505,3 +523,4 @@ Licensed under the [GPL-3][license] license.
 [telegram-shield]: https://img.shields.io/badge/Telegram-blue.svg?style=flat&logo=telegram
 [telegram-url]: https://t.me/ReiNotes
 [license]: LICENCE
+[geodata]: geodata

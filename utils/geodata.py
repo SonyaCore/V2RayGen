@@ -88,6 +88,8 @@ def load_ads() -> Iterable[str]:
 
 def qv2rayrouting(cidr: list, ads: list):
     schema = {
+        "License": "https://www.gnu.org/licenses/gpl-3.0.en.html",
+        "ADSlicense": "AGPLv3",
         "description": "List of Iranian IP's",
         "domainStrategy": "IPIfNonMatch",
         "domains": {"direct": ["regexp:^.+\.ir$"], "block": ["geosite:category-ads-all"] + list(ads)},

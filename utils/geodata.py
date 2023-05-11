@@ -4,7 +4,8 @@
 # ------------------------------------------
 #   Author    : SonyaCore
 # 	Github    : https://github.com/SonyaCore
-#   Licence   : https://www.gnu.org/licenses/gpl-3.0.en.html
+#   License   : https://www.gnu.org/licenses/gpl-3.0.en.html
+#   ADS License : AGPLv3
 
 import re
 import json
@@ -99,6 +100,7 @@ def qv2rayrouting(cidr: list, ads: list):
 def clash(cidr: list, ads: list) -> str:
     config = (
         "# Clash\n"
+        "# ADS License: AGPLv3\n"
         "# Wiki: https://github.com/Dreamacro/clash/wiki/premium-core-features#rule-providers\n"
         "payload:\n"
     )
@@ -134,7 +136,8 @@ def writeraw(cidr,ads):
     with open("/tmp/ads", "r") as file:
         data = file.read()
     with open(ads, "w") as ads:
-        ads.write(data)      
+        ads.write("# ADS License : AGPLv3\n")
+        ads.write(data)
     with open("/tmp/dump", "r") as file:
         data = file.read()
     with open(cidr, "w") as cidr:

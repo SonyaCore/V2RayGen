@@ -1,4 +1,5 @@
 # Clash
+# ADS License: AGPLv3
 # Wiki: https://github.com/Dreamacro/clash/wiki/premium-core-features#rule-providers
 payload:
   - DOMAIN-SUFFIX,adrooz.com

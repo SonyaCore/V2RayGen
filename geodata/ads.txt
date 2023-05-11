@@ -1,3 +1,4 @@
+# ADS License : AGPLv3
 adrooz.com
 affilio.ir
 analyt.ir

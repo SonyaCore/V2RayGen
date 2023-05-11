@@ -1,4 +1,6 @@
 {
+  "License": "https://www.gnu.org/licenses/gpl-3.0.en.html",
+  "ADSlicense": "AGPLv3",
   "description": "List of Iranian IP's",
   "domainStrategy": "IPIfNonMatch",
   "domains": {

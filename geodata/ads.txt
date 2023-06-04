@@ -156,8 +156,10 @@ tracker.farsnews.ir
 hiads.hidoctor.ir
 ipsite.ir
 analytics.irancell.ir
+apptracking.irancell.ir
 websocket.ilna.ir
 websocket.khanefootball.com
+counter.mahanmusic.net
 analytic.magland.ir
 affiliate.malltina.com
 sentry.malltina.com

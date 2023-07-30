@@ -152,6 +152,7 @@ payload:
   - DOMAIN-SUFFIX,new-sentry.digikala.com
   - DOMAIN-SUFFIX,sentry-new.divar.ir
   - DOMAIN-SUFFIX,ammaar.delivery.zeerak.cloud
+  - DOMAIN-SUFFIX,vast.filmnet.ir
   - DOMAIN-SUFFIX,analytics.football360.ir
   - DOMAIN-SUFFIX,fb-gw.bef.rest
   - DOMAIN-SUFFIX,sentry.footballiapp.com
@@ -168,6 +169,7 @@ payload:
   - DOMAIN-SUFFIX,affiliate.malltina.com
   - DOMAIN-SUFFIX,sentry.malltina.com
   - DOMAIN-SUFFIX,sentry.namava.ir
+  - DOMAIN-SUFFIX,ws.namava.ir
   - DOMAIN-SUFFIX,stc.ninisite.com
   - DOMAIN-SUFFIX,websocket.55online.news
   - DOMAIN-SUFFIX,analytics.plaza.ir
@@ -227,8 +229,6 @@ payload:
   - DOMAIN-SUFFIX,hoho.mobi
   - DOMAIN-SUFFIX,unitedsolarinfinity.com
   - DOMAIN-SUFFIX,mogo-crypto.net
-  - DOMAIN-SUFFIX,fillvpn.com
-  - DOMAIN-SUFFIX,sharapako.com
   - IP-CIDR,2.57.3.0/24
   - IP-CIDR,2.144.0.0/14
   - IP-CIDR,2.176.0.0/12

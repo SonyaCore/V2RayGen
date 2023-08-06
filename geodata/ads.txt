@@ -113,6 +113,7 @@ sanjagh.net
 ads.safarme.ir
 sabavision.com
 sabaidea.cloud
+theforge.ir
 trustseal.e-rasaneh.ir
 triboon.net
 te1.ir
@@ -176,6 +177,7 @@ linkdoni.soft98.ir
 ad.technews-iran.com
 adengine.telewebion.com
 rokhdad.telewebion.com
+analytics.telewebion.com
 websocket.varandaz.com
 news-view-api.varzesh3.com
 video-view-api.varzesh3.com

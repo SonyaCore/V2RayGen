@@ -148,8 +148,8 @@ analytics.dunro.com
 ads.dabi.ir
 tracker.digikala.com
 new-sentry.digikala.com
-sentry-new.divar.ir
-ammaar.delivery.zeerak.cloud
+sentry.divar.cloud
+actionlog.divar.ir
 vast.filmnet.ir
 analytics.football360.ir
 fb-gw.bef.rest
@@ -176,7 +176,6 @@ websocket.sobhtazeh.news
 linkdoni.soft98.ir
 ad.technews-iran.com
 adengine.telewebion.com
-rokhdad.telewebion.com
 analytics.telewebion.com
 websocket.varandaz.com
 news-view-api.varzesh3.com
@@ -228,3 +227,4 @@ frzss.com
 hoho.mobi
 unitedsolarinfinity.com
 mogo-crypto.net
+tinancefa.org

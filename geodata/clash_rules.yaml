@@ -151,8 +151,8 @@ payload:
   - DOMAIN-SUFFIX,ads.dabi.ir
   - DOMAIN-SUFFIX,tracker.digikala.com
   - DOMAIN-SUFFIX,new-sentry.digikala.com
-  - DOMAIN-SUFFIX,sentry-new.divar.ir
-  - DOMAIN-SUFFIX,ammaar.delivery.zeerak.cloud
+  - DOMAIN-SUFFIX,sentry.divar.cloud
+  - DOMAIN-SUFFIX,actionlog.divar.ir
   - DOMAIN-SUFFIX,vast.filmnet.ir
   - DOMAIN-SUFFIX,analytics.football360.ir
   - DOMAIN-SUFFIX,fb-gw.bef.rest
@@ -179,7 +179,6 @@ payload:
   - DOMAIN-SUFFIX,linkdoni.soft98.ir
   - DOMAIN-SUFFIX,ad.technews-iran.com
   - DOMAIN-SUFFIX,adengine.telewebion.com
-  - DOMAIN-SUFFIX,rokhdad.telewebion.com
   - DOMAIN-SUFFIX,analytics.telewebion.com
   - DOMAIN-SUFFIX,websocket.varandaz.com
   - DOMAIN-SUFFIX,news-view-api.varzesh3.com
@@ -231,6 +230,7 @@ payload:
   - DOMAIN-SUFFIX,hoho.mobi
   - DOMAIN-SUFFIX,unitedsolarinfinity.com
   - DOMAIN-SUFFIX,mogo-crypto.net
+  - DOMAIN-SUFFIX,tinancefa.org
   - IP-CIDR,2.57.3.0/24
   - IP-CIDR,2.144.0.0/14
   - IP-CIDR,2.176.0.0/12

@@ -17,7 +17,6 @@ payload:
   - DOMAIN-SUFFIX,analytics-3.aasaam.com
   - DOMAIN-SUFFIX,adwised.com
   - DOMAIN-SUFFIX,adwisedfs.com
-  - DOMAIN-SUFFIX,adwised.azureedge.net
   - DOMAIN-SUFFIX,adivery.com
   - DOMAIN-SUFFIX,adnegah.net
   - DOMAIN-SUFFIX,adpulse.ir
@@ -155,7 +154,6 @@ payload:
   - DOMAIN-SUFFIX,actionlog.divar.ir
   - DOMAIN-SUFFIX,vast.filmnet.ir
   - DOMAIN-SUFFIX,analytics.football360.ir
-  - DOMAIN-SUFFIX,fb-gw.bef.rest
   - DOMAIN-SUFFIX,sentry.footballiapp.com
   - DOMAIN-SUFFIX,analysis.faradars.org
   - DOMAIN-SUFFIX,tracker.farsnews.ir
@@ -231,6 +229,7 @@ payload:
   - DOMAIN-SUFFIX,unitedsolarinfinity.com
   - DOMAIN-SUFFIX,mogo-crypto.net
   - DOMAIN-SUFFIX,tinancefa.org
+  - DOMAIN-SUFFIX,wibodir.com
   - IP-CIDR,2.57.3.0/24
   - IP-CIDR,2.144.0.0/14
   - IP-CIDR,2.176.0.0/12

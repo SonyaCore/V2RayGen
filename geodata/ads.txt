@@ -14,7 +14,6 @@ analytics-2.aasaam.com
 analytics-3.aasaam.com
 adwised.com
 adwisedfs.com
-adwised.azureedge.net
 adivery.com
 adnegah.net
 adpulse.ir
@@ -152,7 +151,6 @@ sentry.divar.cloud
 actionlog.divar.ir
 vast.filmnet.ir
 analytics.football360.ir
-fb-gw.bef.rest
 sentry.footballiapp.com
 analysis.faradars.org
 tracker.farsnews.ir
@@ -228,3 +226,4 @@ hoho.mobi
 unitedsolarinfinity.com
 mogo-crypto.net
 tinancefa.org
+wibodir.com

@@ -19,6 +19,8 @@ adnegah.net
 adpulse.ir
 adsima.net
 adtrace.io
+adtrace.ir
+adtrace.world
 affili.ir
 amarfa.ir
 ayyaar.ir
@@ -139,6 +141,8 @@ dsp.aparat.com
 ads.akairan.com
 ads.akaup.com
 ads.alaatv.com
+posthog.basalam.com
+sentry.basalam.com
 metrix.behtarino.com
 apm.bama.ir
 sentry.cafebazaar.org
@@ -175,6 +179,7 @@ linkdoni.soft98.ir
 ad.technews-iran.com
 adengine.telewebion.com
 analytics.telewebion.com
+sentry.virgool.io
 websocket.varandaz.com
 news-view-api.varzesh3.com
 video-view-api.varzesh3.com
@@ -228,3 +233,4 @@ mogo-crypto.net
 tinancefa.org
 wibodir.com
 eh-ra-z-se-na.org
+ebl-hot.com

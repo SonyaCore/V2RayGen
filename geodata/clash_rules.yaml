@@ -22,6 +22,8 @@ payload:
   - DOMAIN-SUFFIX,adpulse.ir
   - DOMAIN-SUFFIX,adsima.net
   - DOMAIN-SUFFIX,adtrace.io
+  - DOMAIN-SUFFIX,adtrace.ir
+  - DOMAIN-SUFFIX,adtrace.world
   - DOMAIN-SUFFIX,affili.ir
   - DOMAIN-SUFFIX,amarfa.ir
   - DOMAIN-SUFFIX,ayyaar.ir
@@ -142,6 +144,8 @@ payload:
   - DOMAIN-SUFFIX,ads.akairan.com
   - DOMAIN-SUFFIX,ads.akaup.com
   - DOMAIN-SUFFIX,ads.alaatv.com
+  - DOMAIN-SUFFIX,posthog.basalam.com
+  - DOMAIN-SUFFIX,sentry.basalam.com
   - DOMAIN-SUFFIX,metrix.behtarino.com
   - DOMAIN-SUFFIX,apm.bama.ir
   - DOMAIN-SUFFIX,sentry.cafebazaar.org
@@ -178,6 +182,7 @@ payload:
   - DOMAIN-SUFFIX,ad.technews-iran.com
   - DOMAIN-SUFFIX,adengine.telewebion.com
   - DOMAIN-SUFFIX,analytics.telewebion.com
+  - DOMAIN-SUFFIX,sentry.virgool.io
   - DOMAIN-SUFFIX,websocket.varandaz.com
   - DOMAIN-SUFFIX,news-view-api.varzesh3.com
   - DOMAIN-SUFFIX,video-view-api.varzesh3.com
@@ -231,6 +236,7 @@ payload:
   - DOMAIN-SUFFIX,tinancefa.org
   - DOMAIN-SUFFIX,wibodir.com
   - DOMAIN-SUFFIX,eh-ra-z-se-na.org
+  - DOMAIN-SUFFIX,ebl-hot.com
   - IP-CIDR,2.57.3.0/24
   - IP-CIDR,2.144.0.0/14
   - IP-CIDR,2.176.0.0/12

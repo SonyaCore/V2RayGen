@@ -140,6 +140,7 @@ payload:
   - DOMAIN-SUFFIX,yelloadwise.ir
   - DOMAIN-SUFFIX,yektanet.com
   - DOMAIN-SUFFIX,yekbux.com
+  - DOMAIN-SUFFIX,zarad.net
   - DOMAIN-SUFFIX,zarpop.com
   - DOMAIN-SUFFIX,analytics.asiatech.ir
   - DOMAIN-SUFFIX,dsp.aparat.com
@@ -169,6 +170,7 @@ payload:
   - DOMAIN-SUFFIX,apptracking.irancell.ir
   - DOMAIN-SUFFIX,websocket.ilna.ir
   - DOMAIN-SUFFIX,websocket.khanefootball.com
+  - DOMAIN-SUFFIX,counter.musicsweb.ir
   - DOMAIN-SUFFIX,counter.mahanmusic.net
   - DOMAIN-SUFFIX,analytic.magland.ir
   - DOMAIN-SUFFIX,affiliate.malltina.com
@@ -237,6 +239,7 @@ payload:
   - DOMAIN-SUFFIX,mogo-crypto.net
   - DOMAIN-SUFFIX,tinancefa.org
   - DOMAIN-SUFFIX,laxsson.com
+  - DOMAIN-SUFFIX,tradergpt.ai
   - DOMAIN-SUFFIX,wibodir.com
   - DOMAIN-SUFFIX,eh-ra-z-se-na.org
   - DOMAIN-SUFFIX,ebl-hot.com
@@ -368,7 +371,7 @@ payload:
   - IP-CIDR,45.86.196.0/22
   - IP-CIDR,45.87.4.0/22
   - IP-CIDR,45.89.136.0/22
-  - IP-CIDR,45.89.200.0/22
+  - IP-CIDR,45.89.202.0/23
   - IP-CIDR,45.89.236.0/22
   - IP-CIDR,45.90.72.0/22
   - IP-CIDR,45.91.152.0/22
@@ -481,8 +484,7 @@ payload:
   - IP-CIDR,80.71.149.0/24
   - IP-CIDR,80.75.0.0/20
   - IP-CIDR,80.91.208.0/24
-  - IP-CIDR,80.191.0.0/17
-  - IP-CIDR,80.191.242.0/23
+  - IP-CIDR,80.191.0.0/16
   - IP-CIDR,80.210.0.0/18
   - IP-CIDR,80.210.128.0/17
   - IP-CIDR,80.242.0.0/20
@@ -507,7 +509,6 @@ payload:
   - IP-CIDR,83.147.192.0/23
   - IP-CIDR,83.147.222.0/24
   - IP-CIDR,83.147.233.0/24
-  - IP-CIDR,83.147.240.0/22
   - IP-CIDR,83.147.252.0/22
   - IP-CIDR,83.150.192.0/22
   - IP-CIDR,84.47.192.0/18
@@ -518,7 +519,6 @@ payload:
   - IP-CIDR,85.133.138.0/23
   - IP-CIDR,85.133.147.0/24
   - IP-CIDR,85.133.154.0/23
-  - IP-CIDR,85.133.157.0/24
   - IP-CIDR,85.133.180.0/22
   - IP-CIDR,85.133.220.0/22
   - IP-CIDR,85.133.242.0/23
@@ -708,7 +708,6 @@ payload:
   - IP-CIDR,91.186.201.0/24
   - IP-CIDR,91.186.216.0/22
   - IP-CIDR,91.190.88.0/21
-  - IP-CIDR,91.190.190.0/24
   - IP-CIDR,91.194.6.0/24
   - IP-CIDR,91.199.9.0/24
   - IP-CIDR,91.199.18.0/24
@@ -716,6 +715,7 @@ payload:
   - IP-CIDR,91.199.30.0/24
   - IP-CIDR,91.207.138.0/23
   - IP-CIDR,91.207.205.0/24
+  - IP-CIDR,91.208.163.0/24
   - IP-CIDR,91.208.165.0/24
   - IP-CIDR,91.209.96.0/24
   - IP-CIDR,91.209.161.0/24
@@ -867,7 +867,7 @@ payload:
   - IP-CIDR,109.107.131.0/24
   - IP-CIDR,109.108.160.0/19
   - IP-CIDR,109.109.32.0/19
-  - IP-CIDR,109.110.160.0/19
+  - IP-CIDR,109.110.160.0/21
   - IP-CIDR,109.122.193.0/24
   - IP-CIDR,109.122.199.0/24
   - IP-CIDR,109.122.209.0/24
@@ -877,7 +877,6 @@ payload:
   - IP-CIDR,109.162.128.0/17
   - IP-CIDR,109.201.0.0/19
   - IP-CIDR,109.203.128.0/19
-  - IP-CIDR,109.203.176.0/22
   - IP-CIDR,109.206.252.0/22
   - IP-CIDR,109.225.128.0/18
   - IP-CIDR,109.230.64.0/19
@@ -1335,7 +1334,6 @@ payload:
   - IP-CIDR,185.188.112.0/22
   - IP-CIDR,185.189.120.0/22
   - IP-CIDR,185.190.20.0/22
-  - IP-CIDR,185.190.25.0/24
   - IP-CIDR,185.190.39.0/24
   - IP-CIDR,185.191.76.0/22
   - IP-CIDR,185.192.8.0/22

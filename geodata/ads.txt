@@ -137,6 +137,7 @@ xmlx.lol
 yelloadwise.ir
 yektanet.com
 yekbux.com
+zarad.net
 zarpop.com
 analytics.asiatech.ir
 dsp.aparat.com
@@ -166,6 +167,7 @@ analytics.irancell.ir
 apptracking.irancell.ir
 websocket.ilna.ir
 websocket.khanefootball.com
+counter.musicsweb.ir
 counter.mahanmusic.net
 analytic.magland.ir
 affiliate.malltina.com
@@ -234,6 +236,7 @@ unitedsolarinfinity.com
 mogo-crypto.net
 tinancefa.org
 laxsson.com
+tradergpt.ai
 wibodir.com
 eh-ra-z-se-na.org
 ebl-hot.com

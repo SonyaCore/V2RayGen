@@ -144,6 +144,8 @@ dsp.aparat.com
 ads.akairan.com
 ads.akaup.com
 ads.alaatv.com
+sentry.alaatv.com
+sentry.bale.sh
 posthog.basalam.com
 sentry.basalam.com
 metrix.behtarino.com

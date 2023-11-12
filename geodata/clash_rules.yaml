@@ -142,6 +142,7 @@ payload:
   - DOMAIN-SUFFIX,yekbux.com
   - DOMAIN-SUFFIX,zarad.net
   - DOMAIN-SUFFIX,zarpop.com
+  - DOMAIN-SUFFIX,ads.aftab.cc
   - DOMAIN-SUFFIX,analytics.asiatech.ir
   - DOMAIN-SUFFIX,dsp.aparat.com
   - DOMAIN-SUFFIX,ads.akairan.com
@@ -161,6 +162,7 @@ payload:
   - DOMAIN-SUFFIX,new-sentry.digikala.com
   - DOMAIN-SUFFIX,sentry.divar.cloud
   - DOMAIN-SUFFIX,actionlog.divar.ir
+  - DOMAIN-SUFFIX,sentry.fidibo.net
   - DOMAIN-SUFFIX,vast.filmnet.ir
   - DOMAIN-SUFFIX,analytics.football360.ir
   - DOMAIN-SUFFIX,sentry.footballiapp.com
@@ -171,6 +173,9 @@ payload:
   - DOMAIN-SUFFIX,analytics.irancell.ir
   - DOMAIN-SUFFIX,apptracking.irancell.ir
   - DOMAIN-SUFFIX,websocket.ilna.ir
+  - DOMAIN-SUFFIX,sentry.alibaba.ir
+  - DOMAIN-SUFFIX,tracker.jabama.com
+  - DOMAIN-SUFFIX,kar-sentry.karnameh.com
   - DOMAIN-SUFFIX,websocket.khanefootball.com
   - DOMAIN-SUFFIX,counter.musicsweb.ir
   - DOMAIN-SUFFIX,counter.mahanmusic.net

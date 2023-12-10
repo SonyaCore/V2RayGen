@@ -92,6 +92,8 @@ payload:
   - DOMAIN-SUFFIX,netbina.com
   - DOMAIN-SUFFIX,oscaranimation.in
   - DOMAIN-SUFFIX,on-click.ir
+  - DOMAIN-SUFFIX,onclick.ir
+  - DOMAIN-SUFFIX,pushq.ir
   - DOMAIN-SUFFIX,pooye-ads.com
   - DOMAIN-SUFFIX,promizer.com
   - DOMAIN-SUFFIX,phonroid.com
@@ -168,6 +170,7 @@ payload:
   - DOMAIN-SUFFIX,sentry.footballiapp.com
   - DOMAIN-SUFFIX,analysis.faradars.org
   - DOMAIN-SUFFIX,tracker.farsnews.ir
+  - DOMAIN-SUFFIX,analytics.hostiran.net
   - DOMAIN-SUFFIX,hiads.hidoctor.ir
   - DOMAIN-SUFFIX,ipsite.ir
   - DOMAIN-SUFFIX,analytics.irancell.ir

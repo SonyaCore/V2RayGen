@@ -198,6 +198,7 @@ payload:
   - DOMAIN-SUFFIX,ad.technews-iran.com
   - DOMAIN-SUFFIX,adengine.telewebion.com
   - DOMAIN-SUFFIX,analytics.telewebion.com
+  - DOMAIN-SUFFIX,analytics.jeldnews.com
   - DOMAIN-SUFFIX,sentry.virgool.io
   - DOMAIN-SUFFIX,websocket.varandaz.com
   - DOMAIN-SUFFIX,news-view-api.varzesh3.com

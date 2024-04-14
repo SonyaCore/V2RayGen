@@ -258,6 +258,7 @@ payload:
   - DOMAIN-SUFFIX,ebl-hot.com
   - DOMAIN-SUFFIX,iranuschsahm.sbs
   - DOMAIN-SUFFIX,seownae.space
+  - DOMAIN-SUFFIX,maeshhtr.com
   - IP-CIDR,2.57.3.0/24
   - IP-CIDR,2.144.0.0/14
   - IP-CIDR,2.176.0.0/12

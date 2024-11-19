@@ -1,4 +1,5 @@
 # ADS License : AGPLv3
+adtodate.ir
 adrooz.com
 affilio.ir
 analyt.ir
@@ -45,6 +46,7 @@ clickyab.com
 chabok.io
 congoro.com
 congoro.ir
+dezhino.com
 daartads.com
 daneshin.ir
 24d.ir
@@ -111,6 +113,8 @@ p30rank.ir
 publica.ir
 rankirani.ir
 rssbank.ir
+spellpop.ir
+spellads.com
 offers.sapra.ir
 statsfa.com
 sendword.ir
@@ -119,7 +123,6 @@ sanjagh.net
 ads.safarme.ir
 sabavision.com
 sabaidea.cloud
-theforge.ir
 trustseal.e-rasaneh.ir
 triboon.net
 te1.ir
@@ -146,6 +149,7 @@ zarpop.com
 ads.aftab.cc
 analytics.asiatech.ir
 dsp.aparat.com
+ads.asset.aparat.com
 ads.akairan.com
 ads.akaup.com
 ads.alaatv.com
@@ -163,8 +167,10 @@ tracker.digikala.com
 new-sentry.digikala.com
 sentry.divar.cloud
 actionlog.divar.ir
+analytics.fam.ir
 sentry.fidibo.net
 vast.filmnet.ir
+sentry.filmnet.ir
 analytics.football360.ir
 sentry.footballiapp.com
 analysis.faradars.org
@@ -190,6 +196,10 @@ stc.ninisite.com
 websocket.55online.news
 analytics.plaza.ir
 sentry.quera.org
+a.reymit.ir
+sentry.mielse.com
+ingest-data-afra.snappfood.dev
+errortracking.snapp.site
 websocket.sobhtazeh.news
 linkdoni.soft98.ir
 ad.technews-iran.com
@@ -197,6 +207,7 @@ adengine.telewebion.com
 analytics.telewebion.com
 analytics.jeldnews.com
 sentry.virgool.io
+countly.virgool.io
 websocket.varandaz.com
 news-view-api.varzesh3.com
 video-view-api.varzesh3.com
@@ -248,11 +259,8 @@ hoho.mobi
 unitedsolarinfinity.com
 mogo-crypto.net
 tinancefa.org
+chancx.io
+falixa.com
 laxsson.com
 tradergpt.ai
-wibodir.com
-eh-ra-z-se-na.org
-ebl-hot.com
-iranuschsahm.sbs
-seownae.space
-maeshhtr.com
+meashstis.ir
